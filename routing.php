@@ -1,0 +1,183 @@
+<?php
+
+// Carga de variables de entorno para que Conexion.php funcione
+require_once __DIR__ . '/EnvLoader.php';
+
+// Prevenir salida de errores HTML que rompan el JSON
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
+error_reporting(E_ALL);
+
+// Gestor de errores personalizado para capturar Warnings/Notices en el log
+set_error_handler(function ($errno, $errstr, $errfile, $errline) {
+    $error_msg = [
+        'type' => 'PHP Error/Warning',
+        'level' => $errno,
+        'message' => $errstr,
+        'file' => $errfile,
+        'line' => $errline,
+        'timestamp' => date('Y-m-d H:i:s')
+    ];
+    file_put_contents(__DIR__ . '/debug_error.log', "[" . date('Y-m-d H:i:s') . "] " . json_encode($error_msg, JSON_PRETTY_PRINT) . "\n", FILE_APPEND);
+    return false; // Seguir con el flujo normal
+});
+
+$controllers = array(
+    'sede' => ['index', 'show', 'store', 'update', 'destroy', 'getProgramas', 'getFichas'],
+    'coordinacion' => ['index', 'show', 'store', 'update', 'destroy'],
+    'asignacion' => ['index', 'show', 'store', 'update', 'destroy'],
+    'detalle_asignacion' => ['index', 'show', 'store', 'update', 'destroy'],
+    'ambiente' => ['index', 'show', 'store', 'update', 'destroy'],
+    'programa' => ['index', 'show', 'store', 'update', 'destroy', 'getTitulos'],
+    'ficha' => ['index', 'show', 'store', 'update', 'destroy'],
+    'competencia' => ['index', 'show', 'store', 'update', 'destroy'],
+    'competencia_programa' => ['index', 'sync', 'getByPrograma'],
+    'titulo_programa' => ['index', 'show', 'store', 'update', 'destroy'],
+    'centro_formacion' => ['index', 'show', 'store', 'update', 'destroy'],
+    'instructor' => ['index', 'show', 'showByCentro', 'store', 'update', 'destroy', 'getCentros', 'getAsignaciones', 'getCompetencias'],
+    'instru_competencia' => ['index', 'show', 'store', 'update', 'destroy'],
+    'reporte' => ['instructoresPorCentro', 'fichasActivasPorPrograma', 'asignacionesPorInstructor', 'competenciasPorPrograma'],
+    // Agrega más controladores y acciones aquí si lo necesitas
+);
+
+try {
+    // Obtener controlador y acción buscando en GET y POST
+    $controller = $_GET['controller'] ?? $_POST['controller'] ?? 'sede';
+    $action = $_GET['action'] ?? $_POST['action'] ?? 'index';
+
+    // Validación básica de existencia del controlador y acción
+    if (!array_key_exists($controller, $controllers) || !in_array($action, $controllers[$controller])) {
+        $controller = 'sede';
+        $action = 'index';
+    }
+
+    $controllerFile = 'controller/' . $controller . 'Controller.php';
+
+    // Verificar que el archivo del controlador existe
+    if (!file_exists($controllerFile)) {
+        throw new Exception("Controlador no encontrado: $controller");
+    }
+
+    require_once($controllerFile);
+
+    switch ($controller) {
+        case 'sede':
+            require_once('model/SedeModel.php');
+            $controllerObj = new SedeController();
+            break;
+        case 'coordinacion':
+            require_once('model/CoordinacionModel.php');
+            $controllerObj = new CoordinacionController();
+            break;
+        case 'asignacion':
+            require_once('model/AsignacionModel.php');
+            $controllerObj = new AsignacionController();
+            break;
+        case 'detalle_asignacion':
+            require_once('model/DetalleAsignacionModel.php');
+            $controllerObj = new DetalleAsignacionController();
+            break;
+        case 'ambiente':
+            require_once('model/AmbienteModel.php');
+            require_once('model/SedeModel.php');
+            $controllerObj = new AmbienteController();
+            break;
+        case 'programa':
+            require_once('model/ProgramaModel.php');
+            require_once('model/TituloProgramaModel.php');
+            $controllerObj = new ProgramaController();
+            break;
+        case 'ficha':
+            require_once('model/FichaModel.php');
+            $controllerObj = new FichaController();
+            break;
+        case 'titulo_programa':
+            require_once('model/TituloProgramaModel.php');
+            $controllerObj = new TituloProgramaController();
+            break;
+        case 'centro_formacion':
+            require_once('model/CentroFormacionModel.php');
+            $controllerObj = new CentroFormacionController();
+            break;
+        case 'competencia':
+            require_once('model/CompetenciaModel.php');
+            $controllerObj = new CompetenciaController();
+            break;
+        case 'competencia_programa':
+            require_once('model/CompetenciaProgramaModel.php');
+            $controllerObj = new CompetenciaProgramaController();
+            break;
+        case 'instructor':
+            require_once('model/InstructorModel.php');
+            require_once('model/CentroFormacionModel.php');
+            $controllerObj = new InstructorController();
+            break;
+        case 'instru_competencia':
+            require_once('model/InstruCompetenciaModel.php');
+            $controllerObj = new InstruCompetenciaController();
+            break;
+        case 'reporte':
+            $controllerObj = new ReporteController();
+            break;
+        default:
+            throw new Exception("Controlador no soportado: $controller");
+    }
+
+    // Verificar que el método existe
+    if (!method_exists($controllerObj, $action)) {
+        throw new Exception("Acción no encontrada: $action en $controller");
+    }
+
+    $reflection = new ReflectionMethod($controllerObj, $action);
+    $args = [];
+
+    // Recolecta los parámetros esperados desde $_POST o $_GET en el orden correcto
+    foreach ($reflection->getParameters() as $param) {
+        $paramName = $param->getName();
+        if (isset($_POST[$paramName])) {
+            $args[] = $_POST[$paramName];
+        } elseif (isset($_GET[$paramName])) {
+            $args[] = $_GET[$paramName];
+        } elseif ($param->isDefaultValueAvailable()) {
+            $args[] = $param->getDefaultValue();
+        } elseif (!$param->isOptional()) {
+            http_response_code(400);
+            throw new Exception("Falta el parámetro requerido: $paramName");
+        }
+    }
+
+    // Llama al método con los argumentos necesarios
+    $controllerObj->{$action}(...$args);
+} catch (Throwable $e) {
+    // Limpiar cualquier salida previa (warnings, etc.) para asegurar un JSON válido
+    if (ob_get_length()) ob_clean();
+
+    http_response_code(500);
+
+    // Asumir JSON si es una petición que no sea de navegación directa (o si pide JSON)
+    $isJsonRequest = (
+        isset($_SERVER['HTTP_X_REQUESTED_WITH']) ||
+        (isset($_SERVER['HTTP_ACCEPT']) && strpos($_SERVER['HTTP_ACCEPT'], 'application/json') !== false) ||
+        isset($_GET['controller']) || isset($_POST['controller']) // Casi cualquier petición a routing es AJAX en este sistema
+    );
+
+    $error_msg = [
+        'error' => 'Error interno en el servidor',
+        'details' => $e->getMessage(),
+        'file' => $e->getFile(),
+        'line' => $e->getLine(),
+        'trace' => $e->getTraceAsString()
+    ];
+
+    // Siempre loggear
+    file_put_contents(__DIR__ . '/debug_error.log', "[" . date('Y-m-d H:i:s') . "] " . json_encode($error_msg, JSON_PRETTY_PRINT) . "\n", FILE_APPEND);
+
+    if ($isJsonRequest) {
+        header('Content-Type: application/json');
+        echo json_encode($error_msg);
+    } else {
+        echo "<h1>Error 500: " . $e->getMessage() . "</h1>";
+        echo "<pre>" . $e->getTraceAsString() . "</pre>";
+        echo "<p>En el archivo: " . $e->getFile() . " en la línea " . $e->getLine() . "</p>";
+    }
+}

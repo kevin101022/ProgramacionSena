@@ -1,0 +1,119 @@
+---
+config:
+  theme: dark
+---
+graph TD
+    Start([INICIO DEL SISTEMA]) --> MenuPrincipal{MENÚ PRINCIPAL}
+    
+    MenuPrincipal -->|1| GestionProgramas[GESTIÓN DE PROGRAMAS]
+    MenuPrincipal -->|2| GestionInstructores[GESTIÓN DE INSTRUCTORES]
+    MenuPrincipal -->|3| GestionFichas[GESTIÓN DE FICHAS]
+    MenuPrincipal -->|4| GestionAsignaciones[GESTIÓN DE ASIGNACIONES]
+    MenuPrincipal -->|5| Reportes[REPORTES Y CONSULTAS]
+    GestionProgramas --> VerificarCentro{¿Existe Centro?}
+    VerificarCentro -->|NO| CrearCentro[Crear Centro<br/>CENTRO_FORMACION]
+    VerificarCentro -->|SÍ| VerificarSede{¿Existe Sede?}
+    CrearCentro --> CrearCoordinacion[Crear Coordinación<br/>COORDINACION]
+
+    VerificarSede -->|NO| CrearSede[Crear Sede<br/>SEDE]
+    VerificarSede -->|SÍ| CrearAmbiente[Crear Ambiente<br/>AMBIENTE]
+    CrearSede --> CrearAmbiente
+
+    CrearAmbiente --> VerificarTitulo{¿Existe Título Programa?}
+    VerificarTitulo -->|NO| CrearTitulo[TITULO_PROGRAMA]
+    VerificarTitulo -->|SÍ| CrearPrograma[Crear Programa<br/>PROGRAMA]
+    CrearTitulo --> CrearPrograma
+
+    CrearPrograma --> VerificarCompetencias{¿Hay Competencias?}
+    VerificarCompetencias -->|NO| CrearCompetencias[Crear Competencia<br/>COMPETENCIA]
+    VerificarCompetencias -->|SÍ| AsociarCompetencias[Asociar Competencias<br/>COMPETxPROGRAMA]
+    CrearCompetencias --> AsociarCompetencias
+
+    AsociarCompetencias --> ProgramaListo[✓ Programa Configurado]
+    ProgramaListo --> MenuPrincipal
+    GestionInstructores --> IngresarDatosInst[Ingresar Datos Instructor]
+    IngresarDatosInst --> SeleccionarCentroInst{Seleccionar Centro}
+    SeleccionarCentroInst -->|Existe| RegistrarInstructor[Registrar Instructor<br/>INSTRUCTOR]
+    SeleccionarCentroInst -->|No existe| CrearCentro
+    RegistrarInstructor --> InstructorListo[✓ Instructor Registrado]
+    InstructorListo --> GestionInstComp[GESTIÓN HABILITACIÓN INSTRUCTOR]
+
+    GestionInstComp --> SeleccionarInstructorIC[Seleccionar Instructor]
+    SeleccionarInstructorIC --> SeleccionarProgramaIC[Seleccionar Programa]
+    SeleccionarProgramaIC --> MostrarCompProg[Mostrar Competencias<br/>del Programa]
+
+    MostrarCompProg --> SeleccionarCompetenciaIC[Seleccionar Competencia]
+    SeleccionarCompetenciaIC --> CrearInstComp[Crear relación<br/>INSTRU_COMPETENCIA<br/>- Instructor<br/>- Programa<br/>- Competencia<br/>- Vigencia]
+
+    CrearInstComp --> InstCompListo[✓ Instructor Habilitado]
+    InstCompListo --> MenuPrincipal
+    GestionFichas --> ValidarPrograma{¿Programa existe?}
+    ValidarPrograma -->|NO| MensajeError1[ERROR: Crear Programa]
+    ValidarPrograma -->|SÍ| ValidarInstructor{¿Instructor líder existe?}
+    MensajeError1 --> MenuPrincipal
+
+    ValidarInstructor -->|NO| RegistrarInstructorDesdeFicha[Registrar Instructor]
+    ValidarInstructor -->|SÍ| SeleccionarCoord[Seleccionar Coordinación]
+
+    RegistrarInstructorDesdeFicha --> SeleccionarCoord
+
+    SeleccionarCoord --> IngresarDatosFicha[Ingresar Datos Ficha]
+    IngresarDatosFicha --> CrearFicha[Crear Ficha<br/>FICHA]
+    CrearFicha --> FichaLista[✓ Ficha Creada]
+    FichaLista --> MenuPrincipal
+    GestionAsignaciones --> ValidarFicha{¿Ficha activa existe?}
+    ValidarFicha -->|NO| MensajeError3[ERROR: Crear Ficha]
+    ValidarFicha -->|SÍ| ObtenerProgramaFicha[Obtener Programa de la Ficha]
+    MensajeError3 --> MenuPrincipal
+
+    ObtenerProgramaFicha --> SeleccionarCompetencia[Seleccionar Competencia<br/>del Programa]
+
+    SeleccionarCompetencia --> BuscarInstHabilitados[Buscar Instructores habilitados<br/>según INSTRU_COMPETENCIA]
+
+    BuscarInstHabilitados --> ValidarInstComp{¿Existe habilitación<br/>Instructor-Programa-Competencia?}
+
+    ValidarInstComp -->|NO| MensajeErrorIC[ERROR: Instructor no habilitado]
+    ValidarInstComp -->|SÍ| SeleccionarInstructorAsig[Seleccionar Instructor]
+
+    MensajeErrorIC --> SeleccionarCompetencia
+
+    SeleccionarInstructorAsig --> SeleccionarAmbiente{¿Ambiente disponible?}
+    SeleccionarAmbiente -->|NO| BuscarOtroAmbiente[Buscar o crear Ambiente]
+    SeleccionarAmbiente -->|SÍ| DefinirPeriodo[Definir Período]
+    BuscarOtroAmbiente --> DefinirPeriodo
+
+    DefinirPeriodo --> VerificarConflictos{¿Conflicto horario?}
+    VerificarConflictos -->|SÍ| MensajeConflicto[CONFLICTO DETECTADO]
+    VerificarConflictos -->|NO| CrearAsignacion[Crear ASIGNACION<br/>- Instructor<br/>- Ficha<br/>- Competencia<br/>- Ambiente<br/>- Fechas]
+
+    MensajeConflicto --> DefinirPeriodo
+
+    CrearAsignacion --> AgregarDetalles{¿Agregar horarios específicos?}
+    AgregarDetalles -->|SÍ| CrearDetalleAsignacion[Crear DETALLE_ASIGNACION]
+    AgregarDetalles -->|NO| AsignacionCompleta[✓ Asignación Creada]
+
+    CrearDetalleAsignacion --> MasDetalles{¿Más horarios?}
+    MasDetalles -->|SÍ| CrearDetalleAsignacion
+    MasDetalles -->|NO| AsignacionCompleta
+
+    AsignacionCompleta --> MenuPrincipal
+    Reportes --> TipoReporte{Seleccionar Reporte}
+    TipoReporte -->|1| ReporteInstructores[Instructores por Centro]
+    TipoReporte -->|2| ReporteFichas[Fichas Activas por Programa]
+    TipoReporte -->|3| ReporteAsignaciones[Asignaciones por Instructor]
+    TipoReporte -->|4| ReporteCompetencias[Competencias por Programa]
+
+    ReporteInstructores --> GenerarReporte
+    ReporteFichas --> GenerarReporte
+    ReporteAsignaciones --> GenerarReporte
+    ReporteCompetencias --> GenerarReporte
+    GenerarReporte --> MenuPrincipal
+    classDef proceso fill:#4A90E2,stroke:#2E5C8A,color:#fff
+    classDef decision fill:#F39C12,stroke:#D68910,color:#fff
+    classDef exito fill:#27AE60,stroke:#1E8449,color:#fff
+    classDef error fill:#E74C3C,stroke:#C0392B,color:#fff
+    classDef inicio fill:#9B59B6,stroke:#7D3C98,color:#fff
+
+    class Start,MenuPrincipal inicio
+    class ProgramaListo,InstructorListo,FichaLista,AsignacionCompleta,InstCompListo exito
+    class MensajeError1,MensajeError3,MensajeConflicto,MensajeErrorIC error
