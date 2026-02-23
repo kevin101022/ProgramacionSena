@@ -1,5 +1,5 @@
 <?php
-$pageTitle = 'Competencias - Gestión de Transversales';
+$pageTitle = 'Competencias - Programaciones';
 $activeNavItem = 'competencias';
 require_once '../layouts/head.php';
 require_once '../layouts/sidebar.php';
@@ -22,6 +22,9 @@ require_once '../layouts/sidebar.php';
     <div class="content-wrapper">
         <div class="stats-grid">
             <div class="stat-card">
+                <div class="stat-card-bg-icon">
+                    <ion-icon src="../../assets/ionicons/bookmarks-outline.svg"></ion-icon>
+                </div>
                 <div class="stat-card-header">
                     <span class="stat-card-label">TOTAL DE COMPETENCIAS</span>
                     <div class="stat-card-icon green">
@@ -31,6 +34,17 @@ require_once '../layouts/sidebar.php';
                 <div class="stat-card-body">
                     <span class="stat-card-number" id="totalCompetencias">0</span>
                     <span class="stat-card-desc">competencias registradas</span>
+                    <p class="stat-card-context">Normas de competencia laboral que definen las habilidades técnicas y conocimientos.</p>
+                </div>
+                <div class="stat-card-pill-container">
+                    <div class="stat-pill">
+                        <ion-icon src="../../assets/ionicons/time-outline.svg"></ion-icon>
+                        Carga
+                    </div>
+                    <div class="stat-pill">
+                        <ion-icon src="../../assets/ionicons/document-text-outline.svg"></ion-icon>
+                        Norma
+                    </div>
                 </div>
             </div>
         </div>
@@ -53,7 +67,7 @@ require_once '../layouts/sidebar.php';
             <table class="data-table" id="competenciasTable">
                 <thead>
                     <tr>
-                        <th>ID</th>
+                        <th class="w-10">N°</th>
                         <th>Nombre Corto</th>
                         <th>Horas</th>
                         <th>Unidad de Competencia</th>

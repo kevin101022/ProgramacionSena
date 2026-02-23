@@ -62,7 +62,6 @@ class SedeManager {
 
     async loadSedes() {
         try {
-            // Simulate API call - replace with actual endpoint
             const response = await this.fetchSedes();
             this.sedes = response;
             this.filteredSedes = [...this.sedes];
@@ -139,18 +138,26 @@ class SedeManager {
             return;
         }
 
-        pageItems.forEach(sede => {
+        pageItems.forEach((sede, index) => {
             const row = document.createElement('tr');
             row.className = 'hover:bg-green-50/50 transition-colors cursor-pointer group';
             row.setAttribute('onclick', `window.location.href='ver.php?id=${sede.sede_id}'`);
             row.title = 'Haga clic para ver detalles';
 
             row.innerHTML = `
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-sena-green">
-                    ${String(sede.sede_id).padStart(3, '0')}
+                <td class="text-xs font-semibold text-gray-400">
+                    ${String(startIndex + index + 1).padStart(2, '0')}
                 </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
-                    <div class="font-medium group-hover:text-sena-green transition-colors">${sede.sede_nombre}</div>
+                <td>
+                    <div class="user-cell">
+                        <div class="user-avatar-sm">
+                            <ion-icon src="../../assets/ionicons/business-outline.svg"></ion-icon>
+                        </div>
+                        <div class="user-info-sm">
+                            <div class="user-name-sm">${sede.sede_nombre}</div>
+                            <div class="user-meta-sm">Sede Institucional</div>
+                        </div>
+                    </div>
                 </td>
             `;
 

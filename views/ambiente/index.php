@@ -25,6 +25,9 @@ require_once '../layouts/sidebar.php';
         <!-- Stats Card -->
         <div class="stats-grid">
             <div class="stat-card">
+                <div class="stat-card-bg-icon">
+                    <ion-icon src="../../assets/ionicons/cube-outline.svg"></ion-icon>
+                </div>
                 <div class="stat-card-header">
                     <span class="stat-card-label">TOTAL DE AMBIENTES</span>
                     <div class="stat-card-icon green">
@@ -34,6 +37,17 @@ require_once '../layouts/sidebar.php';
                 <div class="stat-card-body">
                     <span class="stat-card-number" id="totalAmbientes">0</span>
                     <span class="stat-card-desc">ambientes registrados</span>
+                    <p class="stat-card-context">Espacios físicos técnicamente equipados para el desarrollo de competencias prácticas y teóricas.</p>
+                </div>
+                <div class="stat-card-pill-container">
+                    <div class="stat-pill">
+                        <ion-icon src="../../assets/ionicons/hardware-chip-outline.svg"></ion-icon>
+                        Técnico
+                    </div>
+                    <div class="stat-pill">
+                        <ion-icon src="../../assets/ionicons/flash-outline.svg"></ion-icon>
+                        Disponible
+                    </div>
                 </div>
             </div>
         </div>

@@ -207,15 +207,15 @@ class InstructorModel
         $sql = "SELECT a.asig_id, a.asig_fecha_ini, a.asig_fecha_fin,
                        f.fich_id, f.fich_jornada,
                        p.prog_denominacion,
-                       comp.comp_nombre,
+                       comp.comp_nombre_corto as comp_nombre,
                        amb.amb_nombre,
                        s.sede_nombre
                 FROM ASIGNACION a
-                INNER JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
-                INNER JOIN PROGRAMA p ON f.PROGRAMA_prog_id = p.prog_codigo
-                INNER JOIN COMPETENCIA comp ON a.COMPETENCIA_comp_id = comp.comp_id
-                INNER JOIN AMBIENTE amb ON a.AMBIENTE_amb_id = amb.amb_id
-                INNER JOIN SEDE s ON amb.SEDE_sede_id = s.sede_id
+                LEFT JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
+                LEFT JOIN PROGRAMA p ON f.PROGRAMA_prog_id = p.prog_codigo
+                LEFT JOIN COMPETENCIA comp ON a.COMPETENCIA_comp_id = comp.comp_id
+                LEFT JOIN AMBIENTE amb ON a.AMBIENTE_amb_id = amb.amb_id
+                LEFT JOIN SEDE s ON amb.SEDE_sede_id = s.sede_id
                 WHERE a.INSTRUCTOR_inst_id = :inst_id
                 ORDER BY a.asig_fecha_ini DESC";
         $stmt = $this->db->prepare($sql);
@@ -225,14 +225,14 @@ class InstructorModel
 
     public function getCompetenciasByInstructor()
     {
-        $sql = "SELECT ic.hab_id, ic.hab_vigencia,
-                       comp.comp_id, comp.comp_nombre, comp.comp_descripcion,
+        $sql = "SELECT ic.inscomp_id, ic.inscomp_vigencia as hab_vigencia,
+                       comp.comp_id, comp.comp_nombre_corto as comp_nombre, comp.comp_nombre_unidad_competencia as comp_descripcion,
                        p.prog_codigo, p.prog_denominacion
                 FROM INSTRU_COMPETENCIA ic
-                INNER JOIN COMPETENCIA comp ON ic.COMPETENCIA_comp_id = comp.comp_id
-                INNER JOIN PROGRAMA p ON ic.PROGRAMA_prog_id = p.prog_codigo
+                LEFT JOIN COMPETENCIA comp ON ic.COMPETxPROGRAMA_COMPETENCIA_comp_id = comp.comp_id
+                LEFT JOIN PROGRAMA p ON ic.COMPETxPROGRAMA_PROGRAMA_prog_id = p.prog_codigo
                 WHERE ic.INSTRUCTOR_inst_id = :inst_id
-                ORDER BY comp.comp_nombre ASC";
+                ORDER BY comp.comp_nombre_corto ASC";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([':inst_id' => $this->inst_id]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);

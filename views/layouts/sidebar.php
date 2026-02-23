@@ -1,12 +1,12 @@
 <?php
 $activeNavItem = isset($activeNavItem) ? $activeNavItem : 'sedes';
 ?>
-<aside class="sidebar">
+<aside class="sidebar glass-container">
     <div class="sidebar-header">
         <div class="logo">
             <img src="../../assets/imagenes/LOGOsena.png" alt="SENA Logo" class="logo-img">
             <div class="logo-divider"></div>
-            <span class="logo-text">Gestión de Transversales</span>
+            <span class="logo-text">Programaciones</span>
         </div>
     </div>
 

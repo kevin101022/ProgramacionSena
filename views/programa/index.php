@@ -25,6 +25,9 @@ require_once '../layouts/sidebar.php';
         <!-- Stats Card -->
         <div class="stats-grid">
             <div class="stat-card">
+                <div class="stat-card-bg-icon">
+                    <ion-icon src="../../assets/ionicons/school-outline.svg"></ion-icon>
+                </div>
                 <div class="stat-card-header">
                     <span class="stat-card-label">TOTAL DE PROGRAMAS</span>
                     <div class="stat-card-icon green">
@@ -34,6 +37,17 @@ require_once '../layouts/sidebar.php';
                 <div class="stat-card-body">
                     <span class="stat-card-number" id="totalProgramas">0</span>
                     <span class="stat-card-desc">programas registrados</span>
+                    <p class="stat-card-context">Oferta educativa institucional diseñada para el sector productivo.</p>
+                </div>
+                <div class="stat-card-pill-container">
+                    <div class="stat-pill">
+                        <ion-icon src="../../assets/ionicons/library-outline.svg"></ion-icon>
+                        Avalados
+                    </div>
+                    <div class="stat-pill">
+                        <ion-icon src="../../assets/ionicons/star-outline.svg"></ion-icon>
+                        Calidad
+                    </div>
                 </div>
             </div>
         </div>
@@ -56,7 +70,7 @@ require_once '../layouts/sidebar.php';
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th class="w-10 text-sena-green font-bold">ID</th>
+                        <th class="w-10">N°</th>
                         <th class="w-15">Código</th>
                         <th>Denominación</th>
                         <th>Título</th>

@@ -27,6 +27,9 @@ require_once '../layouts/sidebar.php';
         <!-- Stats Card -->
         <div class="stats-grid">
             <div class="stat-card">
+                <div class="stat-card-bg-icon">
+                    <ion-icon src="../../assets/ionicons/business-outline.svg"></ion-icon>
+                </div>
                 <div class="stat-card-header">
                     <span class="stat-card-label">TOTAL DE SEDES</span>
                     <div class="stat-card-icon green">
@@ -36,6 +39,17 @@ require_once '../layouts/sidebar.php';
                 <div class="stat-card-body">
                     <span class="stat-card-number" id="totalSedes">0</span>
                     <span class="stat-card-desc">sedes registradas</span>
+                    <p class="stat-card-context">Infraestructura física distribuida para la cobertura nacional y formación regional.</p>
+                </div>
+                <div class="stat-card-pill-container">
+                    <div class="stat-pill">
+                        <ion-icon src="../../assets/ionicons/checkmark-circle-outline.svg"></ion-icon>
+                        Operativas
+                    </div>
+                    <div class="stat-pill">
+                        <ion-icon src="../../assets/ionicons/globe-outline.svg"></ion-icon>
+                        Alcance Regional
+                    </div>
                 </div>
             </div>
         </div>
@@ -58,7 +72,7 @@ require_once '../layouts/sidebar.php';
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th class="w-20">ID</th>
+                        <th class="w-10">N°</th>
                         <th>Nombre Sede</th>
                     </tr>
                 </thead>

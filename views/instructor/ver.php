@@ -112,7 +112,7 @@ require_once '../layouts/sidebar.php';
                 </div>
 
                 <!-- Fichas Líder -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div id="fichasSection" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden" style="display: none;">
                     <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                         <h3 class="font-bold text-gray-800 flex items-center gap-2">
                             <ion-icon src="../../assets/ionicons/list-outline.svg" class="text-sena-green"></ion-icon>
@@ -127,7 +127,7 @@ require_once '../layouts/sidebar.php';
                 </div>
 
                 <!-- Asignaciones del Instructor -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div id="asignacionesSection" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden" style="display: none;">
                     <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                         <h3 class="font-bold text-gray-800 flex items-center gap-2">
                             <ion-icon src="../../assets/ionicons/calendar-outline.svg" class="text-sena-orange"></ion-icon>
@@ -142,7 +142,7 @@ require_once '../layouts/sidebar.php';
                 </div>
 
                 <!-- Competencias Habilitadas -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div id="competenciasSection" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden" style="display: none;">
                     <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
                         <h3 class="font-bold text-gray-800 flex items-center gap-2">
                             <ion-icon src="../../assets/ionicons/ribbon-outline.svg" class="text-blue-500"></ion-icon>

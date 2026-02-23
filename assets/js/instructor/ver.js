@@ -57,18 +57,22 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: { 'Accept': 'application/json' }
             });
             const fichas = await res.json();
-            const misFichas = Array.isArray(fichas) ? fichas.filter(f => f.instructor_inst_id == instId) : [];
+            // El campo correcto es instructor_inst_id_lider según FichaModel
+            const misFichas = Array.isArray(fichas) ? fichas.filter(f => f.instructor_inst_id_lider == instId) : [];
 
             const listContainer = document.getElementById('fichasList');
+            const section = document.getElementById('fichasSection');
             const countLabel = document.getElementById('countFichas');
+
             if (countLabel) countLabel.textContent = misFichas.length;
 
-            if (!listContainer) return;
-
             if (misFichas.length === 0) {
-                listContainer.innerHTML = '<p class="text-sm text-gray-400 text-center py-4">No tiene fichas asignadas como líder.</p>';
+                if (section) section.style.display = 'none';
                 return;
             }
+
+            if (section) section.style.display = 'block';
+            if (!listContainer) return;
 
             listContainer.innerHTML = '';
             misFichas.forEach(f => {
@@ -107,29 +111,33 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
             const asignaciones = Array.isArray(data) ? data : [];
 
+            const section = document.getElementById('asignacionesSection');
             if (countEl) countEl.textContent = asignaciones.length;
 
             if (asignaciones.length === 0) {
-                container.innerHTML = '<p class="text-sm text-gray-400 text-center py-4">No tiene asignaciones registradas.</p>';
+                if (section) section.style.display = 'none';
                 return;
             }
+
+            if (section) section.style.display = 'block';
 
             container.innerHTML = '';
             asignaciones.forEach(a => {
                 const item = document.createElement('div');
-                item.className = 'p-4 bg-gray-50 rounded-xl border border-gray-100';
+                item.className = 'p-4 bg-gray-50 rounded-xl border border-gray-100 hover:bg-white hover:border-sena-green/30 transition-all cursor-pointer group shadow-sm flex items-center justify-between gap-4';
+                item.onclick = () => window.location.href = `../asignacion/ver.php?id=${a.asig_id}`;
+
                 item.innerHTML = `
-                    <div class="flex items-start justify-between gap-4">
-                        <div class="flex-1">
-                            <p class="text-sm font-bold text-gray-900">Ficha ${a.fich_id} — ${a.prog_denominacion || 'Programa'}</p>
-                            <p class="text-xs text-gray-600 mt-1"><span class="font-semibold">Competencia:</span> ${a.comp_nombre || 'N/A'}</p>
-                            <p class="text-xs text-gray-500 mt-0.5"><span class="font-semibold">Ambiente:</span> ${a.amb_nombre || 'N/A'} · ${a.sede_nombre || ''}</p>
-                        </div>
-                        <div class="text-right flex-shrink-0">
-                            <p class="text-xs text-gray-400">${a.asig_fecha_ini || ''}</p>
-                            <p class="text-xs text-gray-400">${a.asig_fecha_fin || ''}</p>
+                    <div class="flex-1">
+                        <p class="text-sm font-bold text-gray-900 group-hover:text-sena-green transition-colors">Ficha ${a.fich_id} — ${a.prog_denominacion || 'Programa'}</p>
+                        <p class="text-xs text-gray-600 mt-1"><span class="font-semibold">Competencia:</span> ${a.comp_nombre || 'N/A'}</p>
+                        <p class="text-xs text-gray-500 mt-0.5"><span class="font-semibold">Ambiente:</span> ${a.amb_nombre || 'N/A'} · ${a.sede_nombre || ''}</p>
+                        <div class="mt-2 flex items-center gap-4 text-[10px] text-gray-400 font-medium">
+                             <span class="flex items-center gap-1"><ion-icon src="../../assets/ionicons/calendar-outline.svg"></ion-icon> ${a.asig_fecha_ini || ''}</span>
+                             <span class="flex items-center gap-1"><ion-icon src="../../assets/ionicons/calendar-outline.svg"></ion-icon> ${a.asig_fecha_fin || ''}</span>
                         </div>
                     </div>
+                    <ion-icon src="../../assets/ionicons/chevron-forward-outline.svg" class="text-gray-300 group-hover:text-sena-green group-hover:translate-x-1 transition-all"></ion-icon>
                 `;
                 container.appendChild(item);
             });
@@ -152,12 +160,15 @@ document.addEventListener('DOMContentLoaded', () => {
             const data = await res.json();
             const competencias = Array.isArray(data) ? data : [];
 
+            const section = document.getElementById('competenciasSection');
             if (countEl) countEl.textContent = competencias.length;
 
             if (competencias.length === 0) {
-                container.innerHTML = '<p class="text-sm text-gray-400 text-center py-4">No tiene competencias habilitadas.</p>';
+                if (section) section.style.display = 'none';
                 return;
             }
+
+            if (section) section.style.display = 'block';
 
             container.innerHTML = '';
             competencias.forEach(c => {

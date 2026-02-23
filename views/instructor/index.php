@@ -23,6 +23,9 @@ require_once '../layouts/sidebar.php';
         <!-- Stats Card with SVG Footer Background -->
         <div class="stats-grid">
             <div class="stat-card">
+                <div class="stat-card-bg-icon">
+                    <ion-icon src="../../assets/ionicons/people-outline.svg"></ion-icon>
+                </div>
                 <div class="stat-card-header">
                     <span class="stat-card-label">TOTAL INSTRUCTORES</span>
                     <div class="stat-card-icon green">
@@ -32,6 +35,17 @@ require_once '../layouts/sidebar.php';
                 <div class="stat-card-body">
                     <span class="stat-card-number" id="totalInstructores">0</span>
                     <span class="stat-card-desc">instructores registrados</span>
+                    <p class="stat-card-context">Talento humano calificado para procesos de aprendizaje de alta calidad.</p>
+                </div>
+                <div class="stat-card-pill-container">
+                    <div class="stat-pill">
+                        <ion-icon src="../../assets/ionicons/ribbon-outline.svg"></ion-icon>
+                        Certificados
+                    </div>
+                    <div class="stat-pill">
+                        <ion-icon src="../../assets/ionicons/person-add-outline.svg"></ion-icon>
+                        Vinculados
+                    </div>
                 </div>
             </div>
         </div>
@@ -61,10 +75,11 @@ require_once '../layouts/sidebar.php';
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th class="w-20">N°</th>
+                        <th class="w-10">N°</th>
                         <th>Instructor</th>
                         <th>Contacto</th>
                         <th>Centro de Formación</th>
+                        <th class="text-right">Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="instructorTableBody">

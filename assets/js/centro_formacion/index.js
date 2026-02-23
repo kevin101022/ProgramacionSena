@@ -1,95 +1,215 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const tableBody = document.getElementById('centroTableBody');
-    const searchInput = document.getElementById('searchInput');
-    const totalLabel = document.getElementById('totalCentros');
-    const addBtn = document.getElementById('addBtn');
-    const modal = document.getElementById('centroModal');
-    const form = document.getElementById('centroForm');
-    const closeBtn = document.getElementById('closeModal');
-    const cancelBtn = document.getElementById('cancelBtn');
+/**
+ * Centro Formacion Management JavaScript
+ * Refactored to Class-based manager with Pagination support.
+ */
+class CentroFormacionManager {
+    constructor() {
+        this.centros = [];
+        this.filteredCentros = [];
+        this.currentPage = 1;
+        this.itemsPerPage = 5;
 
-    let centros = [];
+        this.init();
+    }
 
-    const loadCentros = async () => {
+    async init() {
+        this.bindEvents();
+        await this.loadCentros();
+    }
+
+    bindEvents() {
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', () => {
+                this.currentPage = 1;
+                this.renderTable();
+            });
+        }
+
+        const prevBtn = document.getElementById('prevBtn');
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => {
+                if (this.currentPage > 1) {
+                    this.currentPage--;
+                    this.renderTable();
+                }
+            });
+        }
+
+        const nextBtn = document.getElementById('nextBtn');
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                const totalPages = Math.ceil(this.getFilteredData().length / this.itemsPerPage);
+                if (this.currentPage < totalPages) {
+                    this.currentPage++;
+                    this.renderTable();
+                }
+            });
+        }
+
+        const addBtn = document.getElementById('addBtn');
+        if (addBtn) addBtn.onclick = () => this.openModal();
+
+        const closeBtn = document.getElementById('closeModal');
+        if (closeBtn) closeBtn.onclick = () => this.closeModal();
+
+        const cancelBtn = document.getElementById('cancelBtn');
+        if (cancelBtn) cancelBtn.onclick = () => this.closeModal();
+
+        const form = document.getElementById('centroForm');
+        if (form) {
+            form.onsubmit = (e) => this.handleFormSubmit(e);
+        }
+
+        // Global delete trigger
+        window.deleteCentro = (id) => this.confirmDelete(id);
+    }
+
+    async loadCentros() {
         try {
             const response = await fetch('../../routing.php?controller=centro_formacion&action=index', {
                 headers: { 'Accept': 'application/json' }
             });
             const data = await response.json();
+            if (!response.ok) throw new Error(data.details || data.error || 'Error al cargar centros');
 
-            if (!response.ok) {
-                throw new Error(data.details || data.error || 'Error al cargar centros');
-            }
-
-            centros = Array.isArray(data) ? data : [];
-            renderCentros(centros);
-            if (totalLabel) totalLabel.textContent = centros.length;
+            this.centros = Array.isArray(data) ? data : [];
+            this.renderTable();
         } catch (error) {
             console.error('Error:', error);
-            if (tableBody) {
-                tableBody.innerHTML = `<tr><td colspan="3" class="text-center py-8 text-gray-500">No pudimos cargar los centros de formación. Intenta recargar la página.</td></tr>`;
+            NotificationService.showError('No pudimos cargar los centros de formación.');
+        }
+    }
+
+    getFilteredData() {
+        const searchInput = document.getElementById('searchInput');
+        const term = (searchInput ? searchInput.value : '').toLowerCase();
+        return this.centros.filter(c => (c.cent_nombre || '').toLowerCase().includes(term));
+    }
+
+    renderTable() {
+        const tableBody = document.getElementById('centroTableBody');
+        if (!tableBody) return;
+
+        const filtered = this.getFilteredData();
+        const total = filtered.length;
+
+        // Update stats
+        const totalLabel = document.getElementById('totalCentros');
+        const totalRecords = document.getElementById('totalRecords');
+        if (totalLabel) totalLabel.textContent = this.centros.length;
+        if (totalRecords) totalRecords.textContent = total;
+
+        const totalPages = Math.ceil(total / this.itemsPerPage);
+        if (this.currentPage > totalPages && totalPages > 0) this.currentPage = totalPages;
+
+        const start = (this.currentPage - 1) * this.itemsPerPage;
+        const end = Math.min(start + this.itemsPerPage, total);
+        const paginated = filtered.slice(start, end);
+
+        tableBody.innerHTML = '';
+
+        if (paginated.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="3" class="text-center py-8 text-gray-500">No se encontraron centros</td></tr>';
+        } else {
+            paginated.forEach((c, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-green-50/30 transition-all cursor-pointer group';
+                tr.onclick = () => window.location.href = `ver.php?id=${c.cent_id}`;
+                tr.innerHTML = `
+                    <td class="text-xs font-semibold text-gray-400">
+                        ${String(start + index + 1).padStart(2, '0')}
+                    </td>
+                    <td>
+                        <div class="user-cell">
+                            <div class="user-avatar-sm">
+                                <ion-icon src="../../assets/ionicons/business-outline.svg"></ion-icon>
+                            </div>
+                            <div class="user-info-sm">
+                                <div class="user-name-sm">${c.cent_nombre}</div>
+                                <div class="user-meta-sm">Centro de Formación Profesional</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="text-right">
+                        <button class="btn-more-glass" onclick="event.stopPropagation(); window.location.href='ver.php?id=${c.cent_id}'">
+                            <span>Ver más</span>
+                            <ion-icon src="../../assets/ionicons/chevron-forward-outline.svg"></ion-icon>
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        this.updatePagination(totalPages, start, end, total);
+    }
+
+    updatePagination(totalPages, start, end, total) {
+        const paginationNumbers = document.getElementById('paginationNumbers');
+        const showingFrom = document.getElementById('showingFrom');
+        const showingTo = document.getElementById('showingTo');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+
+        if (showingFrom) showingFrom.textContent = total > 0 ? start + 1 : 0;
+        if (showingTo) showingTo.textContent = end;
+        if (prevBtn) prevBtn.disabled = this.currentPage === 1;
+        if (nextBtn) nextBtn.disabled = this.currentPage === totalPages || totalPages === 0;
+
+        if (paginationNumbers) {
+            paginationNumbers.innerHTML = '';
+            for (let i = 1; i <= totalPages; i++) {
+                const btn = document.createElement('button');
+                btn.className = `pagination-number ${i === this.currentPage ? 'active' : ''}`;
+                btn.textContent = i;
+                btn.onclick = () => {
+                    this.currentPage = i;
+                    this.renderTable();
+                };
+                paginationNumbers.appendChild(btn);
             }
         }
-    };
+    }
 
-    const renderCentros = (data) => {
-        if (!tableBody) return;
-        tableBody.innerHTML = '';
-        if (!Array.isArray(data) || data.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="3" class="text-center py-8 text-gray-500">No se encontraron centros</td></tr>';
-            return;
-        }
-        // ... (rest of renderCentros code is the same)
-
-        data.forEach(c => {
-            const row = document.createElement('tr');
-            row.className = 'hover:bg-green-50/50 transition-colors cursor-pointer group';
-            row.onclick = () => window.location.href = `ver.php?id=${c.cent_id}`;
-            row.innerHTML = `
-                <td class="px-6 py-4 font-semibold text-sena-green">${String(c.cent_id).padStart(3, '0')}</td>
-                <td class="px-6 py-4 font-bold text-gray-900">${c.cent_nombre}</td>
-            `;
-            tableBody.appendChild(row);
-        });
-
-        // Add event listeners to edit buttons
-        document.querySelectorAll('.edit-btn').forEach(btn => {
-            btn.onclick = () => {
-                const id = btn.dataset.id;
-                const centro = centros.find(c => c.cent_id == id);
-                if (centro) openModal(centro);
-            };
-        });
-    };
-
-    const openModal = (centro = null) => {
-        form.reset();
+    openModal(centro = null) {
+        const modal = document.getElementById('centroModal');
+        const form = document.getElementById('centroForm');
+        const modalTitle = document.getElementById('modalTitle');
         const centIdInput = document.getElementById('cent_id');
+        const centNombreInput = document.getElementById('cent_nombre');
+
+        if (form) form.reset();
+
         if (centro) {
-            document.getElementById('modalTitle').textContent = 'Editar Centro de Formación';
-            centIdInput.value = centro.cent_id;
-            centIdInput.readOnly = true; // No permitir editar ID en actualización
-            centIdInput.style.backgroundColor = '#f3f4f6';
-            document.getElementById('cent_nombre').value = centro.cent_nombre;
+            if (modalTitle) modalTitle.textContent = 'Editar Centro de Formación';
+            if (centIdInput) {
+                centIdInput.value = centro.cent_id;
+                centIdInput.readOnly = true;
+                centIdInput.style.backgroundColor = '#f3f4f6';
+            }
+            if (centNombreInput) centNombreInput.value = centro.cent_nombre;
         } else {
-            document.getElementById('modalTitle').textContent = 'Nuevo Centro de Formación';
-            centIdInput.value = '';
-            centIdInput.readOnly = false;
-            centIdInput.style.backgroundColor = 'white';
+            if (modalTitle) modalTitle.textContent = 'Nuevo Centro de Formación';
+            if (centIdInput) {
+                centIdInput.value = '';
+                centIdInput.readOnly = false;
+                centIdInput.style.backgroundColor = 'white';
+            }
         }
-        modal.classList.add('show');
-    };
+        if (modal) modal.classList.add('show');
+    }
 
-    const closeModal = () => modal.classList.remove('show');
+    closeModal() {
+        const modal = document.getElementById('centroModal');
+        if (modal) modal.classList.remove('show');
+    }
 
-    addBtn.onclick = () => openModal();
-    closeBtn.onclick = closeModal;
-    cancelBtn.onclick = closeModal;
-
-    form.onsubmit = async (e) => {
+    async handleFormSubmit(e) {
         e.preventDefault();
         const id = document.getElementById('cent_id').value;
-        const isEdit = document.getElementById('modalTitle').textContent.includes('Editar');
+        const modalTitle = document.getElementById('modalTitle');
+        const isEdit = modalTitle && modalTitle.textContent.includes('Editar');
         const action = isEdit ? 'update' : 'store';
 
         const data = {
@@ -105,18 +225,18 @@ document.addEventListener('DOMContentLoaded', () => {
             });
 
             if (response.ok) {
-                NotificationService.showSuccess(id ? '¡Centro de formación actualizado correctamente!' : '¡Centro de formación creado correctamente!');
-                closeModal();
-                loadCentros();
+                NotificationService.showSuccess(isEdit ? '¡Centro actualizado!' : '¡Centro creado!');
+                this.closeModal();
+                await this.loadCentros();
             } else {
-                NotificationService.showError('No se pudo guardar el centro de formación. Verifica los datos e intenta de nuevo.');
+                NotificationService.showError('No se pudo guardar el centro.');
             }
         } catch (error) {
-            NotificationService.showError('No pudimos conectar con el servidor. Intenta de nuevo.');
+            NotificationService.showError('Error de conexión.');
         }
-    };
+    }
 
-    window.deleteCentro = async (id) => {
+    confirmDelete(id) {
         NotificationService.showConfirm(
             '¿Estás seguro de que deseas eliminar este centro de formación? Esta acción no se puede deshacer.',
             async () => {
@@ -125,23 +245,19 @@ document.addEventListener('DOMContentLoaded', () => {
                         headers: { 'Accept': 'application/json' }
                     });
                     if (response.ok) {
-                        NotificationService.showSuccess('El centro de formación fue eliminado correctamente.');
-                        loadCentros();
+                        NotificationService.showSuccess('Centro eliminado correctamente.');
+                        await this.loadCentros();
                     } else {
-                        NotificationService.showError('No se pudo eliminar el centro. Es posible que tenga instructores o coordinaciones asociadas.');
+                        NotificationService.showError('No se pudo eliminar el centro. Es posible que tenga dependencias.');
                     }
                 } catch (error) {
-                    NotificationService.showError('No pudimos conectar con el servidor. Intenta de nuevo.');
+                    NotificationService.showError('Error de conexión.');
                 }
             }
         );
-    };
+    }
+}
 
-    searchInput.oninput = () => {
-        const term = searchInput.value.toLowerCase();
-        const filtered = centros.filter(c => c.cent_nombre.toLowerCase().includes(term));
-        renderCentros(filtered);
-    };
-
-    loadCentros();
+document.addEventListener('DOMContentLoaded', () => {
+    window.centroFormacionManager = new CentroFormacionManager();
 });

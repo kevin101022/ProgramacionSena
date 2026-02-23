@@ -59,7 +59,10 @@ class programaController
         $programa = $this->model->read();
 
         if ($programa) {
-            $this->sendResponse($programa[0]);
+            $data = $programa[0];
+            // Include associated competencias
+            $data['competencias'] = $this->model->getCompetenciasByPrograma();
+            $this->sendResponse($data);
         } else {
             $this->sendResponse(['error' => 'Programa no encontrado'], 404);
         }

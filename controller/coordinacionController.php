@@ -88,6 +88,18 @@ class coordinacionController
         }
     }
 
+    public function getProgramas()
+    {
+        $id = $_GET['id'] ?? null;
+        if (!$id) {
+            $this->sendResponse(['error' => 'ID de coordinación requerido'], 400);
+        }
+
+        $model = new CoordinacionModel($id);
+        $programas = $model->getProgramas();
+        $this->sendResponse($programas);
+    }
+
     private function sendResponse($data, $status = 200)
     {
         header('Content-Type: application/json');

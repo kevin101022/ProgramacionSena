@@ -20,6 +20,9 @@ require_once '../layouts/sidebar.php';
     <div class="content-wrapper">
         <div class="stats-grid">
             <div class="stat-card">
+                <div class="stat-card-bg-icon">
+                    <ion-icon src="../../assets/ionicons/business-outline.svg"></ion-icon>
+                </div>
                 <div class="stat-card-header">
                     <span class="stat-card-label">TOTAL CENTROS</span>
                     <div class="stat-card-icon green">
@@ -29,6 +32,17 @@ require_once '../layouts/sidebar.php';
                 <div class="stat-card-body">
                     <span class="stat-card-number" id="totalCentros">0</span>
                     <span class="stat-card-desc">centros registrados</span>
+                    <p class="stat-card-context">Núcleos institucionales de formación profesional e innovación técnica.</p>
+                </div>
+                <div class="stat-card-pill-container">
+                    <div class="stat-pill">
+                        <ion-icon src="../../assets/ionicons/ribbon-outline.svg"></ion-icon>
+                        Excelencia
+                    </div>
+                    <div class="stat-pill">
+                        <ion-icon src="../../assets/ionicons/rocket-outline.svg"></ion-icon>
+                        Innovación
+                    </div>
                 </div>
             </div>
         </div>
@@ -48,7 +62,7 @@ require_once '../layouts/sidebar.php';
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th class="w-20">ID</th>
+                        <th class="w-10">N°</th>
                         <th>Nombre del Centro</th>
                     </tr>
                 </thead>

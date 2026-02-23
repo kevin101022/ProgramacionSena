@@ -65,8 +65,28 @@ require_once '../layouts/sidebar.php';
                         <div class="form-group">
                             <label class="form-label">Centro de Formación <span class="text-red-500">*</span></label>
                             <select id="centro_id" name="centro_formacion_cent_id" required class="search-input" style="padding-left: 12px !important;">
-                                <option value="">Seleccione un centro...</option>
+                                <option value="">Seleccione un centro de formación...</option>
                             </select>
+                        </div>
+
+                        <div class="form-group md:col-span-2">
+                            <hr class="my-4 border-gray-200">
+                            <h4 class="text-md font-bold mb-2">Asignación de Competencias (Habilitación)</h4>
+                            <p class="text-sm text-gray-500 mb-4">Seleccione un programa para ver y asignar competencias a este instructor.</p>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Programa</label>
+                            <select id="programa_id" class="search-input" style="padding-left: 12px !important;">
+                                <option value="">Seleccione un programa...</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Competencias del Programa</label>
+                            <div id="competenciasContainer" class="border rounded-lg p-4 bg-gray-50 h-64 overflow-y-auto">
+                                <p class="text-gray-400 text-sm italic text-center py-4">Seleccione un programa para cargar competencias</p>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -83,7 +103,7 @@ require_once '../layouts/sidebar.php';
     </div>
 </main>
 
-<script src="../../assets/js/instructor/editar.js"></script>
+<script src="../../assets/js/instructor/editar.js?v=<?php echo time(); ?>"></script>
 </body>
 
 </html>

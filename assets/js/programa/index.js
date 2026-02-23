@@ -1,40 +1,57 @@
-class ProgramaView {
+/**
+ * Programa Management JavaScript
+ * Refactored to Class-based manager for consistency.
+ */
+class ProgramaManager {
     constructor() {
         this.programas = [];
         this.filteredProgramas = [];
         this.currentPage = 1;
-        this.recordsPerPage = 5;
+        this.itemsPerPage = 5;
         this.programaIdToDelete = null;
 
         this.init();
     }
 
     async init() {
-        this.cacheDOM();
         this.bindEvents();
         await this.loadProgramas();
     }
 
-    cacheDOM() {
-        this.tableBody = document.getElementById('programasTableBody');
-        this.searchInput = document.getElementById('searchInput');
-        this.totalProgramasEl = document.getElementById('totalProgramas');
-        this.showingFrom = document.getElementById('showingFrom');
-        this.showingTo = document.getElementById('showingTo');
-        this.totalRecords = document.getElementById('totalRecords');
-        this.paginationNumbers = document.getElementById('paginationNumbers');
-        this.prevBtn = document.getElementById('prevBtn');
-        this.nextBtn = document.getElementById('nextBtn');
-        this.deleteModal = document.getElementById('deleteModal');
-        this.programaToDeleteLabel = document.getElementById('programaToDelete');
-        this.confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
-    }
-
     bindEvents() {
-        if (this.searchInput) this.searchInput.addEventListener('input', () => this.handleSearch());
-        if (this.prevBtn) this.prevBtn.addEventListener('click', () => this.changePage(this.currentPage - 1));
-        if (this.nextBtn) this.nextBtn.addEventListener('click', () => this.changePage(this.currentPage + 1));
-        if (this.confirmDeleteBtn) this.confirmDeleteBtn.addEventListener('click', () => this.confirmDelete());
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', () => {
+                this.currentPage = 1;
+                this.renderTable();
+            });
+        }
+
+        const prevBtn = document.getElementById('prevBtn');
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => {
+                if (this.currentPage > 1) {
+                    this.currentPage--;
+                    this.renderTable();
+                }
+            });
+        }
+
+        const nextBtn = document.getElementById('nextBtn');
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                const totalPages = Math.ceil(this.getFilteredData().length / this.itemsPerPage);
+                if (this.currentPage < totalPages) {
+                    this.currentPage++;
+                    this.renderTable();
+                }
+            });
+        }
+
+        // Global functions for modals
+        window.openDeleteModal = (id, nombre) => this.openDeleteModal(id, nombre);
+        window.closeDeleteModal = () => this.closeDeleteModal();
+        window.confirmDelete = () => this.deletePrograma();
     }
 
     async loadProgramas() {
@@ -42,145 +59,141 @@ class ProgramaView {
             const response = await fetch('../../routing.php?controller=programa&action=index', {
                 headers: { 'Accept': 'application/json' }
             });
-
             const data = await response.json();
-
-            if (!response.ok) {
-                throw new Error(data.details || data.error || 'Error del servidor');
-            }
+            if (!response.ok) throw new Error(data.details || data.error || 'Error del servidor');
 
             this.programas = Array.isArray(data) ? data : [];
-            this.filteredProgramas = [...this.programas];
-            this.render();
+            this.renderTable();
         } catch (error) {
             console.error('Error loading programas:', error);
-            if (this.tableBody) {
-                this.tableBody.innerHTML = `<tr><td colspan="5" class="text-center py-12 text-gray-500">No pudimos cargar los programas. Intenta recargar la página.</td></tr>`;
-            }
-            if (window.NotificationService) {
-                NotificationService.showError('No pudimos cargar los programas. Intenta recargar la página.');
-            }
+            NotificationService.showError('No pudimos cargar los programas.');
         }
     }
 
-    handleSearch() {
-        const query = this.searchInput.value.toLowerCase();
-        this.filteredProgramas = this.programas.filter(p =>
+    getFilteredData() {
+        const searchInput = document.getElementById('searchInput');
+        const query = (searchInput ? searchInput.value : '').toLowerCase();
+
+        return this.programas.filter(p =>
             (p.prog_codigo || '').toString().includes(query) ||
             (p.prog_denominacion || '').toLowerCase().includes(query) ||
             (p.titpro_nombre || '').toLowerCase().includes(query)
         );
-        this.currentPage = 1;
-        this.render();
-    }
-
-    render() {
-        this.renderTable();
-        this.renderStats();
-        this.renderPagination();
-    }
-
-    renderStats() {
-        if (this.totalProgramasEl) this.totalProgramasEl.textContent = this.programas.length;
-        if (this.totalRecords) this.totalRecords.textContent = this.filteredProgramas.length;
-
-        const start = this.filteredProgramas.length === 0 ? 0 : (this.currentPage - 1) * this.recordsPerPage + 1;
-        const end = Math.min(this.currentPage * this.recordsPerPage, this.filteredProgramas.length);
-
-        if (this.showingFrom) this.showingFrom.textContent = start;
-        if (this.showingTo) this.showingTo.textContent = end;
     }
 
     renderTable() {
-        if (!this.tableBody) return;
-        const start = (this.currentPage - 1) * this.recordsPerPage;
-        const end = start + this.recordsPerPage;
-        const paginatedProgramas = this.filteredProgramas.slice(start, end);
+        const tableBody = document.getElementById('programasTableBody');
+        if (!tableBody) return;
 
-        if (paginatedProgramas.length === 0) {
-            this.tableBody.innerHTML = `<tr><td colspan="5" class="text-center py-12 text-gray-500">
-                <div class="flex flex-col items-center gap-2">
-                    <ion-icon src="../../assets/ionicons/search-outline.svg" class="text-4xl text-gray-300"></ion-icon>
-                    <p>No se encontraron programas</p>
-                </div>
-            </td></tr>`;
-            return;
+        const filtered = this.getFilteredData();
+        const total = filtered.length;
+
+        // Update stats
+        const totalProgramasEl = document.getElementById('totalProgramas');
+        const totalRecords = document.getElementById('totalRecords');
+        if (totalProgramasEl) totalProgramasEl.textContent = this.programas.length;
+        if (totalRecords) totalRecords.textContent = total;
+
+        const totalPages = Math.ceil(total / this.itemsPerPage);
+        if (this.currentPage > totalPages && totalPages > 0) this.currentPage = totalPages;
+
+        const start = (this.currentPage - 1) * this.itemsPerPage;
+        const end = Math.min(start + this.itemsPerPage, total);
+        const paginated = filtered.slice(start, end);
+
+        tableBody.innerHTML = '';
+
+        if (paginated.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="5" class="text-center py-12 text-gray-500">No se encontraron programas</td></tr>`;
+        } else {
+            paginated.forEach((p, index) => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-green-50/50 transition-colors cursor-pointer group';
+                tr.onclick = () => window.location.href = `ver.php?id=${p.prog_codigo}`;
+                tr.innerHTML = `
+                    <td class="text-xs font-semibold text-gray-400">
+                        ${String(start + index + 1).padStart(2, '0')}
+                    </td>
+                    <td>
+                        <div class="user-cell">
+                            <div class="user-avatar-sm">
+                                <ion-icon src="../../assets/ionicons/school-outline.svg"></ion-icon>
+                            </div>
+                            <div class="user-info-sm">
+                                <div class="user-name-sm">${p.prog_denominacion}</div>
+                                <div class="user-meta-sm">Código: ${p.prog_codigo}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="contact-cell">
+                            <div class="contact-item">
+                                <ion-icon src="../../assets/ionicons/ribbon-outline.svg"></ion-icon>
+                                <span>${p.titpro_nombre || 'Sin título'}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="badge-glass">
+                            ${p.prog_tipo || 'N/A'}
+                        </div>
+                    </td>
+                    <td class="text-right">
+                        <button class="btn-more-glass" onclick="event.stopPropagation(); window.location.href='ver.php?id=${p.prog_codigo}'">
+                            <span>Ver más</span>
+                            <ion-icon src="../../assets/ionicons/chevron-forward-outline.svg"></ion-icon>
+                        </button>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
         }
 
-        this.tableBody.innerHTML = '';
-        paginatedProgramas.forEach(p => {
-            const row = document.createElement('tr');
-            row.className = 'hover:bg-green-50/50 dark:hover:bg-emerald-900/10 transition-colors cursor-pointer group';
-            row.onclick = () => {
-                window.location.href = `ver.php?id=${p.prog_codigo}`;
-            };
-
-            row.innerHTML = `
-                <td class="px-6 py-4 whitespace-nowrap text-sm font-semibold text-sena-green">
-                    ${String(p.prog_codigo).padStart(3, '0')}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-sena-green/10 text-sena-green border border-sena-green/20">
-                        ${p.prog_codigo}
-                    </span>
-                </td>
-                <td class="px-6 py-4">
-                    <div class="text-sm font-bold text-slate-900 dark:text-white group-hover:text-sena-green transition-colors leading-tight">
-                        ${p.prog_denominacion || 'N/A'}
-                    </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <div class="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
-                        <ion-icon src="../../assets/ionicons/ribbon-outline.svg" class="text-sena-green"></ion-icon>
-                        <span class="truncate max-w-[200px]" title="${p.titpro_nombre || ''}">${p.titpro_nombre || 'Sin título'}</span>
-                    </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-md text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300">
-                        ${p.prog_tipo || 'N/A'}
-                    </span>
-                </td>
-            `;
-            this.tableBody.appendChild(row);
-        });
+        this.updatePagination(totalPages, start, end, total);
     }
 
-    renderPagination() {
-        if (!this.paginationNumbers) return;
-        const totalPages = Math.ceil(this.filteredProgramas.length / this.recordsPerPage);
-        this.paginationNumbers.innerHTML = '';
+    updatePagination(totalPages, start, end, total) {
+        const paginationNumbers = document.getElementById('paginationNumbers');
+        const showingFrom = document.getElementById('showingFrom');
+        const showingTo = document.getElementById('showingTo');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
 
-        for (let i = 1; i <= totalPages; i++) {
-            const btn = document.createElement('button');
-            btn.className = `pagination-btn ${i === this.currentPage ? 'active' : ''}`;
-            btn.textContent = i;
-            btn.onclick = () => this.changePage(i);
-            this.paginationNumbers.appendChild(btn);
+        if (showingFrom) showingFrom.textContent = total > 0 ? start + 1 : 0;
+        if (showingTo) showingTo.textContent = end;
+        if (prevBtn) prevBtn.disabled = this.currentPage === 1;
+        if (nextBtn) nextBtn.disabled = this.currentPage === totalPages || totalPages === 0;
+
+        if (paginationNumbers) {
+            paginationNumbers.innerHTML = '';
+            for (let i = 1; i <= totalPages; i++) {
+                const btn = document.createElement('button');
+                btn.className = `pagination-number ${i === this.currentPage ? 'active' : ''}`;
+                btn.textContent = i;
+                btn.onclick = () => {
+                    this.currentPage = i;
+                    this.renderTable();
+                };
+                paginationNumbers.appendChild(btn);
+            }
         }
-
-        if (this.prevBtn) this.prevBtn.disabled = this.currentPage === 1;
-        if (this.nextBtn) this.nextBtn.disabled = this.currentPage === totalPages || totalPages === 0;
-    }
-
-    changePage(page) {
-        const totalPages = Math.ceil(this.filteredProgramas.length / this.recordsPerPage);
-        if (page < 1 || page > totalPages) return;
-        this.currentPage = page;
-        this.render();
     }
 
     openDeleteModal(id, nombre) {
         this.programaIdToDelete = id;
-        if (this.programaToDeleteLabel) this.programaToDeleteLabel.textContent = nombre;
-        if (this.deleteModal) this.deleteModal.classList.add('active');
+        const label = document.getElementById('programaToDelete');
+        if (label) label.textContent = nombre;
+        const modal = document.getElementById('deleteModal');
+        if (modal) modal.classList.add('show');
     }
 
     closeDeleteModal() {
-        if (this.deleteModal) this.deleteModal.classList.remove('active');
+        const modal = document.getElementById('deleteModal');
+        if (modal) modal.classList.remove('show');
         this.programaIdToDelete = null;
     }
 
-    async confirmDelete() {
+    async deletePrograma() {
         if (!this.programaIdToDelete) return;
 
         try {
@@ -188,31 +201,22 @@ class ProgramaView {
                 method: 'DELETE',
                 headers: { 'Accept': 'application/json' }
             });
-            const result = await response.json();
+            const data = await response.json();
 
             if (response.ok) {
-                if (window.NotificationService) {
-                    NotificationService.showSuccess('El programa fue eliminado correctamente.');
-                }
+                NotificationService.showSuccess('El programa fue eliminado correctamente.');
                 this.closeDeleteModal();
                 await this.loadProgramas();
             } else {
-                throw new Error(result.details || result.error || 'Error desconocido');
+                throw new Error(data.details || data.error || 'Error desconocido');
             }
         } catch (error) {
             console.error('Error deleting programa:', error);
-            if (window.NotificationService) {
-                NotificationService.showError('No se pudo eliminar el programa. Es posible que tenga fichas o competencias asociadas.');
-            }
+            NotificationService.showError('No se pudo eliminar el programa. Es posible que tenga fichas o competencias asociadas.');
         }
     }
 }
 
-// Initialize when DOM is ready
 document.addEventListener('DOMContentLoaded', () => {
-    window.programaView = new ProgramaView();
+    window.programaManager = new ProgramaManager();
 });
-
-// Helper functions for global scope (onclick attributes)
-window.closeDeleteModal = () => window.programaView ? window.programaView.closeDeleteModal() : null;
-window.confirmDelete = () => window.programaView ? window.programaView.confirmDelete() : null;

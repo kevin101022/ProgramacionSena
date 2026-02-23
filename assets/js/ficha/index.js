@@ -1,29 +1,92 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const tableBody = document.getElementById('fichaTableBody');
-    const searchInput = document.getElementById('searchInput');
-    const totalLabel = document.getElementById('totalFichas');
-    const addBtn = document.getElementById('addBtn');
-    const modal = document.getElementById('fichaModal');
-    const form = document.getElementById('fichaForm');
-    const closeBtn = document.getElementById('closeModal');
-    const cancelBtn = document.getElementById('cancelBtn');
-    const programaSelect = document.getElementById('programa_id');
-    const instructorSelect = document.getElementById('instructor_id');
-    const coordinacionSelect = document.getElementById('coordinacion_id');
+/**
+ * Ficha Management JavaScript
+ * Refactored to Class-based manager with Pagination support.
+ */
+class FichaManager {
+    constructor() {
+        this.fichas = [];
+        this.allCoordinaciones = [];
+        this.currentPage = 1;
+        this.itemsPerPage = 5;
 
-    let fichas = [];
+        this.init();
+    }
 
-    const sedeSelect = document.getElementById('sede_id');
-    let allCoordinaciones = [];
+    async init() {
+        this.bindEvents();
+        await this.loadInitialData();
+    }
 
-    const loadData = async () => {
+    bindEvents() {
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', () => {
+                this.currentPage = 1;
+                this.renderTable();
+            });
+        }
+
+        const prevBtn = document.getElementById('prevBtn');
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => {
+                if (this.currentPage > 1) {
+                    this.currentPage--;
+                    this.renderTable();
+                }
+            });
+        }
+
+        const nextBtn = document.getElementById('nextBtn');
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                const totalPages = Math.ceil(this.getFilteredData().length / this.itemsPerPage);
+                if (this.currentPage < totalPages) {
+                    this.currentPage++;
+                    this.renderTable();
+                }
+            });
+        }
+
+        const addBtn = document.getElementById('addBtn');
+        if (addBtn) addBtn.onclick = () => this.openModal();
+
+        const closeBtn = document.getElementById('closeModal');
+        if (closeBtn) closeBtn.onclick = () => this.closeModal();
+
+        const cancelBtn = document.getElementById('cancelBtn');
+        if (cancelBtn) cancelBtn.onclick = () => this.closeModal();
+
+        const form = document.getElementById('fichaForm');
+        if (form) {
+            form.onsubmit = (e) => this.handleFormSubmit(e);
+        }
+
+        const sedeSelect = document.getElementById('sede_id');
+        if (sedeSelect) {
+            sedeSelect.addEventListener('change', () => this.filterCoordinacionesBySede(sedeSelect.value));
+        }
+
+        // Global delete trigger
+        window.deleteFicha = (id) => this.confirmDelete(id);
+    }
+
+    async loadInitialData() {
         try {
             const headers = { 'Accept': 'application/json' };
 
-            // Load Sedes
-            const sedeRes = await fetch('../../routing.php?controller=sede&action=index', { headers });
+            // Promise.all to load select data and main list
+            const [sedeRes, progRes, instRes, coordRes, fichaRes] = await Promise.all([
+                fetch('../../routing.php?controller=sede&action=index', { headers }),
+                fetch('../../routing.php?controller=programa&action=index', { headers }),
+                fetch('../../routing.php?controller=instructor&action=index', { headers }),
+                fetch('../../routing.php?controller=coordinacion&action=index', { headers }),
+                fetch('../../routing.php?controller=ficha&action=index', { headers })
+            ]);
+
+            // Populate Sedes
             if (sedeRes.ok) {
                 const sedes = await sedeRes.json();
+                const sedeSelect = document.getElementById('sede_id');
                 if (sedeSelect) {
                     sedeSelect.innerHTML = '<option value="">Seleccione sede...</option>';
                     sedes.forEach(s => {
@@ -35,10 +98,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            // Load Programas
-            const progRes = await fetch('../../routing.php?controller=programa&action=index', { headers });
+            // Populate Programas
             if (progRes.ok) {
                 const programas = await progRes.json();
+                const programaSelect = document.getElementById('programa_id');
                 if (programaSelect) {
                     programaSelect.innerHTML = '<option value="">Seleccione programa...</option>';
                     programas.forEach(p => {
@@ -50,10 +113,10 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            // Load Instructores
-            const instRes = await fetch('../../routing.php?controller=instructor&action=index', { headers });
+            // Populate Instructores
             if (instRes.ok) {
                 const instructores = await instRes.json();
+                const instructorSelect = document.getElementById('instructor_id');
                 if (instructorSelect) {
                     instructorSelect.innerHTML = '<option value="">Seleccione instructor líder...</option>';
                     instructores.forEach(i => {
@@ -65,14 +128,13 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            // Load Coordinaciones (All for filtering)
-            const coordRes = await fetch('../../routing.php?controller=coordinacion&action=index', { headers });
+            // Populate Coordinaciones
             if (coordRes.ok) {
-                allCoordinaciones = await coordRes.json();
-                // Populate coordinacion select immediately
+                this.allCoordinaciones = await coordRes.json();
+                const coordinacionSelect = document.getElementById('coordinacion_id');
                 if (coordinacionSelect) {
                     coordinacionSelect.innerHTML = '<option value="">Seleccione coordinación...</option>';
-                    allCoordinaciones.forEach(c => {
+                    this.allCoordinaciones.forEach(c => {
                         const opt = document.createElement('option');
                         opt.value = c.coord_id;
                         opt.textContent = c.cent_nombre ? `${c.coord_descripcion} - ${c.cent_nombre}` : c.coord_descripcion;
@@ -82,92 +144,153 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             // Load Fichas
-            const fichaRes = await fetch('../../routing.php?controller=ficha&action=index', { headers });
-            const data = await fichaRes.json();
-
-            if (!fichaRes.ok) {
-                throw new Error(data.details || data.error || 'Error al cargar fichas');
+            if (fichaRes.ok) {
+                const data = await fichaRes.json();
+                this.fichas = Array.isArray(data) ? data : [];
+                this.renderTable();
+            } else {
+                throw new Error('Error al cargar fichas');
             }
 
-            fichas = Array.isArray(data) ? data : [];
-            renderFichas(fichas);
-            if (totalLabel) totalLabel.textContent = fichas.length;
         } catch (error) {
-            console.error('Error:', error);
-            if (tableBody) {
-                tableBody.innerHTML = `<tr><td colspan="6" class="text-center py-8 text-gray-500">No pudimos cargar las fichas. Intenta recargar la página.</td></tr>`;
-            }
+            console.error('Error loading initial data:', error);
+            NotificationService.showError('No pudimos cargar la información de las fichas.');
         }
-    };
-
-    // Filter coordinaciones based on selected sede
-    if (sedeSelect) {
-        sedeSelect.addEventListener('change', () => {
-            const sedeId = sedeSelect.value;
-            if (coordinacionSelect) {
-                coordinacionSelect.innerHTML = '<option value="">Seleccione coordinación...</option>';
-                const filtered = allCoordinaciones.filter(c => !sedeId || c.sede_id == sedeId);
-                filtered.forEach(c => {
-                    const opt = document.createElement('option');
-                    opt.value = c.coord_id;
-                    opt.textContent = c.coord_descripcion;
-                    coordinacionSelect.appendChild(opt);
-                });
-            }
-        });
     }
 
-    const renderFichas = (data) => {
+    filterCoordinacionesBySede(sedeId) {
+        const coordinacionSelect = document.getElementById('coordinacion_id');
+        if (coordinacionSelect) {
+            coordinacionSelect.innerHTML = '<option value="">Seleccione coordinación...</option>';
+            const filtered = this.allCoordinaciones.filter(c => !sedeId || c.sede_id == sedeId);
+            filtered.forEach(c => {
+                const opt = document.createElement('option');
+                opt.value = c.coord_id;
+                opt.textContent = c.coord_descripcion;
+                coordinacionSelect.appendChild(opt);
+            });
+        }
+    }
+
+    getFilteredData() {
+        const searchInput = document.getElementById('searchInput');
+        const term = (searchInput ? searchInput.value : '').toLowerCase();
+
+        return this.fichas.filter(f =>
+            String(f.fich_id).toLowerCase().includes(term) ||
+            (f.titpro_nombre || '').toLowerCase().includes(term) ||
+            (f.prog_denominacion || '').toLowerCase().includes(term) ||
+            (f.inst_nombres || '').toLowerCase().includes(term) ||
+            (f.inst_apellidos || '').toLowerCase().includes(term)
+        );
+    }
+
+    renderTable() {
+        const tableBody = document.getElementById('fichaTableBody');
         if (!tableBody) return;
+
+        const filtered = this.getFilteredData();
+        const total = filtered.length;
+
+        // Update stats
+        const totalLabel = document.getElementById('totalFichas');
+        const totalRecords = document.getElementById('totalRecords');
+        if (totalLabel) totalLabel.textContent = this.fichas.length;
+        if (totalRecords) totalRecords.textContent = total;
+
+        const totalPages = Math.ceil(total / this.itemsPerPage);
+        if (this.currentPage > totalPages && totalPages > 0) this.currentPage = totalPages;
+
+        const start = (this.currentPage - 1) * this.itemsPerPage;
+        const end = Math.min(start + this.itemsPerPage, total);
+        const paginated = filtered.slice(start, end);
+
         tableBody.innerHTML = '';
 
-        if (!Array.isArray(data) || data.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="6" class="text-center py-8 text-gray-500">No se encontraron fichas</td></tr>';
-            return;
+        if (paginated.length === 0) {
+            tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-500">No se encontraron fichas</td></tr>';
+        } else {
+            paginated.forEach(f => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-green-50/50 transition-colors cursor-pointer group';
+                tr.onclick = () => window.location.href = `ver.php?id=${f.fich_id}`;
+                tr.innerHTML = `
+                    <td class="px-6 py-4">
+                        <span class="text-sena-green font-bold text-sm tracking-wider">
+                            ${f.fich_id}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="user-cell">
+                            <div class="user-info-sm px-0">
+                                <div class="user-name-sm">${f.titpro_nombre || 'N/A'}</div>
+                                <div class="user-meta-sm">${f.prog_denominacion || ''}</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="contact-cell">
+                            <div class="contact-item">
+                                <ion-icon src="../../assets/ionicons/business-outline.svg"></ion-icon>
+                                <span>${f.sede_nombre || 'N/A'}</span>
+                            </div>
+                            <div class="contact-item">
+                                <ion-icon src="../../assets/ionicons/people-outline.svg"></ion-icon>
+                                <span>${f.coord_nombre || 'No asignada'}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm font-medium text-gray-700">${f.inst_nombres || ''} ${f.inst_apellidos || ''}</div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="badge-glass">
+                            ${f.fich_jornada || 'N/A'}
+                        </div>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
         }
 
-        data.forEach(f => {
-            const row = document.createElement('tr');
-            row.className = 'hover:bg-green-50/50 transition-colors cursor-pointer group';
-            row.onclick = () => window.location.href = `ver.php?id=${f.fich_id}`;
-            row.innerHTML = `
-                <td class="px-6 py-4">
-                    <span class="text-sena-green font-bold text-sm tracking-wider">
-                        ${f.fich_id}
-                    </span>
-                </td>
-                <td class="px-6 py-4">
-                    <div class="text-gray-900 font-semibold text-sm">${f.titpro_nombre || 'N/A'}</div>
-                    <div class="text-xs text-gray-500">${f.prog_denominacion || ''}</div>
-                </td>
-                <td class="px-6 py-4">
-                    <div class="text-sm font-medium text-gray-700">${f.sede_nombre || 'N/A'}</div>
-                    <div class="text-xs text-gray-500">${f.coord_nombre || 'No asignada'}</div>
-                </td>
-                <td class="px-6 py-4 text-gray-600 text-sm">${f.inst_nombres || ''} ${f.inst_apellidos || ''}</td>
-                <td class="px-6 py-4">
-                    <span class="status-badge status-active">${f.fich_jornada || 'N/A'}</span>
-                </td>
-            `;
-            tableBody.appendChild(row);
-        });
+        this.updatePagination(totalPages, start, end, total);
+    }
 
-        document.querySelectorAll('.edit-btn').forEach(btn => {
-            btn.onclick = () => {
-                const id = btn.dataset.id;
-                const ficha = fichas.find(f => f.fich_id == id);
-                if (ficha) openModal(ficha);
-            };
-        });
-    };
+    updatePagination(totalPages, start, end, total) {
+        const paginationNumbers = document.getElementById('paginationNumbers');
+        const showingFrom = document.getElementById('showingFrom');
+        const showingTo = document.getElementById('showingTo');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
 
-    const openModal = (ficha = null) => {
-        if (!form) return;
-        form.reset();
+        if (showingFrom) showingFrom.textContent = total > 0 ? start + 1 : 0;
+        if (showingTo) showingTo.textContent = end;
+        if (prevBtn) prevBtn.disabled = this.currentPage === 1;
+        if (nextBtn) nextBtn.disabled = this.currentPage === totalPages || totalPages === 0;
 
+        if (paginationNumbers) {
+            paginationNumbers.innerHTML = '';
+            for (let i = 1; i <= totalPages; i++) {
+                const btn = document.createElement('button');
+                btn.className = `pagination-number ${i === this.currentPage ? 'active' : ''}`;
+                btn.textContent = i;
+                btn.onclick = () => {
+                    this.currentPage = i;
+                    this.renderTable();
+                };
+                paginationNumbers.appendChild(btn);
+            }
+        }
+    }
+
+    openModal(ficha = null) {
+        const modal = document.getElementById('fichaModal');
+        const form = document.getElementById('fichaForm');
         const modalTitle = document.getElementById('modalTitle');
         const fichIdInput = document.getElementById('fich_id');
         const fichIdOldInput = document.getElementById('fich_id_old');
+
+        if (form) form.reset();
 
         if (ficha) {
             if (modalTitle) modalTitle.textContent = 'Editar Ficha';
@@ -177,10 +300,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             if (fichIdOldInput) fichIdOldInput.value = ficha.fich_id;
 
-            if (document.getElementById('programa_id')) document.getElementById('programa_id').value = ficha.programa_prog_id || ficha.programa_prog_codigo || '';
-            if (document.getElementById('instructor_id')) document.getElementById('instructor_id').value = ficha.instructor_inst_id_lider || ficha.instructor_inst_id || '';
-            if (document.getElementById('coordinacion_id')) document.getElementById('coordinacion_id').value = ficha.coordinacion_coord_id || '';
-            if (document.getElementById('fich_jornada')) document.getElementById('fich_jornada').value = ficha.fich_jornada || '';
+            const fields = {
+                'programa_id': ficha.programa_prog_id || ficha.programa_prog_codigo,
+                'instructor_id': ficha.instructor_inst_id_lider || ficha.instructor_inst_id,
+                'coordinacion_id': ficha.coordinacion_coord_id,
+                'fich_jornada': ficha.fich_jornada
+            };
+
+            for (const [id, value] of Object.entries(fields)) {
+                const el = document.getElementById(id);
+                if (el) el.value = value || '';
+            }
+
             if (document.getElementById('fich_fecha_ini_lectiva') && ficha.fich_fecha_ini_lectiva) {
                 document.getElementById('fich_fecha_ini_lectiva').value = ficha.fich_fecha_ini_lectiva.split('T')[0];
             }
@@ -197,83 +328,61 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (modal) modal.classList.add('show');
-    };
-
-    const closeModal = () => {
-        if (modal) modal.classList.remove('show');
-    };
-
-    if (addBtn) addBtn.onclick = () => openModal();
-    if (closeBtn) closeBtn.onclick = closeModal;
-    if (cancelBtn) cancelBtn.onclick = closeModal;
-
-    if (form) {
-        form.onsubmit = async (e) => {
-            e.preventDefault();
-            const idOld = document.getElementById('fich_id_old').value;
-            const action = idOld ? 'update' : 'store';
-
-            const formData = new FormData(form);
-            // Asegurarse de que los nombres de los campos coincidan con lo que el controlador espera si hay diferencias
-            // En este caso, el controlador espera programa_prog_id, instructor_inst_id, etc.
-            // El formulario ya tiene esos nombres en los atributos 'name'.
-
-            try {
-                const response = await fetch(`../../routing.php?controller=ficha&action=${action}`, {
-                    method: 'POST',
-                    body: formData,
-                    headers: { 'Accept': 'application/json' }
-                });
-
-                const result = await response.json();
-
-                if (response.ok) {
-                    NotificationService.showSuccess(idOld ? '¡Ficha actualizada correctamente!' : '¡Ficha registrada correctamente!');
-                    closeModal();
-                    loadData();
-                } else {
-                    NotificationService.showError('No se pudo guardar la ficha. Verifica que todos los campos estén completos e intenta de nuevo.');
-                }
-            } catch (error) {
-                console.error('Error al guardar:', error);
-                NotificationService.showError('No pudimos conectar con el servidor. Intenta de nuevo.');
-            }
-        };
     }
 
-    window.deleteFicha = async (id) => {
-        if (window.NotificationService) {
-            NotificationService.showConfirm('¿Estás seguro de que deseas eliminar esta ficha? Esta acción no se puede deshacer.', async () => {
+    closeModal() {
+        const modal = document.getElementById('fichaModal');
+        if (modal) modal.classList.remove('show');
+    }
+
+    async handleFormSubmit(e) {
+        e.preventDefault();
+        const idOld = document.getElementById('fich_id_old').value;
+        const action = idOld ? 'update' : 'store';
+        const form = e.target;
+        const formData = new FormData(form);
+
+        try {
+            const response = await fetch(`../../routing.php?controller=ficha&action=${action}`, {
+                method: 'POST',
+                body: formData,
+                headers: { 'Accept': 'application/json' }
+            });
+
+            if (response.ok) {
+                NotificationService.showSuccess(idOld ? '¡Ficha actualizada!' : '¡Ficha registrada!');
+                this.closeModal();
+                await this.loadInitialData();
+            } else {
+                NotificationService.showError('No se pudo guardar la ficha. Revisa los datos.');
+            }
+        } catch (error) {
+            NotificationService.showError('Error de conexión.');
+        }
+    }
+
+    confirmDelete(id) {
+        NotificationService.showConfirm(
+            '¿Estás seguro de que deseas eliminar esta ficha? Esta acción no se puede deshacer.',
+            async () => {
                 try {
                     const response = await fetch(`../../routing.php?controller=ficha&action=destroy&id=${id}`, {
                         headers: { 'Accept': 'application/json' }
                     });
-
                     if (response.ok) {
-                        NotificationService.showSuccess('La ficha fue eliminada correctamente.');
-                        loadData();
+                        NotificationService.showSuccess('Ficha eliminada correctamente.');
+                        await this.loadInitialData();
                     } else {
-                        NotificationService.showError('No se pudo eliminar la ficha. Es posible que tenga asignaciones asociadas.');
+                        NotificationService.showError('No se pudo eliminar la ficha. Es posible que tenga asignaciones.');
                     }
                 } catch (error) {
-                    NotificationService.showError('No pudimos conectar con el servidor. Intenta de nuevo.');
+                    NotificationService.showError('Error de conexión.');
                 }
-            });
-        }
-    };
-
-    if (searchInput) {
-        searchInput.oninput = () => {
-            const term = searchInput.value.toLowerCase();
-            const filtered = fichas.filter(f =>
-                String(f.fich_id).toLowerCase().includes(term) ||
-                (f.titpro_nombre || '').toLowerCase().includes(term) ||
-                (f.inst_nombres || '').toLowerCase().includes(term) ||
-                (f.inst_apellidos || '').toLowerCase().includes(term)
-            );
-            renderFichas(filtered);
-        };
+            }
+        );
     }
+}
 
-    loadData();
+document.addEventListener('DOMContentLoaded', () => {
+    window.fichaManager = new FichaManager();
 });

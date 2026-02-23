@@ -107,11 +107,23 @@ require_once '../layouts/sidebar.php';
                         </div>
                     </div>
 
-                    <!-- Placeholder for extra info -->
-                    <div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-8 text-center">
-                        <ion-icon src="../../assets/ionicons/calendar-outline.svg" class="text-4xl text-slate-300 mb-2"></ion-icon>
-                        <h4 class="text-slate-900 dark:text-white font-bold mb-1">Programación de Clases</h4>
-                        <p class="text-sm text-slate-500 dark:text-slate-400">La agenda semanal para este ambiente se cargará próximamente.</p>
+                    <!-- Class Schedule Card -->
+                    <div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+                            <h3 class="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                <ion-icon src="../../assets/ionicons/calendar-outline.svg" class="text-sena-green"></ion-icon>
+                                Programación Semanal
+                            </h3>
+                        </div>
+                        <div class="p-6">
+                            <div id="programacionList" class="space-y-4">
+                                <!-- Data loaded via JS -->
+                            </div>
+                            <div id="noProgramacion" class="hidden text-center py-12">
+                                <ion-icon src="../../assets/ionicons/calendar-clear-outline.svg" class="text-4xl text-slate-300 mb-2"></ion-icon>
+                                <p class="text-slate-500 text-sm italic">No hay programación registrada para este ambiente.</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>

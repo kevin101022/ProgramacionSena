@@ -133,4 +133,23 @@ class AmbienteModel
         $stmt->bindParam(':id', $this->amb_id);
         return $stmt->execute();
     }
+
+    public function getProgramacion()
+    {
+        $sql = "SELECT a.ASIG_ID as asig_id, a.FICHA_fich_id as fich_id, 
+                       a.asig_fecha_ini, a.asig_fecha_fin,
+                       i.inst_nombres, i.inst_apellidos,
+                       p.prog_denominacion,
+                       c.comp_nombre_corto
+                FROM ASIGNACION a
+                LEFT JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.inst_id
+                LEFT JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
+                LEFT JOIN PROGRAMA p ON f.PROGRAMA_prog_id = p.prog_codigo
+                LEFT JOIN COMPETENCIA c ON a.COMPETENCIA_comp_id = c.comp_id
+                WHERE a.AMBIENTE_amb_id = :amb_id
+                ORDER BY a.asig_fecha_ini DESC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':amb_id' => $this->amb_id]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }

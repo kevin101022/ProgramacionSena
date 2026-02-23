@@ -54,20 +54,34 @@ require_once '../layouts/sidebar.php';
                 </div>
             </div>
 
-            <div class="lg:col-span-2">
+            <div class="lg:col-span-2 space-y-6">
                 <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100 h-full">
                     <h3 class="text-lg font-bold text-gray-800 mb-6 flex items-center gap-2">
                         <ion-icon src="../../assets/ionicons/list-outline.svg" class="text-sena-green"></ion-icon>
                         Gestión Administrativa
                     </h3>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
                         <div class="p-4 bg-gray-50 rounded-xl border border-gray-100">
                             <p class="text-xs font-bold text-gray-400 uppercase">Estado</p>
                             <span class="status-badge status-active mt-1">Activo</span>
                         </div>
                         <div class="p-4 bg-gray-50 rounded-xl border border-gray-100">
-                            <p class="text-xs font-bold text-gray-400 uppercase">Programas Vinculados</p>
-                            <p class="text-xl font-black text-gray-900 mt-1">--</p>
+                            <p class="text-xs font-bold text-gray-400 uppercase">Total Programas</p>
+                            <p class="text-xl font-black text-gray-900 mt-1" id="countProgramas">0</p>
+                        </div>
+                    </div>
+
+                    <!-- Programas Section -->
+                    <div class="border-t border-gray-100 pt-6">
+                        <h4 class="text-sm font-bold text-gray-700 mb-4 flex items-center gap-2">
+                            <ion-icon src="../../assets/ionicons/school-outline.svg" class="text-sena-orange"></ion-icon>
+                            Programas de Formación Bajo esta Coordinación
+                        </h4>
+                        <div id="programasList" class="space-y-3">
+                            <!-- Data loaded via JS -->
+                        </div>
+                        <div id="noProgramas" class="hidden text-center py-8">
+                            <p class="text-gray-400 text-sm italic">No hay programas vinculados a esta coordinación.</p>
                         </div>
                     </div>
                 </div>

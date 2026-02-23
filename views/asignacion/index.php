@@ -117,6 +117,9 @@ require_once '../layouts/head.php';
     <div class="content-wrapper">
         <div class="stats-grid">
             <div class="stat-card">
+                <div class="stat-card-bg-icon">
+                    <ion-icon src="../../assets/ionicons/calendar-outline.svg"></ion-icon>
+                </div>
                 <div class="stat-card-header">
                     <span class="stat-card-label">TOTAL ASIGNACIONES</span>
                     <div class="stat-card-icon green">
@@ -126,6 +129,17 @@ require_once '../layouts/head.php';
                 <div class="stat-card-body">
                     <span class="stat-card-number" id="totalAsignaciones">0</span>
                     <span class="stat-card-desc">asignaciones de la ficha</span>
+                    <p class="stat-card-context">Distribución cronológica y técnica del tiempo de formación profesional.</p>
+                </div>
+                <div class="stat-card-pill-container">
+                    <div class="stat-pill">
+                        <ion-icon src="../../assets/ionicons/time-outline.svg"></ion-icon>
+                        Horario
+                    </div>
+                    <div class="stat-pill">
+                        <ion-icon src="../../assets/ionicons/analytics-outline.svg"></ion-icon>
+                        Optimizado
+                    </div>
                 </div>
             </div>
         </div>

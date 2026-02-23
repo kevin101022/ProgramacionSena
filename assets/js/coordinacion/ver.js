@@ -24,6 +24,9 @@ document.addEventListener('DOMContentLoaded', () => {
             // Cargar datos de la coordinación
             await loadCoordinacionData();
 
+            // Cargar programas vinculados
+            await loadProgramas();
+
         } catch (error) {
             console.error('Error:', error);
             showError(error.message);
@@ -61,6 +64,52 @@ document.addEventListener('DOMContentLoaded', () => {
 
         populateUI(coord);
         showDetails();
+    };
+
+    const loadProgramas = async () => {
+        try {
+            const response = await fetch(`../../routing.php?controller=coordinacion&action=getProgramas&id=${coordId}`, {
+                headers: { 'Accept': 'application/json' }
+            });
+            const programas = await response.json();
+
+            const list = document.getElementById('programasList');
+            const noData = document.getElementById('noProgramas');
+            const countEl = document.getElementById('countProgramas');
+
+            countEl.textContent = programas.length;
+
+            if (programas.length === 0) {
+                list.innerHTML = '';
+                noData.classList.remove('hidden');
+                return;
+            }
+
+            noData.classList.add('hidden');
+            list.innerHTML = '';
+
+            programas.forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer group';
+                item.onclick = () => window.location.href = `../programa/ver.php?id=${p.prog_codigo}`;
+
+                item.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-white rounded-lg shadow-sm group-hover:bg-sena-green/10 transition-colors">
+                            <ion-icon src="../../assets/ionicons/journal-outline.svg" class="text-sena-green text-lg"></ion-icon>
+                        </div>
+                        <div>
+                            <p class="text-xs font-bold text-gray-800">${p.prog_denominacion}</p>
+                            <p class="text-[10px] text-gray-400 uppercase tracking-tighter">Código: ${p.prog_codigo}</p>
+                        </div>
+                    </div>
+                    <ion-icon src="../../assets/ionicons/chevron-forward-outline.svg" class="text-gray-300 group-hover:text-sena-green transition-all"></ion-icon>
+                `;
+                list.appendChild(item);
+            });
+        } catch (err) {
+            console.error('Error loading programs:', err);
+        }
     };
 
     const populateUI = (c) => {

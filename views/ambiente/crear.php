@@ -40,7 +40,12 @@ require_once '../layouts/sidebar.php';
             </div>
 
             <form id="ambienteForm" class="form-content">
-
+                <div class="form-group">
+                    <label for="amb_id" class="form-label required">Número / ID del Ambiente</label>
+                    <input type="text" id="amb_id" name="amb_id" class="form-input" placeholder="Ej: 101, T05, LAB-A" required>
+                    <div class="form-help">Ingrese el número identificador único del ambiente.</div>
+                    <div class="form-error" id="amb_id_error"></div>
+                </div>
 
                 <div class="form-group">
                     <label for="amb_nombre" class="form-label required">Nombre del Ambiente</label>

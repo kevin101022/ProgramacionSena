@@ -162,4 +162,11 @@ class InstruCompetenciaModel
         ]);
         return $stmt->fetchColumn() > 0;
     }
+    public function deleteByInstructor($inst_id)
+    {
+        $query = "DELETE FROM INSTRU_COMPETENCIA WHERE INSTRUCTOR_inst_id = :inst_id";
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':inst_id', $inst_id);
+        return $stmt->execute();
+    }
 }

@@ -99,4 +99,26 @@ class CentroFormacionModel
         $stmt->bindParam(':cent_id', $this->cent_id);
         return $stmt->execute();
     }
+
+    public function getInstructores()
+    {
+        $sql = "SELECT inst_id, inst_nombres, inst_apellidos, inst_correo, inst_telefono 
+                FROM INSTRUCTOR 
+                WHERE CENTRO_FORMACION_cent_id = :cent_id 
+                ORDER BY inst_nombres ASC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':cent_id' => $this->cent_id]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getCoordinaciones()
+    {
+        $sql = "SELECT coord_id, coord_descripcion 
+                FROM COORDINACION 
+                WHERE CENTRO_FORMACION_cent_id = :cent_id 
+                ORDER BY coord_descripcion ASC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':cent_id' => $this->cent_id]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }

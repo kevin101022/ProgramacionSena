@@ -149,6 +149,10 @@ class AmbienteView {
                 this.ambienteData = ambiente;
                 // Note: sede_nombre is already included by the model's JOIN in readById
                 this.populateAmbienteInfo();
+
+                // Load and render programming
+                await this.loadProgramacion();
+
                 this.showDetails();
             } else {
                 this.showError(ambiente.error || 'Ambiente no encontrado');
@@ -178,6 +182,79 @@ class AmbienteView {
                 }
             }
         }
+    }
+
+    async loadProgramacion() {
+        try {
+            const response = await fetch(`../../routing.php?controller=ambiente&action=getProgramacion&id=${this.ambienteId}`, {
+                headers: { 'Accept': 'application/json' }
+            });
+            const data = await response.json();
+
+            const list = document.getElementById('programacionList');
+            const noData = document.getElementById('noProgramacion');
+            const countFichas = document.getElementById('totalFichas');
+            const countInstructores = document.getElementById('totalInstructores');
+
+            // Unique fichas and instructors counts
+            const uniqueFichas = new Set(data.map(p => p.fich_id));
+            const uniqueInstructores = new Set(data.map(p => `${p.inst_nombres} ${p.inst_apellidos}`));
+
+            countFichas.textContent = uniqueFichas.size;
+            countInstructores.textContent = uniqueInstructores.size;
+
+            if (data.length === 0) {
+                list.innerHTML = '';
+                noData.classList.remove('hidden');
+                return;
+            }
+
+            noData.classList.add('hidden');
+            list.innerHTML = '';
+
+            data.forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border border-slate-100 dark:border-slate-700 hover:border-sena-green/30 hover:bg-white dark:hover:bg-slate-800 transition-all cursor-pointer group';
+                item.onclick = () => window.location.href = `../asignacion/ver.php?id=${p.asig_id}`;
+
+                item.innerHTML = `
+                    <div class="flex items-start gap-4">
+                        <div class="p-3 bg-white dark:bg-slate-800 rounded-lg shadow-sm group-hover:bg-sena-green/10 transition-colors">
+                            <ion-icon src="../../assets/ionicons/calendar-outline.svg" class="text-sena-green text-xl"></ion-icon>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2 mb-1">
+                                <span class="px-2 py-0.5 bg-sena-orange/10 text-sena-orange text-[10px] font-bold rounded-full uppercase">Ficha: ${p.fich_id}</span>
+                                <span class="px-2 py-0.5 bg-blue-100 text-blue-600 text-[10px] font-bold rounded-full uppercase">${p.comp_nombre_corto}</span>
+                            </div>
+                            <h4 class="text-sm font-bold text-slate-900 dark:text-white line-clamp-1 group-hover:text-sena-green transition-colors">${p.prog_denominacion}</h4>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 flex items-center gap-1 mt-1">
+                                <ion-icon src="../../assets/ionicons/person-outline.svg"></ion-icon>
+                                ${p.inst_nombres} ${p.inst_apellidos}
+                            </p>
+                        </div>
+                    </div>
+                    <div class="mt-4 sm:mt-0 text-right flex items-center gap-3">
+                        <div>
+                            <div class="text-[10px] text-slate-400 uppercase tracking-wider mb-1">Horario de Asignación</div>
+                            <p class="text-xs font-bold text-slate-700 dark:text-slate-300">
+                                ${this.formatDate(p.asig_fecha_ini)} - ${this.formatDate(p.asig_fecha_fin)}
+                            </p>
+                        </div>
+                        <ion-icon src="../../assets/ionicons/chevron-forward-outline.svg" class="text-slate-300 group-hover:text-sena-green transition-all"></ion-icon>
+                    </div>
+                `;
+                list.appendChild(item);
+            });
+        } catch (err) {
+            console.error('Error loading programming:', err);
+        }
+    }
+
+    formatDate(dateStr) {
+        if (!dateStr) return 'N/A';
+        const date = new Date(dateStr);
+        return date.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
     }
 
     showDetails() {

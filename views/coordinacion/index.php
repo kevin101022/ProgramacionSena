@@ -20,6 +20,9 @@ require_once '../layouts/sidebar.php';
     <div class="content-wrapper">
         <div class="stats-grid">
             <div class="stat-card">
+                <div class="stat-card-bg-icon">
+                    <ion-icon src="../../assets/ionicons/people-circle-outline.svg"></ion-icon>
+                </div>
                 <div class="stat-card-header">
                     <span class="stat-card-label">TOTAL COORDINACIONES</span>
                     <div class="stat-card-icon green">
@@ -29,6 +32,17 @@ require_once '../layouts/sidebar.php';
                 <div class="stat-card-body">
                     <span class="stat-card-number" id="totalCoordinaciones">0</span>
                     <span class="stat-card-desc">dependencias registradas</span>
+                    <p class="stat-card-context">Células administrativas encargadas del seguimiento y control de los procesos.</p>
+                </div>
+                <div class="stat-card-pill-container">
+                    <div class="stat-pill">
+                        <ion-icon src="../../assets/ionicons/ribbon-outline.svg"></ion-icon>
+                        Académicas
+                    </div>
+                    <div class="stat-pill">
+                        <ion-icon src="../../assets/ionicons/briefcase-outline.svg"></ion-icon>
+                        Gestión
+                    </div>
                 </div>
             </div>
         </div>
@@ -48,7 +62,7 @@ require_once '../layouts/sidebar.php';
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th class="w-20">ID</th>
+                        <th class="w-10">N°</th>
                         <th>Nombre de la Coordinación</th>
                         <th>Centro de Formación</th>
                     </tr>

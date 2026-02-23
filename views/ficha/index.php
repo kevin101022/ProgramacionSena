@@ -20,6 +20,9 @@ require_once '../layouts/sidebar.php';
     <div class="content-wrapper">
         <div class="stats-grid">
             <div class="stat-card">
+                <div class="stat-card-bg-icon">
+                    <ion-icon src="../../assets/ionicons/layers-outline.svg"></ion-icon>
+                </div>
                 <div class="stat-card-header">
                     <span class="stat-card-label">TOTAL FICHAS</span>
                     <div class="stat-card-icon green">
@@ -29,6 +32,17 @@ require_once '../layouts/sidebar.php';
                 <div class="stat-card-body">
                     <span class="stat-card-number" id="totalFichas">0</span>
                     <span class="stat-card-desc">fichas activas</span>
+                    <p class="stat-card-context">Grupos de formación en proceso que representan la vitalidad institucional.</p>
+                </div>
+                <div class="stat-card-pill-container">
+                    <div class="stat-pill">
+                        <ion-icon src="../../assets/ionicons/school-outline.svg"></ion-icon>
+                        En Formación
+                    </div>
+                    <div class="stat-pill">
+                        <ion-icon src="../../assets/ionicons/checkmark-circle-outline.svg"></ion-icon>
+                        Vigentes
+                    </div>
                 </div>
             </div>
         </div>

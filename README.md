@@ -196,3 +196,14 @@ Recuerda importar tu archivo `.sql` en PHPMyAdmin o la herramienta que utilices 
 
 ---
 
+# Insertar datos de prueba
+c:\xampp\php\php.exe scripts/seed.php
+
+# Limpiar TODO y volver a insertar
+c:\xampp\php\php.exe scripts/seed.php --clean
+
+# Solo limpiar (sin insertar)
+c:\xampp\php\php.exe scripts/seed.php --clean-only
+
+# Ver ayuda
+c:\xampp\php\php.exe scripts/seed.php --help

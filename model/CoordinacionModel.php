@@ -147,4 +147,16 @@ class CoordinacionModel
         $stmt->bindParam(':coord_id', $this->coord_id);
         return $stmt->execute();
     }
+
+    public function getProgramas()
+    {
+        $sql = "SELECT DISTINCT p.prog_codigo, p.prog_denominacion 
+                FROM PROGRAMA p 
+                INNER JOIN FICHA f ON p.prog_codigo = f.PROGRAMA_prog_id 
+                WHERE f.COORDINACION_coord_id = :coord_id
+                ORDER BY p.prog_denominacion ASC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':coord_id' => $this->coord_id]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }

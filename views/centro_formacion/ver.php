@@ -61,10 +61,43 @@ require_once '../layouts/sidebar.php';
                 </div>
             </div>
 
-            <div class="lg:col-span-2">
-                <div class="bg-white p-8 rounded-xl shadow-sm border border-gray-100">
-                    <h3 class="text-lg font-bold text-gray-800 mb-4">Unidades y Sedes Vinculadas</h3>
-                    <p class="text-sm text-gray-500 italic">Próximamente se listarán las sedes que pertenecen a este centro.</p>
+            <div class="lg:col-span-2 space-y-6">
+                <!-- Instructores Card -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-50 flex justify-between items-center">
+                        <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                            <ion-icon src="../../assets/ionicons/people-outline.svg" class="text-sena-green text-lg"></ion-icon>
+                            Instructores Vinculados
+                        </h3>
+                        <span id="countInstructores" class="px-2.5 py-0.5 bg-sena-green/10 text-sena-green text-xs font-bold rounded-full">0</span>
+                    </div>
+                    <div class="p-6">
+                        <div id="instructoresList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <!-- Data loaded via JS -->
+                        </div>
+                        <div id="noInstructores" class="hidden text-center py-8">
+                            <p class="text-gray-400 text-sm italic">No hay instructores vinculados a este centro.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Coordinaciones Card -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-50 flex justify-between items-center">
+                        <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                            <ion-icon src="../../assets/ionicons/git-network-outline.svg" class="text-sena-green text-lg"></ion-icon>
+                            Coordinaciones
+                        </h3>
+                        <span id="countCoordinaciones" class="px-2.5 py-0.5 bg-sena-green/10 text-sena-green text-xs font-bold rounded-full">0</span>
+                    </div>
+                    <div class="p-6">
+                        <div id="coordinacionesList" class="space-y-3">
+                            <!-- Data loaded via JS -->
+                        </div>
+                        <div id="noCoordinaciones" class="hidden text-center py-8">
+                            <p class="text-gray-400 text-sm italic">No hay coordinaciones registradas en este centro.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

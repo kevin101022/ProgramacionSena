@@ -78,16 +78,15 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const loadFichaData = async () => {
-        const response = await fetch(`../../routing.php?controller=ficha&action=index`, {
+        const response = await fetch(`../../routing.php?controller=ficha&action=show&id=${fichId}`, {
             headers: { 'Accept': 'application/json' }
         });
-        const fichas = await response.json();
-        const ficha = fichas.find(f => f.fich_id == fichId);
 
-        if (!ficha) {
+        if (!response.ok) {
             throw new Error('Ficha no encontrada');
         }
 
+        const ficha = await response.json();
         currentFicha = ficha;
         populateFichaInfo(ficha);
         await loadAsignaciones();
@@ -147,10 +146,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const populateFichaInfo = (f) => {
         document.getElementById('detFichaId').textContent = f.fich_id;
-        document.getElementById('detPrograma').textContent = f.titpro_nombre || 'N/A';
+        document.getElementById('detPrograma').textContent = f.prog_denominacion || 'N/A';
         document.getElementById('detJornada').textContent = `Jornada ${f.fich_jornada}`;
         document.getElementById('detInstructor').textContent = `${f.inst_nombres} ${f.inst_apellidos}`;
-        document.getElementById('detCoordinacion').textContent = f.coord_descripcion || 'No asignada';
+        document.getElementById('detCoordinacion').textContent = f.coord_nombre || 'No asignada';
 
         const iniciales = `${f.inst_nombres[0]}${f.inst_apellidos[0]}`;
         document.getElementById('detInstInic').textContent = iniciales;

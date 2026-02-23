@@ -1,48 +1,117 @@
-document.addEventListener('DOMContentLoaded', () => {
-    // ── DOM Elements ──────────────────────────────────────────
-    const fichaSelector = document.getElementById('fichaSelector');
-    const fichaSearch = document.getElementById('fichaSearch');
-    const fichaDropdown = document.getElementById('fichaDropdown');
-    const addBtn = document.getElementById('addBtn');
-    const calendarEl = document.getElementById('calendar');
-    const placeholder = document.getElementById('calendarPlaceholder');
-    const totalLabel = document.getElementById('totalAsignaciones');
-    const modal = document.getElementById('asignacionModal');
-    const form = document.getElementById('asignacionForm');
-    const closeBtn = document.getElementById('closeModal');
-    const cancelBtn = document.getElementById('cancelBtn');
-    const competenciaSelect = document.getElementById('competencia_id');
-    const instructorSelect = document.getElementById('instructor_id');
-    const ambienteSelect = document.getElementById('ambiente_id');
+/**
+ * Asignacion Management JavaScript
+ * Refactored to Class-based manager for consistency.
+ * Manages FullCalendar, custom searchable dropdowns, and conflict detection.
+ */
+class AsignacionManager {
+    constructor() {
+        this.calendar = null;
+        this.fichas = [];
+        this.selectedFicha = null;
+        this.allAsignaciones = [];
+        this.allCompetenciasPrograma = [];
+        this.allHabilitaciones = [];
+        this.ambientes = [];
 
-    let calendar = null;
+        this.COLORS = [
+            '#39a900', '#3b82f6', '#8b5cf6', '#ef4444',
+            '#f59e0b', '#06b6d4', '#ec4899', '#14b8a6'
+        ];
 
+        this.init();
+    }
 
+    async init() {
+        this.bindEvents();
+        await Promise.all([
+            this.loadFichas(),
+            this.loadAmbientes()
+        ]);
+    }
 
+    bindEvents() {
+        const fichaSearch = document.getElementById('fichaSearch');
+        if (fichaSearch) {
+            fichaSearch.addEventListener('focus', () => this.renderFichaDropdown(fichaSearch.value));
+            fichaSearch.addEventListener('input', (e) => this.renderFichaDropdown(e.target.value));
+            fichaSearch.addEventListener('click', (e) => {
+                e.stopPropagation();
+                this.renderFichaDropdown(e.target.value);
+            });
+        }
 
+        document.addEventListener('click', (e) => {
+            const fichaDropdown = document.getElementById('fichaDropdown');
+            if (fichaDropdown && fichaSearch && !fichaSearch.contains(e.target) && !fichaDropdown.contains(e.target)) {
+                fichaDropdown.style.display = 'none';
+            }
+        });
 
+        const fichaSelector = document.getElementById('fichaSelector');
+        if (fichaSelector) {
+            fichaSelector.addEventListener('change', () => this.handleFichaChange());
+        }
 
-    let fichas = [];
-    let selectedFicha = null;
-    let allAsignaciones = [];
-    let allCompetenciasPrograma = []; // competencias del programa de la ficha
-    let allHabilitaciones = []; // instru_competencia
+        const addBtn = document.getElementById('addBtn');
+        if (addBtn) addBtn.onclick = () => this.openModal();
 
-    // ── Color palette for events ──────────────────────────────
-    const COLORS = [
-        '#39a900', '#3b82f6', '#8b5cf6', '#ef4444',
-        '#f59e0b', '#06b6d4', '#ec4899', '#14b8a6'
-    ];
-    const getColor = (index) => COLORS[index % COLORS.length];
+        const closeBtn = document.getElementById('closeModal');
+        if (closeBtn) closeBtn.onclick = () => this.closeModal();
 
-    // ── Render custom searchable dropdown ─────────────────────
-    const renderFichas = (filter = '') => {
+        const cancelBtn = document.getElementById('cancelBtn');
+        if (cancelBtn) cancelBtn.onclick = () => this.closeModal();
+
+        const form = document.getElementById('asignacionForm');
+        if (form) {
+            form.onsubmit = (e) => this.handleFormSubmit(e);
+        }
+
+        const competenciaSelect = document.getElementById('competencia_id');
+        if (competenciaSelect) {
+            competenciaSelect.addEventListener('change', () => this.handleCompetenciaChange());
+        }
+    }
+
+    async loadFichas() {
+        try {
+            const res = await fetch('../../routing.php?controller=ficha&action=index', {
+                headers: { 'Accept': 'application/json' }
+            });
+            this.fichas = await res.json();
+        } catch (e) {
+            console.error('Error cargando fichas:', e);
+        }
+    }
+
+    async loadAmbientes() {
+        try {
+            const res = await fetch('../../routing.php?controller=ambiente&action=index', {
+                headers: { 'Accept': 'application/json' }
+            });
+            this.ambientes = await res.json();
+            const ambienteSelect = document.getElementById('ambiente_id');
+            if (ambienteSelect) {
+                ambienteSelect.innerHTML = '<option value="">Seleccione ambiente...</option>';
+                this.ambientes.forEach(a => {
+                    const opt = document.createElement('option');
+                    opt.value = a.amb_id;
+                    opt.textContent = `${a.amb_id} - ${a.amb_nombre || 'Sin nombre'}`;
+                    ambienteSelect.appendChild(opt);
+                });
+            }
+        } catch (e) {
+            console.error('Error cargando ambientes:', e);
+        }
+    }
+
+    renderFichaDropdown(filter = '') {
+        const fichaDropdown = document.getElementById('fichaDropdown');
         if (!fichaDropdown) return;
 
         fichaDropdown.innerHTML = '';
         const searchTerm = filter.toLowerCase().trim();
 
-        const filtered = fichas.filter(f => {
+        const filtered = this.fichas.filter(f => {
             const id = String(f.fich_id).toLowerCase();
             const prog = (f.prog_denominacion || f.titpro_nombre || '').toLowerCase();
             return id.includes(searchTerm) || prog.includes(searchTerm);
@@ -56,180 +125,120 @@ document.addEventListener('DOMContentLoaded', () => {
                 item.className = 'custom-dropdown-item';
                 item.innerHTML = `
                     <div class="ficha-num">Ficha ${f.fich_id}</div>
-                    <div class="prog-name">${f.prog_denominacion || f.titpro_nombre || 'Sin nombre de programa'}</div>
+                    <div class="prog-name">${f.prog_denominacion || f.titpro_nombre || 'Sin nombre'}</div>
                 `;
                 item.onclick = (e) => {
                     e.stopPropagation();
-                    selectFicha(f);
+                    this.selectFicha(f);
                 };
                 fichaDropdown.appendChild(item);
             });
         }
-
         fichaDropdown.style.display = 'block';
-    };
-
-    const selectFicha = async (f) => {
-        if (!f) return;
-
-        // Update UI
-        fichaSearch.value = `Ficha ${f.fich_id} — ${f.prog_denominacion || f.titpro_nombre || ''}`;
-        fichaDropdown.style.display = 'none';
-
-        // Update hidden select for compatibility
-        if (fichaSelector) {
-            fichaSelector.innerHTML = `<option value="${f.fich_id}" selected>Ficha ${f.fich_id}</option>`;
-            // Trigger change event manually
-            const event = new Event('change');
-            fichaSelector.dispatchEvent(event);
-        }
-    };
-
-    // ── Load fichas ───────────────────────────────────────────
-    const loadFichas = async () => {
-        try {
-            const res = await fetch('../../routing.php?controller=ficha&action=index', {
-                headers: { 'Accept': 'application/json' }
-            });
-            fichas = await res.json();
-        } catch (e) { console.error('Error cargando fichas:', e); }
-    };
-
-    // ── Ficha search logic ────────────────────────────────────
-    if (fichaSearch) {
-        fichaSearch.addEventListener('focus', () => {
-            renderFichas(fichaSearch.value);
-        });
-
-        fichaSearch.addEventListener('input', (e) => {
-            renderFichas(e.target.value);
-        });
-
-        fichaSearch.addEventListener('click', (e) => {
-            e.stopPropagation();
-            renderFichas(e.target.value);
-        });
     }
 
-    // Close dropdown on click outside
-    document.addEventListener('click', (e) => {
-        if (fichaDropdown && !fichaSearch.contains(e.target) && !fichaDropdown.contains(e.target)) {
-            fichaDropdown.style.display = 'none';
+    async selectFicha(f) {
+        if (!f) return;
+        this.selectedFicha = f;
+        const fichaSearch = document.getElementById('fichaSearch');
+        const fichaDropdown = document.getElementById('fichaDropdown');
+        const fichaSelector = document.getElementById('fichaSelector');
+
+        if (fichaSearch) fichaSearch.value = `Ficha ${f.fich_id} — ${f.prog_denominacion || f.titpro_nombre || ''}`;
+        if (fichaDropdown) fichaDropdown.style.display = 'none';
+
+        if (fichaSelector) {
+            fichaSelector.innerHTML = `<option value="${f.fich_id}" selected>Ficha ${f.fich_id}</option>`;
+            fichaSelector.dispatchEvent(new Event('change'));
         }
-    });
+    }
 
-    // ── Load ambientes ────────────────────────────────────────
-    const loadAmbientes = async () => {
-        try {
-            const res = await fetch('../../routing.php?controller=ambiente&action=index', {
-                headers: { 'Accept': 'application/json' }
-            });
-            const ambientes = await res.json();
-            if (ambienteSelect) {
-                ambienteSelect.innerHTML = '<option value="">Seleccione ambiente...</option>';
-                ambientes.forEach(a => {
-                    const opt = document.createElement('option');
-                    opt.value = a.amb_id;
-                    opt.textContent = `${a.amb_id} - ${a.amb_nombre || 'Sin nombre'}`;
-                    ambienteSelect.appendChild(opt);
-                });
-            }
-        } catch (e) { console.error('Error cargando ambientes:', e); }
-    };
+    async handleFichaChange() {
+        const fichaSelector = document.getElementById('fichaSelector');
+        const fichId = fichaSelector ? fichaSelector.value : null;
 
-    // ── When ficha is selected ────────────────────────────────
-    fichaSelector.addEventListener('change', async () => {
-        const fichId = fichaSelector.value;
+        const addBtn = document.getElementById('addBtn');
+        const calendarEl = document.getElementById('calendar');
+        const placeholder = document.getElementById('calendarPlaceholder');
+
         if (!fichId) {
-            selectedFicha = null;
+            this.selectedFicha = null;
             if (addBtn) addBtn.disabled = true;
             if (calendarEl) calendarEl.style.display = 'none';
             if (placeholder) placeholder.style.display = '';
             return;
         }
 
-        selectedFicha = fichas.find(f => f.fich_id == fichId);
+        this.selectedFicha = this.fichas.find(f => f.fich_id == fichId);
         if (addBtn) addBtn.disabled = false;
         if (placeholder) placeholder.style.display = 'none';
         if (calendarEl) calendarEl.style.display = '';
 
-        // Load assignments for this ficha
-        await loadAsignacionesFicha(fichId);
+        await Promise.all([
+            this.loadAsignacionesFicha(fichId),
+            this.loadCompetenciasPrograma(),
+            this.loadHabilitaciones()
+        ]);
 
-        // Load competencias del programa de la ficha
-        const progId = selectedFicha.programa_prog_codigo || selectedFicha.programa_prog_id;
-        if (progId) {
-            await loadCompetenciasPrograma(progId);
-        }
+        this.initCalendar();
+    }
 
-        // Load habilitaciones for filtering instructors
-        await loadHabilitaciones();
-
-        initCalendar();
-    });
-
-    // ── Load assignments for a specific ficha ─────────────────
-    const loadAsignacionesFicha = async (fichId) => {
+    async loadAsignacionesFicha(fichId) {
         try {
             const res = await fetch('../../routing.php?controller=asignacion&action=index', {
                 headers: { 'Accept': 'application/json' }
             });
             const data = await res.json();
-            // Filter by ficha
-            allAsignaciones = (Array.isArray(data) ? data : []).filter(
+            this.allAsignaciones = (Array.isArray(data) ? data : []).filter(
                 a => a.ficha_fich_id == fichId || a.fich_id == fichId
             );
-            if (totalLabel) totalLabel.textContent = allAsignaciones.length;
+            const totalLabel = document.getElementById('totalAsignaciones');
+            if (totalLabel) totalLabel.textContent = this.allAsignaciones.length;
         } catch (e) {
-            console.error('Error cargando asignaciones:', e);
-            allAsignaciones = [];
+            console.error('Error:', e);
         }
-    };
+    }
 
-    // ── Load competencias del programa ────────────────────────
-    const loadCompetenciasPrograma = async (progId) => {
+    async loadCompetenciasPrograma() {
+        if (!this.selectedFicha) return;
+        const progId = this.selectedFicha.programa_prog_codigo || this.selectedFicha.programa_prog_id;
         try {
             const res = await fetch(`../../routing.php?controller=competencia_programa&action=getByPrograma&prog_id=${progId}`, {
                 headers: { 'Accept': 'application/json' }
             });
-            if (!res.ok) throw new Error('Error fetching competencies');
             const data = await res.json();
-            allCompetenciasPrograma = Array.isArray(data) ? data : [];
+            this.allCompetenciasPrograma = Array.isArray(data) ? data : [];
         } catch (e) {
-            console.error('Error cargando competencias:', e);
-            allCompetenciasPrograma = [];
+            console.error('Error:', e);
         }
-    };
+    }
 
-    // ── Load habilitaciones ───────────────────────────────────
-    const loadHabilitaciones = async () => {
+    async loadHabilitaciones() {
         try {
             const res = await fetch('../../routing.php?controller=instru_competencia&action=index', {
                 headers: { 'Accept': 'application/json' }
             });
-            if (!res.ok) throw new Error('Error fetching habilitaciones');
-            const data = await res.json();
-            allHabilitaciones = Array.isArray(data) ? data : [];
+            this.allHabilitaciones = await res.json();
         } catch (e) {
-            console.error('Error cargando habilitaciones:', e);
-            allHabilitaciones = [];
+            console.error('Error:', e);
         }
-    };
+    }
 
-    // ── Initialize FullCalendar ───────────────────────────────
-    const initCalendar = () => {
-        if (calendar) calendar.destroy();
+    initCalendar() {
+        const calendarEl = document.getElementById('calendar');
+        if (!calendarEl) return;
+        if (this.calendar) this.calendar.destroy();
 
-        const events = allAsignaciones.map((a, i) => ({
+        const events = this.allAsignaciones.map((a, i) => ({
             id: a.asig_id,
             title: `${a.comp_nombre_corto || 'Comp.'} — ${a.inst_nombres || ''} ${a.inst_apellidos || ''}`,
             start: a.asig_fecha_ini,
             end: a.asig_fecha_fin,
-            backgroundColor: getColor(i),
+            backgroundColor: this.COLORS[i % this.COLORS.length],
             extendedProps: a
         }));
 
-        calendar = new FullCalendar.Calendar(calendarEl, {
+        this.calendar = new FullCalendar.Calendar(calendarEl, {
             locale: 'es',
             initialView: 'dayGridMonth',
             headerToolbar: {
@@ -239,29 +248,19 @@ document.addEventListener('DOMContentLoaded', () => {
             },
             events: events,
             selectable: true,
-            select: (info) => {
-                // When clicking a date range, prefill the dates in the modal
-                openModal(null, info.startStr, info.endStr);
-            },
-            eventClick: (info) => {
-                // Navigate to detail view
-                window.location.href = `ver.php?id=${info.event.id}`;
-            },
+            select: (info) => this.openModal(null, info.startStr, info.endStr),
+            eventClick: (info) => window.location.href = `ver.php?id=${info.event.id}`,
             height: 'auto',
-            buttonText: {
-                today: 'Hoy',
-                month: 'Mes',
-                week: 'Semana',
-                list: 'Lista'
-            }
+            buttonText: { today: 'Hoy', month: 'Mes', week: 'Semana', list: 'Lista' }
         });
 
-        calendar.render();
-    };
+        this.calendar.render();
+    }
 
-    // ── Open modal with smart filtering ───────────────────────
-    const openModal = (asig = null, startDate = null, endDate = null) => {
-        if (!form || !selectedFicha) return;
+    openModal(asig = null, startDate = null, endDate = null) {
+        const modal = document.getElementById('asignacionModal');
+        const form = document.getElementById('asignacionForm');
+        if (!form || !this.selectedFicha) return;
         form.reset();
 
         const modalTitle = document.getElementById('modalTitle');
@@ -270,23 +269,21 @@ document.addEventListener('DOMContentLoaded', () => {
         const fichaDisplay = document.getElementById('fichaDisplay');
         const fechaIni = document.getElementById('asig_fecha_ini');
         const fechaFin = document.getElementById('asig_fecha_fin');
+        const competenciaSelect = document.getElementById('competencia_id');
+        const instructorSelect = document.getElementById('instructor_id');
 
-        // Pre-fill ficha
-        if (fichaInput) fichaInput.value = selectedFicha.fich_id;
-        if (fichaDisplay) fichaDisplay.value = `Ficha ${selectedFicha.fich_id} — ${selectedFicha.prog_denominacion || selectedFicha.titpro_nombre || ''}`;
-
-        // Pre-fill dates from calendar selection
+        if (fichaInput) fichaInput.value = this.selectedFicha.fich_id;
+        if (fichaDisplay) fichaDisplay.value = `Ficha ${this.selectedFicha.fich_id} — ${this.selectedFicha.prog_denominacion || this.selectedFicha.titpro_nombre || ''}`;
         if (startDate && fechaIni) fechaIni.value = startDate;
         if (endDate && fechaFin) fechaFin.value = endDate;
 
-        // Filter competencias: only those NOT already assigned to this ficha
-        const assignedCompIds = allAsignaciones.map(a => a.competencia_comp_id);
-        const availableComps = allCompetenciasPrograma.filter(c => !assignedCompIds.includes(c.comp_id));
+        const assignedCompIds = this.allAsignaciones.map(a => a.competencia_comp_id);
+        const availableComps = this.allCompetenciasPrograma.filter(c => !assignedCompIds.includes(c.comp_id));
 
         if (competenciaSelect) {
             competenciaSelect.innerHTML = '<option value="">Seleccione competencia...</option>';
             if (availableComps.length === 0) {
-                competenciaSelect.innerHTML = '<option value="">Todas las competencias ya están asignadas</option>';
+                competenciaSelect.innerHTML = '<option value="">Todas las competencias asignadas</option>';
             } else {
                 availableComps.forEach(c => {
                     const opt = document.createElement('option');
@@ -297,7 +294,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // Reset instructor select
         if (instructorSelect) {
             instructorSelect.innerHTML = '<option value="">Primero seleccione competencia...</option>';
             instructorSelect.disabled = true;
@@ -312,138 +308,119 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (modal) modal.classList.add('show');
-    };
-
-    // ── Cascade: Competencia → Instructores habilitados ───────
-    if (competenciaSelect) {
-        competenciaSelect.addEventListener('change', () => {
-            const compId = competenciaSelect.value;
-            if (!instructorSelect) return;
-
-            if (!compId) {
-                instructorSelect.innerHTML = '<option value="">Primero seleccione competencia...</option>';
-                instructorSelect.disabled = true;
-                return;
-            }
-
-            const progId = selectedFicha.programa_prog_codigo || selectedFicha.programa_prog_id;
-
-            // Filter habilitaciones: instructors who are habilitated for this competencia+programa
-            const habilitados = allHabilitaciones.filter(h =>
-                h.competxprograma_competencia_comp_id == compId &&
-                h.competxprograma_programa_prog_id == progId
-            );
-
-            instructorSelect.innerHTML = '<option value="">Seleccione instructor...</option>';
-            if (habilitados.length === 0) {
-                instructorSelect.innerHTML = '<option value="">No hay instructores habilitados para esta competencia</option>';
-                instructorSelect.disabled = true;
-            } else {
-                // Remove duplicates (same instructor could have multiple habilitaciones)
-                const seen = new Set();
-                habilitados.forEach(h => {
-                    if (!seen.has(h.instructor_inst_id)) {
-                        seen.add(h.instructor_inst_id);
-                        const opt = document.createElement('option');
-                        opt.value = h.instructor_inst_id;
-                        opt.textContent = `${h.inst_nombres || ''} ${h.inst_apellidos || ''}`;
-                        instructorSelect.appendChild(opt);
-                    }
-                });
-                instructorSelect.disabled = false;
-            }
-        });
     }
 
-    // ── Modal controls ────────────────────────────────────────
-    const closeModal = () => { if (modal) modal.classList.remove('show'); };
-    if (addBtn) addBtn.onclick = () => openModal();
-    if (closeBtn) closeBtn.onclick = closeModal;
-    if (cancelBtn) cancelBtn.onclick = closeModal;
+    closeModal() {
+        const modal = document.getElementById('asignacionModal');
+        if (modal) modal.classList.remove('show');
+    }
 
-    // ── Form submit ───────────────────────────────────────────
-    if (form) {
-        form.onsubmit = async (e) => {
-            e.preventDefault();
-            const id = document.getElementById('asig_id').value;
-            const action = id ? 'update' : 'store';
+    handleCompetenciaChange() {
+        const competenciaSelect = document.getElementById('competencia_id');
+        const instructorSelect = document.getElementById('instructor_id');
+        const compId = competenciaSelect.value;
 
-            const data = {
-                ficha_fich_id: document.getElementById('modal_ficha_id').value,
-                competencia_comp_id: competenciaSelect.value,
-                instructor_inst_id: instructorSelect.value,
-                ambiente_amb_id: ambienteSelect.value,
-                asig_fecha_ini: document.getElementById('asig_fecha_ini').value,
-                asig_fecha_fin: document.getElementById('asig_fecha_fin').value
-            };
-            if (id) data.asig_id = id;
+        if (!instructorSelect) return;
 
-            // Clear previous alerts
-            const conflictAlert = document.getElementById('modalConflictAlert');
-            if (conflictAlert) {
-                conflictAlert.classList.add('hidden');
-                conflictAlert.innerHTML = '';
-            }
+        if (!compId) {
+            instructorSelect.innerHTML = '<option value="">Primero seleccione competencia...</option>';
+            instructorSelect.disabled = true;
+            return;
+        }
 
-            try {
-                const res = await fetch(`../../routing.php?controller=asignacion&action=${action}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                    body: JSON.stringify(data)
-                });
-                const result = await res.json();
+        const progId = this.selectedFicha.programa_prog_codigo || this.selectedFicha.programa_prog_id;
+        const habilitados = this.allHabilitaciones.filter(h =>
+            h.competxprograma_competencia_comp_id == compId &&
+            h.competxprograma_programa_prog_id == progId
+        );
 
-                if (res.ok) {
-                    NotificationService.showSuccess(id ? '¡Asignación actualizada correctamente!' : '¡Asignación registrada correctamente!');
-                    closeModal();
-                    // Reload ficha data
-                    await loadAsignacionesFicha(selectedFicha.fich_id);
-                    initCalendar();
-                } else if (res.status === 409) {
-                    const conflicts = result.details || [];
-                    const types = new Set();
-                    conflicts.forEach(c => c.conflict_type.forEach(t => types.add(t === 'instructor' ? 'el Instructor' : 'el Ambiente')));
-                    const typeMsg = Array.from(types).join(' y ');
-                    const fichas = conflicts.map(c => `Ficha ${c.fich_id}`).join(', ');
-
-                    if (conflictAlert) {
-                        conflictAlert.classList.remove('hidden');
-                        conflictAlert.innerHTML = `
-                            <div class="p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg">
-                                <div class="flex items-center gap-2 mb-1">
-                                    <ion-icon name="warning" class="text-red-500"></ion-icon>
-                                    <span class="text-sm font-bold text-red-700">Cruce Detectado</span>
-                                </div>
-                                <p class="text-xs text-red-600">
-                                    ${typeMsg} ya están asignados a <strong>${fichas}</strong> en esas fechas.
-                                </p>
-                            </div>
-                        `;
-                    }
-                } else if (res.status === 400) {
-                    if (conflictAlert) {
-                        conflictAlert.classList.remove('hidden');
-                        conflictAlert.innerHTML = `
-                            <div class="p-3 bg-amber-50 border-l-4 border-amber-500 rounded-r-lg">
-                                <div class="flex items-center gap-2 mb-1">
-                                    <ion-icon name="alert-circle" class="text-amber-500"></ion-icon>
-                                    <span class="text-sm font-bold text-amber-700">Campo Requerido</span>
-                                </div>
-                                <p class="text-xs text-amber-600">${result.error}</p>
-                            </div>
-                        `;
-                    }
-                } else {
-                    NotificationService.showError('No se pudo guardar la asignación. Revisa los campos e intenta de nuevo.');
+        instructorSelect.innerHTML = '<option value="">Seleccione instructor...</option>';
+        if (habilitados.length === 0) {
+            instructorSelect.innerHTML = '<option value="">Sin instructores habilitados</option>';
+            instructorSelect.disabled = true;
+        } else {
+            const seen = new Set();
+            habilitados.forEach(h => {
+                if (!seen.has(h.instructor_inst_id)) {
+                    seen.add(h.instructor_inst_id);
+                    const opt = document.createElement('option');
+                    opt.value = h.instructor_inst_id;
+                    opt.textContent = `${h.inst_nombres} ${h.inst_apellidos}`;
+                    instructorSelect.appendChild(opt);
                 }
-            } catch (error) {
-                console.error('Error al guardar:', error);
-                NotificationService.showError('No pudimos conectar con el servidor. Intenta de nuevo.');
-            }
-        };
+            });
+            instructorSelect.disabled = false;
+        }
     }
 
-    // ── Init ──────────────────────────────────────────────────
-    loadFichas();
-    loadAmbientes();
+    async handleFormSubmit(e) {
+        e.preventDefault();
+        const id = document.getElementById('asig_id').value;
+        const action = id ? 'update' : 'store';
+
+        const data = {
+            ficha_fich_id: document.getElementById('modal_ficha_id').value,
+            competencia_comp_id: document.getElementById('competencia_id').value,
+            instructor_inst_id: document.getElementById('instructor_id').value,
+            ambiente_amb_id: document.getElementById('ambiente_id').value,
+            asig_fecha_ini: document.getElementById('asig_fecha_ini').value,
+            asig_fecha_fin: document.getElementById('asig_fecha_fin').value
+        };
+        if (id) data.asig_id = id;
+
+        const conflictAlert = document.getElementById('modalConflictAlert');
+        if (conflictAlert) {
+            conflictAlert.classList.add('hidden');
+            conflictAlert.innerHTML = '';
+        }
+
+        try {
+            const res = await fetch(`../../routing.php?controller=asignacion&action=${action}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                body: JSON.stringify(data)
+            });
+            const result = await res.json();
+
+            if (res.ok) {
+                NotificationService.showSuccess(id ? '¡Asignación actualizada!' : '¡Asignación registrada!');
+                this.closeModal();
+                await this.loadAsignacionesFicha(this.selectedFicha.fich_id);
+                this.initCalendar();
+            } else if (res.status === 409) {
+                this.showConflictAlert(result.details || []);
+            } else {
+                NotificationService.showError(result.error || 'Error al guardar.');
+            }
+        } catch (error) {
+            NotificationService.showError('Error de conexión.');
+        }
+    }
+
+    showConflictAlert(conflicts) {
+        const conflictAlert = document.getElementById('modalConflictAlert');
+        if (!conflictAlert) return;
+
+        const types = new Set();
+        conflicts.forEach(c => c.conflict_type.forEach(t => types.add(t === 'instructor' ? 'el Instructor' : 'el Ambiente')));
+        const typeMsg = Array.from(types).join(' y ');
+        const fichasStr = conflicts.map(c => `Ficha ${c.fich_id}`).join(', ');
+
+        conflictAlert.classList.remove('hidden');
+        conflictAlert.innerHTML = `
+            <div class="p-4 bg-red-50 border-l-4 border-red-500 rounded-r-lg shadow-sm">
+                <div class="flex items-center gap-2 mb-2">
+                    <ion-icon src="../../assets/ionicons/warning-outline.svg" class="text-red-500 text-xl"></ion-icon>
+                    <span class="text-sm font-bold text-red-700">Cruce Detectado</span>
+                </div>
+                <p class="text-xs text-red-600 leading-relaxed">
+                    ${typeMsg} ya están asignados a <strong>${fichasStr}</strong> en este rango de fechas.
+                </p>
+            </div>
+        `;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    window.asignacionManager = new AsignacionManager();
 });

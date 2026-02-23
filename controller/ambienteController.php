@@ -38,6 +38,7 @@ class AmbienteController
 
     public function store()
     {
+        $id = $_POST['amb_id'] ?? null;
         $nombre = $_POST['amb_nombre'] ?? null;
         $sede = $_POST['sede_sede_id'] ?? null;
 
@@ -46,6 +47,7 @@ class AmbienteController
             return;
         }
 
+        $this->model->setAmbId($id);
         $this->model->setAmbnombre($nombre);
         $this->model->setSedeSedeId($sede);
 
@@ -89,6 +91,18 @@ class AmbienteController
         } else {
             $this->sendResponse(['error' => 'Error al eliminar (puede tener datos asociados)'], 500);
         }
+    }
+
+    public function getProgramacion()
+    {
+        $id = $_GET['id'] ?? null;
+        if (!$id) {
+            $this->sendResponse(['error' => 'ID de ambiente requerido'], 400);
+        }
+
+        $this->model->setAmbId($id);
+        $programacion = $this->model->getProgramacion();
+        $this->sendResponse($programacion);
     }
 
     private function sendResponse($data, $statusCode = 200)

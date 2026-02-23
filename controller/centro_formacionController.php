@@ -70,6 +70,30 @@ class CentroFormacionController
         }
     }
 
+    public function getInstructores()
+    {
+        $id = $_GET['id'] ?? null;
+        if (!$id) {
+            $this->sendResponse(['error' => 'ID requerido'], 400);
+            return;
+        }
+        $model = new CentroFormacionModel($id);
+        $instructores = $model->getInstructores();
+        $this->sendResponse($instructores);
+    }
+
+    public function getCoordinaciones()
+    {
+        $id = $_GET['id'] ?? null;
+        if (!$id) {
+            $this->sendResponse(['error' => 'ID requerido'], 400);
+            return;
+        }
+        $model = new CentroFormacionModel($id);
+        $coordinaciones = $model->getCoordinaciones();
+        $this->sendResponse($coordinaciones);
+    }
+
     private function sendResponse($data, $status = 200)
     {
         http_response_code($status);

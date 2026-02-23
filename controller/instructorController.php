@@ -109,6 +109,27 @@ class instructorController
         );
 
         if ($model->update()) {
+            // Actualizar habilitaciones (competencias seleccionadas)
+            $competencias = $_POST['competencias'] ?? [];
+            $programaId = $_POST['programa_id'] ?? null;
+
+            require_once dirname(__DIR__) . '/model/InstruCompetenciaModel.php';
+            $instruCompModel = new InstruCompetenciaModel();
+
+            // Limpiar habilitaciones previas antes de insertar las nuevas (opción simple)
+            $instruCompModel->deleteByInstructor($id);
+
+            if (!empty($competencias) && $programaId) {
+                $vigencia = date('Y') + 1;
+                foreach ($competencias as $compId) {
+                    $instruCompModel->setInstructorInstId($id);
+                    $instruCompModel->setCompetxprogramaProgramaProgId($programaId);
+                    $instruCompModel->setCompetxprogramaCompetenciaCompId($compId);
+                    $instruCompModel->setInscompVigencia($vigencia);
+                    $instruCompModel->create();
+                }
+            }
+
             return $this->sendResponse(['message' => 'Instructor actualizado correctamente']);
         }
         return $this->sendResponse(['error' => 'Error al actualizar el instructor'], 500);

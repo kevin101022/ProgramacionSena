@@ -1,5 +1,5 @@
 <?php
-$pageTitle = 'Editar Competencia - Gestión de Transversales';
+$pageTitle = 'Editar Competencia - Programaciones';
 $activeNavItem = 'competencias';
 require_once '../layouts/head.php';
 require_once '../layouts/sidebar.php';

@@ -1,0 +1,7 @@
+[2026-02-23 02:43:47] {
+    "error": "Error interno en el servidor",
+    "details": "SQLSTATE[42S22]: Column not found: 1054 Unknown column 'tp.titpro_nivel' in 'field list'",
+    "file": "C:\\xampp\\htdocs\\MVC\\ProgramacionSena\\model\\SedeModel.php",
+    "line": 159,
+    "trace": "#0 C:\\xampp\\htdocs\\MVC\\ProgramacionSena\\model\\SedeModel.php(159): PDOStatement->execute(Array)\n#1 C:\\xampp\\htdocs\\MVC\\ProgramacionSena\\controller\\sedeController.php(175): SedeModel->getProgramasBySede()\n#2 C:\\xampp\\htdocs\\MVC\\ProgramacionSena\\routing.php(150): SedeController->getProgramas('1')\n#3 {main}"
+}
