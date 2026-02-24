@@ -1,0 +1,7 @@
+/* Login specific styles extracted from Tailwind configuration */
+body {
+    font-family: 'Manrope', sans-serif;
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}

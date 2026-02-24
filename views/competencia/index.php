@@ -2,6 +2,13 @@
 $pageTitle = 'Competencias - Programaciones';
 $activeNavItem = 'competencias';
 require_once '../layouts/head.php';
+
+// Prevent instructors from accessing the Coordinator's Competencia View
+if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'instructor') {
+    header("Location: instructor_index.php");
+    exit;
+}
+
 require_once '../layouts/sidebar.php';
 ?>
 

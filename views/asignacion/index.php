@@ -2,6 +2,12 @@
 $pageTitle = "Asignaciones Académicas - SENA";
 $activeNavItem = 'asignaciones';
 require_once '../layouts/head.php';
+
+// Prevent instructors from accessing the Coordinator's Assignment View
+if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'instructor') {
+    header("Location: instructor_index.php");
+    exit;
+}
 ?>
 <!-- FullCalendar CDN -->
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.css" rel="stylesheet">

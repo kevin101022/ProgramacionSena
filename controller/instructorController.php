@@ -6,8 +6,17 @@ class instructorController
 {
     public function index()
     {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
         $model = new InstructorModel();
-        $instructores = $model->readAll();
+
+        if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'coordinador' && isset($_SESSION['centro_id'])) {
+            $instructores = $model->readByCentro($_SESSION['centro_id']);
+        } else {
+            $instructores = $model->readAll();
+        }
+
         return $this->sendResponse($instructores);
     }
 
@@ -45,21 +54,23 @@ class instructorController
         if ($id) {
             // Guardar habilitaciones (competencias seleccionadas)
             $competencias = $_POST['competencias'] ?? [];
-            $programaId = $_POST['programa_id'] ?? null;
 
-            if (!empty($competencias) && $programaId) {
+            if (!empty($competencias)) {
                 require_once dirname(__DIR__) . '/model/InstruCompetenciaModel.php';
-                $vigencia = date('Y') + 1; // Vigencia por defecto: año siguiente
+                $vigencia = (date('Y') + 1) . '-12-31'; // Vigencia por defecto: 31 dic del año siguiente
 
-                foreach ($competencias as $compId) {
-                    $instruCompModel = new InstruCompetenciaModel(
-                        null,
-                        $id, // Nuevo ID del instructor
-                        $programaId,
-                        $compId,
-                        $vigencia
-                    );
-                    $instruCompModel->create();
+                foreach ($competencias as $compData) {
+                    if (strpos($compData, '|') !== false) {
+                        list($progId, $compId) = explode('|', $compData);
+                        $instruCompModel = new InstruCompetenciaModel(
+                            null,
+                            $id, // Nuevo ID del instructor
+                            $progId,
+                            $compId,
+                            $vigencia
+                        );
+                        $instruCompModel->create();
+                    }
                 }
             }
 
@@ -109,9 +120,8 @@ class instructorController
         );
 
         if ($model->update()) {
-            // Actualizar habilitaciones (competencias seleccionadas)
+            // Actualizar habilitaciones (competencias seleccionadas multi-programa)
             $competencias = $_POST['competencias'] ?? [];
-            $programaId = $_POST['programa_id'] ?? null;
 
             require_once dirname(__DIR__) . '/model/InstruCompetenciaModel.php';
             $instruCompModel = new InstruCompetenciaModel();
@@ -119,14 +129,17 @@ class instructorController
             // Limpiar habilitaciones previas antes de insertar las nuevas (opción simple)
             $instruCompModel->deleteByInstructor($id);
 
-            if (!empty($competencias) && $programaId) {
-                $vigencia = date('Y') + 1;
-                foreach ($competencias as $compId) {
-                    $instruCompModel->setInstructorInstId($id);
-                    $instruCompModel->setCompetxprogramaProgramaProgId($programaId);
-                    $instruCompModel->setCompetxprogramaCompetenciaCompId($compId);
-                    $instruCompModel->setInscompVigencia($vigencia);
-                    $instruCompModel->create();
+            if (!empty($competencias)) {
+                $vigencia = (date('Y') + 1) . '-12-31';
+                foreach ($competencias as $compData) {
+                    if (strpos($compData, '|') !== false) {
+                        list($progId, $compId) = explode('|', $compData);
+                        $instruCompModel->setInstructorInstId($id);
+                        $instruCompModel->setCompetxprogramaProgramaProgId($progId);
+                        $instruCompModel->setCompetxprogramaCompetenciaCompId($compId);
+                        $instruCompModel->setInscompVigencia($vigencia);
+                        $instruCompModel->create();
+                    }
                 }
             }
 

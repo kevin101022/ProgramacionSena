@@ -161,6 +161,20 @@ class InstructorModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function readByCentro($cent_id)
+    {
+        $sql = "SELECT i.inst_id, i.inst_nombres, i.inst_apellidos, i.inst_correo, i.inst_telefono, 
+                       i.CENTRO_FORMACION_cent_id as cent_id, i.inst_password,
+                       c.cent_nombre 
+                FROM INSTRUCTOR i 
+                LEFT JOIN CENTRO_FORMACION c ON i.CENTRO_FORMACION_cent_id = c.cent_id 
+                WHERE i.CENTRO_FORMACION_cent_id = :cent_id
+                ORDER BY i.inst_id DESC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':cent_id' => $cent_id]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
     public function update()
     {
         try {

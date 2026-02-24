@@ -116,6 +116,13 @@ Al registrar una hora (ej: 7:00 AM a 10:00 AM), el sistema realiza un **Escaneo 
 - **Empalmes:** Se permite que una clase termine a las 9:00 y la siguiente empiece a las 9:00.
 - **Alcance Global:** La validación revisa todas las asignaciones existentes, no solo la actual.
 
+### 🏢 Control de Acceso y Estructura Organizacional
+El sistema está modelado para respetar la estructura física de los centros SENA bajo un modelo de accesos estrictos:
+1. **Coordinaciones por Defecto:** Al inicializar la base de datos, el sistema se despliega con **4 coordinaciones fijas** pre-ancladas a sus respectivos *Centros de Formación* (Industria y Comercio, Industria, Comercio, y Moda/Turismo/Tecnología).
+2. **Auto-registro Inteligente (Coordinadores):** Un coordinador no digita su centro de formación. Selecciona una de las coordinaciones vacantes de la base de datos, heredando **automáticamente** el perfil de su `Centro de Formación` asociado. Esto evita inconsistencias de tipado y relaciona directamente al usuario con su contexto.
+3. **Visibilidad Restringida (Aislamiento de Información):** Al ingresar al sistema, a los Coordinadores **solo se les listan los Instructores que pertenezcan a su mismo Centro de Formación**, ocultando por diseño toda la red de instructores de otras sedes del país.
+4. **Vistas Limitadas para Instructores (RBAC):** El sistema cuenta con Control de Acceso Basado en Roles. Si un Instructor inicia sesión, es redirigido a un entorno de **solo lectura** ("Mi Espacio"). Solo pueden visualizar las Asignaciones y Competencias que les corresponden. Cualquier intento de un Instructor por acceder a vistas de Coordinador o alterar datos a través del enrutador (`routing.php`) es bloqueado automáticamente devolviendo un error HTTP 403 (Acceso Denegado).
+
 ---
 
 ## 3. Estructura y Conceptos Técnicos

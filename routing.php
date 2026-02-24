@@ -37,6 +37,7 @@ $controllers = array(
     'instructor' => ['index', 'show', 'showByCentro', 'store', 'update', 'destroy', 'getCentros', 'getAsignaciones', 'getCompetencias'],
     'instru_competencia' => ['index', 'show', 'store', 'update', 'destroy'],
     'reporte' => ['instructoresPorCentro', 'fichasActivasPorPrograma', 'asignacionesPorInstructor', 'competenciasPorPrograma'],
+    'login' => ['showLogin', 'login', 'logout', 'registroCoordinador', 'guardarCoordinador'],
     // Agrega más controladores y acciones aquí si lo necesitas
 );
 
@@ -57,6 +58,32 @@ try {
     if (!file_exists($controllerFile)) {
         throw new Exception("Controlador no encontrado: $controller");
     }
+
+    // --- ROLE-BASED ACCESS CONTROL (RBAC) ---
+    if (session_status() === PHP_SESSION_NONE) {
+        session_start();
+    }
+
+    // Si no es el controlador de login, verificamos permisos
+    if ($controller !== 'login') {
+        if (!isset($_SESSION['rol'])) {
+            http_response_code(401);
+            throw new Exception("No autorizado. Por favor, inicie sesión.");
+        }
+
+        // Restricciones estrictas para Instructores
+        if ($_SESSION['rol'] === 'instructor') {
+            $allowedForInstructor = [
+                'instructor' => ['getAsignaciones', 'getCompetencias']
+            ];
+
+            if (!isset($allowedForInstructor[$controller]) || !in_array($action, $allowedForInstructor[$controller])) {
+                http_response_code(403);
+                throw new Exception("Acceso denegado: Permisos limitados para Instructores.");
+            }
+        }
+    }
+    // --- END RBAC ---
 
     require_once($controllerFile);
 
@@ -118,6 +145,10 @@ try {
             break;
         case 'reporte':
             $controllerObj = new ReporteController();
+            break;
+        case 'login':
+            require_once('model/LoginModel.php');
+            $controllerObj = new LoginController();
             break;
         default:
             throw new Exception("Controlador no soportado: $controller");

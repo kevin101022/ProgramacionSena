@@ -311,11 +311,10 @@ progress('INSTRUCTOR', count($instructores), $ins);
 
 // 9. COORDINACION
 $coordinaciones = [
-    ['coord_id' => 1, 'coord_descripcion' => 'Coordinación de Tecnologías de la Información',  'CENTRO_FORMACION_cent_id' => 1, 'coord_nombre_coordinador' => 'Pedro Luis Gómez',       'coord_correo' => 'pedro.gomez@sena.edu.co',    'coord_password' => password_hash('Coord2025', PASSWORD_DEFAULT)],
-    ['coord_id' => 2, 'coord_descripcion' => 'Coordinación de Gestión Administrativa',         'CENTRO_FORMACION_cent_id' => 2, 'coord_nombre_coordinador' => 'Sandra Milena Arias',     'coord_correo' => 'sandra.arias@sena.edu.co',   'coord_password' => password_hash('Coord2025', PASSWORD_DEFAULT)],
-    ['coord_id' => 3, 'coord_descripcion' => 'Coordinación Agroindustrial',                    'CENTRO_FORMACION_cent_id' => 3, 'coord_nombre_coordinador' => 'Julio César Ramírez',     'coord_correo' => 'julio.ramirez@sena.edu.co',  'coord_password' => password_hash('Coord2025', PASSWORD_DEFAULT)],
-    ['coord_id' => 4, 'coord_descripcion' => 'Coordinación de Comercio y Servicios',           'CENTRO_FORMACION_cent_id' => 4, 'coord_nombre_coordinador' => 'Ana María Velásquez',     'coord_correo' => 'ana.velasquez@sena.edu.co',  'coord_password' => password_hash('Coord2025', PASSWORD_DEFAULT)],
-    ['coord_id' => 5, 'coord_descripcion' => 'Coordinación de Innovación y Emprendimiento',    'CENTRO_FORMACION_cent_id' => 5, 'coord_nombre_coordinador' => 'Fernando José Betancur',  'coord_correo' => 'fernando.betancur@sena.edu.co', 'coord_password' => password_hash('Coord2025', PASSWORD_DEFAULT)],
+    ['coord_id' => 1, 'coord_descripcion' => 'Coordinación Industria y Comercio',           'CENTRO_FORMACION_cent_id' => 1, 'coord_nombre_coordinador' => 'Por Asignar', 'coord_correo' => 'indcom_std@sena.edu.co', 'coord_password' => ''],
+    ['coord_id' => 2, 'coord_descripcion' => 'Coordinación Industria',                      'CENTRO_FORMACION_cent_id' => 2, 'coord_nombre_coordinador' => 'Por Asignar', 'coord_correo' => 'ind_std@sena.edu.co',    'coord_password' => ''],
+    ['coord_id' => 3, 'coord_descripcion' => 'Coordinación Comercio',                       'CENTRO_FORMACION_cent_id' => 3, 'coord_nombre_coordinador' => 'Por Asignar', 'coord_correo' => 'com_std@sena.edu.co',    'coord_password' => ''],
+    ['coord_id' => 4, 'coord_descripcion' => 'Coordinación Moda, Turismo y Tecnología',     'CENTRO_FORMACION_cent_id' => 4, 'coord_nombre_coordinador' => 'Por Asignar', 'coord_correo' => 'mod_std@sena.edu.co',    'coord_password' => ''],
 ];
 $ins = 0;
 foreach ($coordinaciones as $row) {
@@ -333,8 +332,8 @@ $fichas = [
     ['fich_id' => 2760135, 'PROGRAMA_prog_id' => 122317, 'INSTRUCTOR_inst_id_lider' => 1006, 'fich_jornada' => 'Tarde',   'COORDINACION_coord_id' => 3, 'fich_fecha_ini_lectiva' => '2025-05-01', 'fich_fecha_fin_lectiva' => '2026-03-01'],
     ['fich_id' => 2871256, 'PROGRAMA_prog_id' => 223219, 'INSTRUCTOR_inst_id_lider' => 1007, 'fich_jornada' => 'Mañana',  'COORDINACION_coord_id' => 4, 'fich_fecha_ini_lectiva' => '2025-01-15', 'fich_fecha_fin_lectiva' => '2026-07-15'],
     ['fich_id' => 2871257, 'PROGRAMA_prog_id' => 228106, 'INSTRUCTOR_inst_id_lider' => 1008, 'fich_jornada' => 'Noche',   'COORDINACION_coord_id' => 4, 'fich_fecha_ini_lectiva' => '2025-06-01', 'fich_fecha_fin_lectiva' => '2027-01-01'],
-    ['fich_id' => 2982378, 'PROGRAMA_prog_id' => 524232, 'INSTRUCTOR_inst_id_lider' => 1009, 'fich_jornada' => 'Mañana',  'COORDINACION_coord_id' => 5, 'fich_fecha_ini_lectiva' => '2025-03-01', 'fich_fecha_fin_lectiva' => '2026-06-01'],
-    ['fich_id' => 2982379, 'PROGRAMA_prog_id' => 921310, 'INSTRUCTOR_inst_id_lider' => 1010, 'fich_jornada' => 'Virtual', 'COORDINACION_coord_id' => 5, 'fich_fecha_ini_lectiva' => '2025-04-15', 'fich_fecha_fin_lectiva' => '2025-10-15'],
+    ['fich_id' => 2982378, 'PROGRAMA_prog_id' => 524232, 'INSTRUCTOR_inst_id_lider' => 1009, 'fich_jornada' => 'Mañana',  'COORDINACION_coord_id' => 1, 'fich_fecha_ini_lectiva' => '2025-03-01', 'fich_fecha_fin_lectiva' => '2026-06-01'],
+    ['fich_id' => 2982379, 'PROGRAMA_prog_id' => 921310, 'INSTRUCTOR_inst_id_lider' => 1010, 'fich_jornada' => 'Virtual', 'COORDINACION_coord_id' => 2, 'fich_fecha_ini_lectiva' => '2025-04-15', 'fich_fecha_fin_lectiva' => '2025-10-15'],
     ['fich_id' => 3001001, 'PROGRAMA_prog_id' => 228185, 'INSTRUCTOR_inst_id_lider' => 1011, 'fich_jornada' => 'Tarde',   'COORDINACION_coord_id' => 1, 'fich_fecha_ini_lectiva' => '2025-07-01', 'fich_fecha_fin_lectiva' => '2027-01-01'],
     ['fich_id' => 3001002, 'PROGRAMA_prog_id' => 217303, 'INSTRUCTOR_inst_id_lider' => 1012, 'fich_jornada' => 'Mañana',  'COORDINACION_coord_id' => 2, 'fich_fecha_ini_lectiva' => '2025-08-01', 'fich_fecha_fin_lectiva' => '2027-02-01'],
 ];
