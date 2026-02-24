@@ -27,6 +27,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
         document.getElementById('amb_id').value = data.amb_id;
         document.getElementById('amb_nombre').value = data.amb_nombre;
+        const tipoAmbienteSelect = document.getElementById('tipo_ambiente');
+        if (tipoAmbienteSelect) tipoAmbienteSelect.value = data.tipo_ambiente || 'Convencional';
         sedeSelect.value = data.sede_sede_id;
 
         document.getElementById('loadingState').style.display = 'none';

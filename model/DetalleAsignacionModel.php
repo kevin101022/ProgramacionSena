@@ -58,22 +58,57 @@ class DetalleAsignacionModel
         return $stmt->execute();
     }
 
-    public function checkTimeConflicts($asig_id, $hora_ini, $hora_fin, $detasig_id = null)
+    public function checkGlobalConflicts($asig_id, $hora_ini, $hora_fin, $detasig_id = null)
     {
-        // Detect overlapping slots WITHIN the same assignment period (for same ficha/instructor/ambiente)
-        $sql = "SELECT * FROM DETALLExASIGNACION 
-                WHERE ASIGNACION_asig_id = :asig_id 
-                AND (detasig_hora_ini < :hora_fin AND detasig_hora_fin > :hora_ini)";
+        // 1. Get current assignment info
+        $sqlAsig = "SELECT asig_fecha_ini, asig_fecha_fin, INSTRUCTOR_inst_id, AMBIENTE_amb_id, FICHA_fich_id 
+                    FROM ASIGNACION WHERE ASIG_ID = :asig_id";
+        $stmtAsig = $this->db->prepare($sqlAsig);
+        $stmtAsig->execute([':asig_id' => $asig_id]);
+        $current = $stmtAsig->fetch(PDO::FETCH_ASSOC);
+
+        if (!$current) return [];
+
+        // 2. Search for ANY detail that overlaps in:
+        // - Date Range (Assignment level)
+        // - Time Range (Detail level)
+        // - Resource (Instructor OR Environment OR Ficha)
+        $sql = "SELECT d.*, a.INSTRUCTOR_inst_id, a.AMBIENTE_amb_id, a.FICHA_fich_id, 
+                       i.inst_nombres, i.inst_apellidos, am.amb_nombre, f.fich_id as ficha_num
+                FROM DETALLExASIGNACION d
+                INNER JOIN ASIGNACION a ON d.ASIGNACION_asig_id = a.ASIG_ID
+                INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.inst_id
+                INNER JOIN AMBIENTE am ON a.AMBIENTE_amb_id = am.amb_id
+                INNER JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
+                WHERE (a.asig_fecha_ini <= :fecha_fin AND a.asig_fecha_fin >= :fecha_ini)
+                AND (d.detasig_hora_ini < :hora_fin AND d.detasig_hora_fin > :hora_ini)
+                AND (a.INSTRUCTOR_inst_id = :inst_id OR a.AMBIENTE_amb_id = :amb_id OR a.FICHA_fich_id = :fich_id)";
 
         if ($detasig_id) {
-            $sql .= " AND detasig_id != :det_id";
+            $sql .= " AND d.detasig_id != :det_id";
         }
 
         $stmt = $this->db->prepare($sql);
-        $params = [':asig_id' => $asig_id, ':hora_ini' => $hora_ini, ':hora_fin' => $hora_fin];
+        $params = [
+            ':fecha_ini' => $current['asig_fecha_ini'],
+            ':fecha_fin' => $current['asig_fecha_fin'],
+            ':hora_ini'  => $hora_ini,
+            ':hora_fin'  => $hora_fin,
+            ':inst_id'   => $current['INSTRUCTOR_inst_id'],
+            ':amb_id'    => $current['AMBIENTE_amb_id'],
+            ':fich_id'   => $current['FICHA_fich_id']
+        ];
         if ($detasig_id) $params[':det_id'] = $detasig_id;
 
         $stmt->execute($params);
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        return array_map(function ($row) use ($current) {
+            $row['conflict_type'] = [];
+            if ($row['INSTRUCTOR_inst_id'] == $current['INSTRUCTOR_inst_id']) $row['conflict_type'][] = 'instructor';
+            if ($row['AMBIENTE_amb_id'] == $current['AMBIENTE_amb_id']) $row['conflict_type'][] = 'ambiente';
+            if ($row['FICHA_fich_id'] == $current['FICHA_fich_id']) $row['conflict_type'][] = 'ficha';
+            return $row;
+        }, $results);
     }
 }

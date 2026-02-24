@@ -33,11 +33,23 @@ class DetalleAsignacionController
             }
         }
 
+        // 1. Coherencia cronológica
+        if ($data['detasig_hora_ini'] >= $data['detasig_hora_fin']) {
+            $this->sendResponse(['error' => 'La hora de inicio debe ser menor a la hora de fin'], 400);
+            return;
+        }
+
+        // 2. Horario Institucional (06:00 AM - 10:00 PM)
+        if ($data['detasig_hora_ini'] < '06:00' || $data['detasig_hora_fin'] > '22:00') {
+            $this->sendResponse(['error' => 'El horario debe estar dentro de la jornada institucional (06:00 AM - 10:00 PM)'], 400);
+            return;
+        }
+
         try {
             $model = new DetalleAsignacionModel();
-            $conflicts = $model->checkTimeConflicts($data['asignacion_asig_id'], $data['detasig_hora_ini'], $data['detasig_hora_fin']);
+            $conflicts = $model->checkGlobalConflicts($data['asignacion_asig_id'], $data['detasig_hora_ini'], $data['detasig_hora_fin']);
             if (!empty($conflicts)) {
-                $this->sendResponse(['error' => 'Cruce de horario detectado con otra franja de esta misma asignación'], 409);
+                $this->sendResponse(['error' => 'Cruce de horario detectado', 'details' => $conflicts], 409);
                 return;
             }
 
@@ -87,11 +99,23 @@ class DetalleAsignacionController
             }
         }
 
+        // 1. Coherencia cronológica
+        if ($data['detasig_hora_ini'] >= $data['detasig_hora_fin']) {
+            $this->sendResponse(['error' => 'La hora de inicio debe ser menor a la hora de fin'], 400);
+            return;
+        }
+
+        // 2. Horario Institucional (06:00 AM - 10:00 PM)
+        if ($data['detasig_hora_ini'] < '06:00' || $data['detasig_hora_fin'] > '22:00') {
+            $this->sendResponse(['error' => 'El horario debe estar dentro de la jornada institucional (06:00 AM - 10:00 PM)'], 400);
+            return;
+        }
+
         try {
             $model = new DetalleAsignacionModel();
-            $conflicts = $model->checkTimeConflicts($data['asignacion_asig_id'], $data['detasig_hora_ini'], $data['detasig_hora_fin'], $data['detasig_id']);
+            $conflicts = $model->checkGlobalConflicts($data['asignacion_asig_id'], $data['detasig_hora_ini'], $data['detasig_hora_fin'], $data['detasig_id']);
             if (!empty($conflicts)) {
-                $this->sendResponse(['error' => 'Cruce de horario detectado con otra franja de esta misma asignación'], 409);
+                $this->sendResponse(['error' => 'Cruce de horario detectado', 'details' => $conflicts], 409);
                 return;
             }
 

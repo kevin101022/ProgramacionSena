@@ -117,11 +117,12 @@ body {
 
 .logo-text {
     font-weight: 700;
-    font-size: 16px;
-    color: var(--primary-green);
+    font-size: 20px;
+    color: var(--gray-900);
     line-height: 1.1;
     letter-spacing: -0.02em;
-    max-width: 120px;
+    max-width: 160px;
+    transition: all 0.3s ease;
 }
 
 .sidebar-nav {

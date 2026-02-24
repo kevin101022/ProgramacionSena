@@ -142,13 +142,29 @@ document.addEventListener('DOMContentLoaded', () => {
                 if (conflictAlert) {
                     conflictAlert.classList.remove('hidden');
                     const isConflict = response.status === 409;
+                    let errorMsg = result.error;
+
+                    if (isConflict && result.details && result.details.length > 0) {
+                        const types = new Set();
+                        result.details.forEach(c => {
+                            c.conflict_type.forEach(t => {
+                                if (t === 'instructor') types.add('el Instructor');
+                                if (t === 'ambiente') types.add('el Ambiente');
+                                if (t === 'ficha') types.add('la Ficha (¡Ya tiene clase!)');
+                            });
+                        });
+                        const typeMsg = Array.from(types).join(' y ');
+                        const detailsStr = result.details.map(c => `Asig. ${c.asignacion_asig_id} (Ficha ${c.ficha_num})`).join(', ');
+                        errorMsg = `${typeMsg} ya tienen cruce con: <strong>${detailsStr}</strong> en este horario.`;
+                    }
+
                     conflictAlert.innerHTML = `
                         <div class="p-3 ${isConflict ? 'bg-red-50 border-l-4 border-red-500' : 'bg-amber-50 border-l-4 border-amber-500'} rounded-r-lg">
                             <div class="flex items-center gap-2 mb-1">
                                 <ion-icon name="${isConflict ? 'warning' : 'alert-circle'}" class="${isConflict ? 'text-red-500' : 'text-amber-500'}"></ion-icon>
                                 <span class="text-sm font-bold ${isConflict ? 'text-red-700' : 'text-amber-700'}">${isConflict ? 'Cruce Detectado' : 'Validación'}</span>
                             </div>
-                            <p class="text-xs ${isConflict ? 'text-red-600' : 'text-amber-600'}">${result.error}</p>
+                            <p class="text-xs ${isConflict ? 'text-red-600' : 'text-amber-600'}">${errorMsg}</p>
                         </div>
                     `;
                 }

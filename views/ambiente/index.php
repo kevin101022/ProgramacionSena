@@ -70,9 +70,10 @@ require_once '../layouts/sidebar.php';
             <table class="data-table">
                 <thead>
                     <tr>
-                        <th class="w-20">ID</th>
+                        <th class="w-10">ID</th>
                         <th>Nombre Ambiente</th>
-                        <th>Sede</th>
+                        <th class="w-20">Tipo</th>
+                        <th class="w-20">Sede</th>
                     </tr>
                 </thead>
                 <tbody id="ambientesTableBody">

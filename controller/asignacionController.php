@@ -33,6 +33,13 @@ class AsignacionController
             }
         }
 
+        // Validación de fecha no pasada
+        $today = date('Y-m-d');
+        if ($data['asig_fecha_ini'] < $today) {
+            $this->sendResponse(['error' => 'La fecha de inicio no puede ser menor a la fecha actual (' . $today . ')'], 400);
+            return;
+        }
+
         // 1. Obtener programa de la ficha
         $fichaModel = new FichaModel($data['ficha_fich_id']);
         $fichaData = $fichaModel->read()[0] ?? null;
@@ -49,18 +56,18 @@ class AsignacionController
         }
 
         $model = new AsignacionModel();
-        // Check for conflicts
+        // Check for conflicts informational purposes or to log if needed
+        // But we ALLOW overlapping dates as requested, real block is in Details
         $conflicts = $model->checkConflicts(
             $data['instructor_inst_id'],
             $data['ambiente_amb_id'],
+            $data['ficha_fich_id'],
             $data['asig_fecha_ini'],
             $data['asig_fecha_fin']
         );
 
-        if (!empty($conflicts)) {
-            $this->sendResponse(['error' => 'Cruce de horarios detectado', 'details' => $conflicts], 409);
-            return;
-        }
+        // We could send a warning, but to allow flexibility we proceed
+        // The user specifically requested to allow two fichas in same ambiente different hours
 
         $model = new AsignacionModel(
             null,
@@ -122,6 +129,13 @@ class AsignacionController
             }
         }
 
+        // Validación de fecha no pasada
+        $today = date('Y-m-d');
+        if ($data['asig_fecha_ini'] < $today) {
+            $this->sendResponse(['error' => 'La fecha de inicio no puede ser menor a la fecha actual (' . $today . ')'], 400);
+            return;
+        }
+
         // 1. Obtener programa de la ficha
         $fichaModel = new FichaModel($data['ficha_fich_id']);
         $fichaData = $fichaModel->read()[0] ?? null;
@@ -138,19 +152,14 @@ class AsignacionController
         }
 
         $model = new AsignacionModel();
-        // Check for conflicts excluding current assignment
         $conflicts = $model->checkConflicts(
             $data['instructor_inst_id'],
             $data['ambiente_amb_id'],
+            $data['ficha_fich_id'],
             $data['asig_fecha_ini'],
             $data['asig_fecha_fin'],
             $data['asig_id']
         );
-
-        if (!empty($conflicts)) {
-            $this->sendResponse(['error' => 'Cruce de horarios detectado', 'details' => $conflicts], 409);
-            return;
-        }
 
         $model = new AsignacionModel(
             $data['asig_id'],
@@ -191,6 +200,7 @@ class AsignacionController
         $conflicts = $model->checkConflicts(
             $asig['instructor_inst_id'],
             $asig['ambiente_amb_id'],
+            $asig['ficha_fich_id'],
             $asig['asig_fecha_ini'],
             $asig['asig_fecha_fin'],
             $id

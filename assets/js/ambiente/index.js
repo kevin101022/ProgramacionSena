@@ -165,6 +165,14 @@ class AmbienteManager {
                     <td>
                         <div class="contact-cell">
                             <div class="contact-item">
+                                <ion-icon src="../../assets/ionicons/layers-outline.svg" class="text-sena-green"></ion-icon>
+                                <span>${a.tipo_ambiente || 'N/A'}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        <div class="contact-cell">
+                            <div class="contact-item">
                                 <ion-icon src="../../assets/ionicons/business-outline.svg" class="text-sena-green"></ion-icon>
                                 <span>${a.sede_nombre || 'N/A'}</span>
                             </div>

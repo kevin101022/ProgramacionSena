@@ -1,209 +1,162 @@
 # 🎓 Guía de Configuración: SENA Académico (MVC)
 
-Esta guía explica paso a paso cómo poner en marcha el proyecto, configurar la base de datos y entender la arquitectura de rutas y seguridad.
+Esta guía explica paso a paso cómo poner en marcha el proyecto, configurar la base de datos y entender la arquitectura de rutas y reglas de negocio.
 
----
+## 1. Configuración y Conexión de Base de Datos
 
-## 1. 📂 Estructura y Conceptos Clave
+El pilar fundamental del sistema es su conexión segura y flexible. Utilizamos un sistema basado en variables de entorno para proteger tus credenciales.
 
-### 🛡️ Seguridad con `.env` y `EnvLoader.php`
-- **¿Para qué sirve?**: En lugar de escribir tu contraseña dentro de los archivos de PHP (lo cual es inseguro), la guardamos en el archivo `.env`.
-- **EnvLoader.php**: Es el encargado de leer ese archivo y "prestarle" los datos a la clase `Conexion.php`. Si mañana cambias de contraseña, **solo editas el .env**.
-
-### 🛰️ Gestión de Rutas Maestras
-- El proyecto usa la función `dirname(__DIR__)` y cadenas de `dirname`.
-- **¿Por qué?**: Esto hace que las rutas sean **absolutas e inteligentes**. No importa si usas Laragon o XAMPP, el sistema siempre sabrá dónde están las carpetas `model`, `view` y `controller` sin perderse.
-
-### � Front Controller (routing.php)
-- **¿Qué es?**: Es el punto de entrada único de la aplicación.
-- **¿Cómo funciona?**: En lugar de llamar a cada archivo por separado, todas las peticiones van a `routing.php`. Él se encarga de llamar al controlador y la acción correcta de forma segura usando **Reflexión de PHP**.
-
----
-
-## 2. 🔌 Configuración del Servidor (Paso a Paso)
-
-Elige tu servidor local:
-
-### 🟢 Opción A: Laragon (Recomendado)
-1. **Activar Extensiones**:
-   - Click derecho en el botón de Laragon -> **PHP** -> **Extensiones**.
-   - Asegúrate de que `pdo_pgsql` y `pgsql` tengan el check (para PostgreSQL).
-   - O `pdo_mysql` y `mysqli` (para MySQL).
-2. **Carpeta**: Coloca el proyecto en `C:\laragon\www\MVC`.
-
-### 🟠 Opción B: XAMPP
-1. **Activar Extensiones**:
-   - Abre el **XAMPP Control Panel**.
-   - En la fila de Apache, haz clic en **Config** -> **PHP (php.ini)**.
-   - Busca (Ctrl + B) la línea `;extension=pdo_pgsql` y quítale el punto y coma `;` inicial. Haz lo mismo con `;extension=pgsql`.
-   - **Guarda el archivo** y dale a **Stop** y luego **Start** en Apache.
-2. **Carpeta**: Coloca el proyecto en `C:\xampp\htdocs\MVC`.
-
----
-
-## 3. 🗄️ Configuración de la Base de Datos (.env)
-
-Crea y abre en tu editor de código el archivo `.env` en la raíz y configura según tu motor:
-
-### 🐘 Usando PostgreSQL
+### 🛡️ Seguridad con `.env`
+No escribimos contraseñas dentro del código. Todo se configura en el archivo `.env` en la raíz del proyecto:
 ```env
-DB_DRIVER=pgsql
-DB_PORT=5432
+DB_DRIVER=pgsql      # O 'mysql'
+DB_PORT=5432         # 3306 para MySQL
 DB_HOST=localhost
-DB_NAME=transversal
+DB_NAME=programacionesSena
 DB_USER=postgres
-DB_PASS=tu_contraseña_de_postgres
+DB_PASS=tu_contraseña
 ```
+Requisitos del Servidor
 
-### 🐬 Usando MySQL
-```env
-DB_DRIVER=mysql
-DB_PORT=3306
-DB_HOST=localhost
-DB_NAME=transversal
-DB_USER=root
-DB_PASS=          # En XAMPP suele estar vacío
-```
+### En XAMPP
+1. Abre **php.ini** (desde el panel de XAMPP).
+2. Habilita las extensiones quitando el `;` inicial:
+    para postgresql
+   - `extension=pdo_pgsql`
+   - `extension=pgsql`
+    para mysql
+   - `extension=pdo_mysql`
+   - `extension=mysql`
+3. Reinicia Apache.
 
----
+### 🟢 En Laragon
+1. Click derecho -> PHP -> Extensiones.
+2. Asegúrate de marcar 
+    para postgresql
+   - `extension=pdo_pgsql`
+   - `extension=pgsql`
+    para mysql
+   - `extension=pdo_mysql`
+   - `extension=mysql`
+3. Reinicia Apache.
 
-## 5. 🔄 Configuración por Motor de Base de Datos
+### ⚙️ Clase de Conexión (`Conexion.php`)
+El sistema usa el patrón **Singleton** para la base de datos. Esto significa que solo se abre una conexión por cada petición.
 
-El proyecto es compatible con ambos motores. Aquí tienes el código de `Conexion.php` y la configuración de `.env` separada para cada uno.
-
----
-
-### 🐬 Opción A: Configuración para MySQL
-
-**1. Archivo `.env`:**
-```env
-DB_DRIVER=mysql
-DB_PORT=3306
-DB_HOST=localhost
-DB_NAME=transversal
-DB_USER=root
-DB_PASS=          # Vacío en XAMPP/Laragon por defecto
-```
-
-**2.copia y pega este Código en `mvc_programa/Conexion.php`:**
+#### 🐬 Opción A: Configuración para MySQL
+Si usas MySQL (XAMPP/Laragon por defecto), copia esto en `Conexion.php`:
 ```php
 <?php
-
-class Conexion
-{
+class Conexion {
     private static $instance = NULL;
-
-    private function __construct() {}
-
-    public static function getConnect()
-    {
+    public static function getConnect() {
         if (!isset(self::$instance)) {
             require_once __DIR__ . '/EnvLoader.php';
             EnvLoader::load(__DIR__ . '/.env');
-
-            $pdo_options = [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION];
-
             $host = getenv('DB_HOST') ?: 'localhost';
             $db   = getenv('DB_NAME') ?: 'transversal';
             $user = getenv('DB_USER') ?: 'root';
             $pass = getenv('DB_PASS') ?: '';
             $port = getenv('DB_PORT') ?: '3306';
-
-            // Driver para MySQL
             $dsn = "mysql:host=$host;port=$port;dbname=$db";
-            
-            try {
-                self::$instance = new PDO($dsn, $user, $pass, $pdo_options);
-            } catch (PDOException $e) {
-                throw new Exception("Error al conectar a MySQL: " . $e->getMessage());
-            }
+            self::$instance = new PDO($dsn, $user, $pass, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         }
         return self::$instance;
     }
 }
 ```
 
----
-
-### 🐘 Opción B: Configuración para PostgreSQL
-
-**1. Archivo `.env`:**
-```env
-DB_DRIVER=pgsql
-DB_PORT=5432
-DB_HOST=localhost
-DB_NAME=transversal
-DB_USER=postgres
-DB_PASS=tu_contraseña
-```
-
-**2.copia y pega este Código en `mvc_programa/Conexion.php`:**
+#### 🐘 Opción B: Configuración para PostgreSQL
+Si usas PostgreSQL (Recomendado para este proyecto), copia esto en `Conexion.php`:
 ```php
 <?php
-
-class Conexion
-{
+class Conexion {
     private static $instance = NULL;
-
-    private function __construct() {}
-
-    public static function getConnect()
-    {
+    private static $driver = 'pgsql'; // Necesario para el Seeder
+    public static function getConnect() {
         if (!isset(self::$instance)) {
             require_once __DIR__ . '/EnvLoader.php';
             EnvLoader::load(__DIR__ . '/.env');
-
-            $pdo_options = [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION];
-
             $host = getenv('DB_HOST') ?: 'localhost';
-            $db   = getenv('DB_NAME') ?: 'transversal';
+            $db   = getenv('DB_NAME') ?: 'programacionesSena';
             $user = getenv('DB_USER') ?: 'postgres';
             $pass = getenv('DB_PASS') ?: '';
             $port = getenv('DB_PORT') ?: '5432';
-
-            // Verificar driver de PostgreSQL
-            if (!in_array('pgsql', PDO::getAvailableDrivers())) {
-                throw new Exception("El driver 'pdo_pgsql' no está habilitado.");
-            }
-
-            // Driver para PostgreSQL
             $dsn = "pgsql:host=$host;port=$port;dbname=$db";
-            try {
-                self::$instance = new PDO($dsn, $user, $pass, $pdo_options);
-            } catch (PDOException $e) {
-                throw new Exception("Error al conectar a PostgreSQL: " . $e->getMessage());
-            }
+            self::$instance = new PDO($dsn, $user, $pass, [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION]);
         }
         return self::$instance;
     }
+    public static function getDriver() { return self::$driver; }
 }
 ```
 
 
 
-### Paso 4: Importar la base de datos
-Recuerda importar tu archivo `.sql` en PHPMyAdmin o la herramienta que utilices para MySQL.
+
+## 2. 📋 Reglas de Negocio y Restricciones (El "Cerebro")
+
+Este sistema no es solo una base de datos; tiene un motor de validaciones que garantiza que la programación académica sea coherente.
+
+### 🛡️ Habilitación de Instructores
+- Solo puedes asignar a un instructor si está previamente **habilitado** para la Competencia y el Programa específicos (tabla `INSTRU_COMPETENCIA`).
+
+### ⏰ Control de Horarios (Nivel Franjas Horarias)
+Al registrar una hora (ej: 7:00 AM a 10:00 AM), el sistema realiza un **Escaneo Global** y aplica estos bloqueos:
+
+#### 🚫 Bloqueos Estrictos
+1. **Cruce de Instructor:** El instructor no puede estar en dos lugares a la vez.
+2. **Cruce de Ambiente:** El aula no puede ser ocupada por dos fichas al mismo tiempo.
+3. **Cruce de Ficha:** La ficha no puede recibir dos clases simultáneamente.
+4. **Coherencia Cronológica:** La hora de fin debe ser mayor a la de inicio.
+5. **Jornada Institucional:** Solo se permite programar entre las **06:00 AM y 10:00 PM**.
+6. **Fechas Vigentes:** No se puede iniciar una programación en una fecha que ya pasó.
+
+#### ✅ Precisión Quirúrgica
+- **Empalmes:** Se permite que una clase termine a las 9:00 y la siguiente empiece a las 9:00.
+- **Alcance Global:** La validación revisa todas las asignaciones existentes, no solo la actual.
 
 ---
 
-## 6. 🔍 Verificación (¿Cómo saber si todo está bien?)
+## 3. Estructura y Conceptos Técnicos
 
-1. Abre tu navegador y ve a: `http://localhost/MVC/mvc_programa/debug_db.php`.
-2. El sistema te mostrará una lista verde:
-   - ✅ Extensiones PHP cargadas.
-   - ✅ Conexión establecida.
-   - ✅ Tablas encontradas con su estructura.
+###  Gestión de Rutas Maestras
+Usamos rutas absolutas calculadas con `dirname(__DIR__)`. Esto garantiza que el sistema funcione en cualquier servidor sin importar el nombre de la carpeta donde lo instales.
+
+###  Front Controller (`routing.php`)
+Es el punto de entrada único. Todas las peticiones pasan por aquí y son distribuidas a sus respectivos controladores usando **Reflexión de PHP**, lo que hace que el sistema sea modular y fácil de escalar.
 
 ---
 
-# Insertar datos de prueba
-c:\xampp\php\php.exe scripts/seed.php
+## 4.  Requisitos del Servidor
 
-# Limpiar TODO y volver a insertar
+### � En XAMPP
+1. Abre **php.ini** (desde el panel de XAMPP).
+2. Habilita las extensiones quitando el `;` inicial:
+   - `extension=pdo_pgsql`
+   - `extension=pgsql`
+3. Reinicia Apache.
+
+### 🟢 En Laragon
+1. Click derecho -> PHP -> Extensiones.
+2. Asegúrate de marcar `pdo_pgsql` y `pgsql`.
+
+---
+
+## 5. 🔍 Verificación y Datos de Prueba
+
+### Diagnóstico rápido
+Accede a `http://localhost/MVC/ProgramacionSena/debug_db.php` para verificar:
+- ✅ Extensiones PHP activas.
+- ✅ Conexión exitosa a la DB.
+- ✅ Existencia de tablas requeridas.
+
+### Sembrado de Datos (Seeding)
+Si necesitas llenar el sistema con datos de prueba, usa la terminal en la raíz:
+```bash
+# Limpiar todo e insertar datos nuevos
 c:\xampp\php\php.exe scripts/seed.php --clean
 
-# Solo limpiar (sin insertar)
-c:\xampp\php\php.exe scripts/seed.php --clean-only
-
-# Ver ayuda
+# Solo ver la ayuda
 c:\xampp\php\php.exe scripts/seed.php --help
+```

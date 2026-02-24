@@ -3,7 +3,7 @@
 class Conexion
 {
     private static $instance = NULL;
-    private static $driver = NULL;
+    private static $driver = 'pgsql';
 
     private function __construct() {}
 
@@ -15,25 +15,23 @@ class Conexion
 
             $pdo_options = [PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION];
 
-            $driver = getenv('DB_CONNECTION') ?: 'mysql';
-            $host   = getenv('DB_HOST') ?: 'localhost';
-            $db     = getenv('DB_NAME') ?: 'transversal';
-            $user   = getenv('DB_USER') ?: 'root';
-            $pass   = getenv('DB_PASS') ?: '';
-            $port   = getenv('DB_PORT') ?: ($driver === 'pgsql' ? '5432' : '3306');
+            $host = getenv('DB_HOST') ?: 'localhost';
+            $db   = getenv('DB_NAME') ?: 'programacionesSena';
+            $user = getenv('DB_USER') ?: 'postgres';
+            $pass = getenv('DB_PASS') ?: '';
+            $port = getenv('DB_PORT') ?: '5432';
 
-            self::$driver = $driver;
-
-            if ($driver === 'pgsql') {
-                $dsn = "pgsql:host=$host;port=$port;dbname=$db";
-            } else {
-                $dsn = "mysql:host=$host;port=$port;dbname=$db;charset=utf8";
+            // Verificar driver de PostgreSQL
+            if (!in_array('pgsql', PDO::getAvailableDrivers())) {
+                throw new Exception("El driver 'pdo_pgsql' no está habilitado.");
             }
 
+            // Driver para PostgreSQL
+            $dsn = "pgsql:host=$host;port=$port;dbname=$db";
             try {
                 self::$instance = new PDO($dsn, $user, $pass, $pdo_options);
             } catch (PDOException $e) {
-                throw new Exception("Error al conectar a la base de datos ($driver): " . $e->getMessage());
+                throw new Exception("Error al conectar a PostgreSQL: " . $e->getMessage());
             }
         }
         return self::$instance;
@@ -41,9 +39,6 @@ class Conexion
 
     public static function getDriver()
     {
-        if (self::$driver === NULL) {
-            self::getConnect();
-        }
         return self::$driver;
     }
 }

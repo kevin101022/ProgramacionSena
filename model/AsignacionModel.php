@@ -108,16 +108,15 @@ class AsignacionModel
         return $stmt->execute();
     }
 
-    public function checkConflicts($inst_id, $amb_id, $fecha_ini, $fecha_fin, $asig_id = null)
+    public function checkConflicts($inst_id, $amb_id, $fich_id, $fecha_ini, $fecha_fin, $asig_id = null)
     {
-        // Detect overlapping assignments for the same instructor OR the same environment
-        // Range overlap: (StartA <= EndB) AND (EndA >= StartB)
-        $sql = "SELECT a.*, i.inst_nombres, i.inst_apellidos, am.amb_nombre, f.fich_id
+        // Detect overlaps for: Same Instructor OR Same Environment OR Same Ficha
+        $sql = "SELECT a.*, i.inst_nombres, i.inst_apellidos, am.amb_nombre, f.fich_id as ficha_num
                 FROM ASIGNACION a
                 INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.inst_id
                 INNER JOIN AMBIENTE am ON a.AMBIENTE_amb_id = am.amb_id
                 INNER JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
-                WHERE (a.INSTRUCTOR_inst_id = :inst_id OR a.AMBIENTE_amb_id = :amb_id)
+                WHERE (a.INSTRUCTOR_inst_id = :inst_id OR a.AMBIENTE_amb_id = :amb_id OR a.FICHA_fich_id = :fich_id)
                 AND (a.asig_fecha_ini <= :fecha_fin AND a.asig_fecha_fin >= :fecha_ini)";
 
         if ($asig_id) {
@@ -128,6 +127,7 @@ class AsignacionModel
         $params = [
             ':inst_id' => $inst_id,
             ':amb_id' => $amb_id,
+            ':fich_id' => $fich_id,
             ':fecha_ini' => $fecha_ini,
             ':fecha_fin' => $fecha_fin
         ];
@@ -136,11 +136,11 @@ class AsignacionModel
         $stmt->execute($params);
         $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // Add conflict type flag for easier UI handling
-        return array_map(function ($row) use ($inst_id, $amb_id) {
+        return array_map(function ($row) use ($inst_id, $amb_id, $fich_id) {
             $row['conflict_type'] = [];
             if ($row['INSTRUCTOR_inst_id'] == $inst_id) $row['conflict_type'][] = 'instructor';
             if ($row['AMBIENTE_amb_id'] == $amb_id) $row['conflict_type'][] = 'ambiente';
+            if ($row['FICHA_fich_id'] == $fich_id) $row['conflict_type'][] = 'ficha';
             return $row;
         }, $results);
     }

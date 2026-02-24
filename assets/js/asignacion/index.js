@@ -402,9 +402,13 @@ class AsignacionManager {
         if (!conflictAlert) return;
 
         const types = new Set();
-        conflicts.forEach(c => c.conflict_type.forEach(t => types.add(t === 'instructor' ? 'el Instructor' : 'el Ambiente')));
+        conflicts.forEach(c => c.conflict_type.forEach(t => {
+            if (t === 'instructor') types.add('el Instructor');
+            else if (t === 'ambiente') types.add('el Ambiente');
+            else if (t === 'ficha') types.add('la Ficha');
+        }));
         const typeMsg = Array.from(types).join(' y ');
-        const fichasStr = conflicts.map(c => `Ficha ${c.fich_id}`).join(', ');
+        const fichasStr = conflicts.map(c => `Ficha ${c.ficha_num || c.fich_id}`).join(', ');
 
         conflictAlert.classList.remove('hidden');
         conflictAlert.innerHTML = `
