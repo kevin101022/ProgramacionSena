@@ -1,10 +1,8 @@
 <?php
 require_once dirname(__DIR__) . '/Conexion.php';
-require_once __DIR__ . '/SchemaResilienceTrait.php';
 
 class ProgramaModel
 {
-    use SchemaResilienceTrait;
 
     private $prog_codigo;
     private $prog_denominacion;
@@ -68,29 +66,18 @@ class ProgramaModel
 
     public function create()
     {
-        $retryLogic = function () {
-            // Se asume que prog_codigo es proporcionado manualmente por el usuario (Código Nacional)
-            if (!$this->prog_codigo) {
-                throw new Exception("El código del programa es obligatorio.");
-            }
-            $query = "INSERT INTO PROGRAMA (prog_codigo, prog_denominacion, TIT_PROGRAMA_titpro_id, prog_tipo) 
-                      VALUES (:prog_codigo, :prog_denominacion, :tit_programa_titpro_id, :prog_tipo)";
-            $stmt = $this->db->prepare($query);
-            $stmt->bindParam(':prog_codigo', $this->prog_codigo);
-            $stmt->bindParam(':prog_denominacion', $this->prog_denominacion);
-            $stmt->bindParam(':tit_programa_titpro_id', $this->tit_programa_titpro_id);
-            $stmt->bindParam(':prog_tipo', $this->prog_tipo);
-            return $stmt->execute();
-        };
-
-        try {
-            return $retryLogic();
-        } catch (PDOException $e) {
-            return $this->handleTruncation($e, 'programa', [
-                'prog_denominacion' => $this->prog_denominacion,
-                'prog_tipo' => $this->prog_tipo
-            ], $retryLogic);
+        // Se asume que prog_codigo es proporcionado manualmente por el usuario (Código Nacional)
+        if (!$this->prog_codigo) {
+            throw new Exception("El código del programa es obligatorio.");
         }
+        $query = "INSERT INTO PROGRAMA (prog_codigo, prog_denominacion, TIT_PROGRAMA_titpro_id, prog_tipo) 
+                  VALUES (:prog_codigo, :prog_denominacion, :tit_programa_titpro_id, :prog_tipo)";
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':prog_codigo', $this->prog_codigo);
+        $stmt->bindParam(':prog_denominacion', $this->prog_denominacion);
+        $stmt->bindParam(':tit_programa_titpro_id', $this->tit_programa_titpro_id);
+        $stmt->bindParam(':prog_tipo', $this->prog_tipo);
+        return $stmt->execute();
     }
 
     public function read()

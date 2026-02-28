@@ -1,21 +1,19 @@
 <?php
 require_once dirname(__DIR__) . '/Conexion.php';
-require_once __DIR__ . '/SchemaResilienceTrait.php';
 
 class SedeModel
 {
-    use SchemaResilienceTrait;
 
     private $sede_id;
     private $sede_nombre;
-    private $sede_foto;
+    private $centro_formacion_id;
     private $db;
 
-    public function __construct($sede_id = null, $sede_nombre = null, $sede_foto = null)
+    public function __construct($sede_id = null, $sede_nombre = null, $centro_formacion_id = null)
     {
         $this->setSedeId($sede_id);
         $this->setSedeNombre($sede_nombre);
-        $this->setSedeFoto($sede_foto);
+        $this->setCentroFormacionId($centro_formacion_id);
         $this->db = Conexion::getConnect();
     }
 
@@ -28,9 +26,9 @@ class SedeModel
     {
         return $this->sede_nombre;
     }
-    public function getSedeFoto()
+    public function getCentroFormacionId()
     {
-        return $this->sede_foto;
+        return $this->centro_formacion_id;
     }
 
     // Setters
@@ -42,9 +40,9 @@ class SedeModel
     {
         $this->sede_nombre = $sede_nombre;
     }
-    public function setSedeFoto($sede_foto)
+    public function setCentroFormacionId($centro_formacion_id)
     {
-        $this->sede_foto = $sede_foto;
+        $this->centro_formacion_id = $centro_formacion_id;
     }
 
     // CRUD helpers
@@ -58,50 +56,45 @@ class SedeModel
 
     public function create()
     {
-        $retryLogic = function () {
-            if (!$this->sede_id) {
-                $this->sede_id = $this->getNextId();
-            }
-            $query = "INSERT INTO SEDE (sede_id, sede_nombre, foto) 
-            VALUES (:sede_id, :sede_nombre, :foto)";
-            $stmt = $this->db->prepare($query);
-            $stmt->bindParam(':sede_id', $this->sede_id);
-            $stmt->bindParam(':sede_nombre', $this->sede_nombre);
-            $stmt->bindParam(':foto', $this->sede_foto);
-            $stmt->execute();
-            return $this->sede_id;
-        };
-
-        try {
-            return $retryLogic();
-        } catch (PDOException $e) {
-            return $this->handleTruncation($e, 'sede', [
-                'sede_nombre' => $this->sede_nombre,
-                'foto' => $this->sede_foto
-            ], $retryLogic);
+        if (!$this->sede_id) {
+            $this->sede_id = $this->getNextId();
         }
+        $query = "INSERT INTO SEDE (sede_id, sede_nombre, CENTRO_FORMACION_cent_id) 
+        VALUES (:sede_id, :sede_nombre, :cent_id)";
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':sede_id', $this->sede_id);
+        $stmt->bindParam(':sede_nombre', $this->sede_nombre);
+        $stmt->bindParam(':cent_id', $this->centro_formacion_id);
+        $stmt->execute();
+        return $this->sede_id;
     }
     public function read()
     {
-        $sql = "SELECT sede_id, sede_nombre, foto AS sede_foto FROM SEDE WHERE sede_id = :sede_id";
+        $sql = "SELECT sede_id, sede_nombre, CENTRO_FORMACION_cent_id FROM SEDE WHERE sede_id = :sede_id";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([':sede_id' => $this->sede_id]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function readAll()
+    public function readAll($cent_id = null)
     {
-        $sql = "SELECT sede_id, sede_nombre, foto AS sede_foto FROM SEDE";
+        $sql = "SELECT sede_id, sede_nombre, CENTRO_FORMACION_cent_id FROM SEDE";
+        if ($cent_id) {
+            $sql .= " WHERE CENTRO_FORMACION_cent_id = :cent_id";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([':cent_id' => $cent_id]);
+            return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        }
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
     public function update()
     {
-        $query = "UPDATE SEDE SET sede_nombre = :sede_nombre, foto = :foto WHERE sede_id = :sede_id";
+        $query = "UPDATE SEDE SET sede_nombre = :sede_nombre, CENTRO_FORMACION_cent_id = :cent_id WHERE sede_id = :sede_id";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':sede_nombre', $this->sede_nombre);
-        $stmt->bindParam(':foto', $this->sede_foto);
+        $stmt->bindParam(':cent_id', $this->centro_formacion_id);
         $stmt->bindParam(':sede_id', $this->sede_id);
         $stmt->execute();
         return $stmt;

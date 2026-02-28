@@ -167,3 +167,46 @@ c:\xampp\php\php.exe scripts/seed.php --clean
 # Solo ver la ayuda
 c:\xampp\php\php.exe scripts/seed.php --help
 ```
+
+---
+
+## 6. 🔒 Auditoría y Refactorización de Base de Datos
+
+El sistema cuenta con una arquitectura de base de datos optimizada y segura para la trazabilidad de la información:
+
+### 🔑 Llaves Primarias Naturales
+Para garantizar la inmutabilidad y coherencia de los datos, las tablas principales (`instructor` y `coordinacion`) utilizan el **Número de Documento** (BIGINT) como Llave Primaria (PK) en lugar de IDs autoincrementables. Todas las llaves foráneas en el sistema apuntan directamente a estos documentos.     
+
+### 🗑️ Borrado Lógico (Soft Delete)
+Para proteger el historial académico y las programaciones pasadas, está **estrictamente prohibido el borrado físico** de instructores y coordinadores. El sistema utiliza un esquema de *Borrado Lógico* mediante un campo `estado` (1 = Activo, 0 = Inactivo). Al "eliminar" un registro desde la interfaz, internamente solo se inactiva, preservando intacta la trazabilidad y métricas del sistema.
+
+### 🕵️‍♂️ Sistema de Auditoría a Nivel de Motor
+Se implementa un esquema de auditoría robusto y transparente a nivel de motor de base de datos (PostgreSQL), garantizando captura total:
+
+
+- **Tabla Espejo (`auditoria_asignacion`):** Los cambios se respaldan automáticamente guardando tanto el estado anterior como la acción realizada.
+- **Triggers (Disparadores):** Funciones nativas de PostgreSQL configuradas para activarse tras cualquier alteración (`INSERT`, `UPDATE`, `DELETE`).
+
+
+- **Trazabilidad Pura:** Mediante inyección de variables de sesión (`myapp.documento_usuario` y `myapp.correo_usuario`) en la instancia de conexión PDO, el motor de BD rastrea con precisión inquebrantable qué usuario del sistema originó la modificación.
+
+---
+
+## 7. 🛡️ Aislamiento de Datos por Centro y Vistas por Rol
+
+El sistema implementa una estricta política de multitenencia (multi-tenant) lógica, donde la información se aísla dependiendo del **Centro de Formación** (`centro_id`) al que pertenece el usuario autenticado:
+
+### 🏢 Aislamiento Global (Centro ID)
+Absolutamente todas las entidades principales (**Sedes, Instructores, Ambientes, Fichas, Coordinaciones, Asignaciones, Reportes y Auditoría**) filtran sus datos en el backend comparando contra el `centro_id` guardado en la sesión activa. Un usuario administrador de un centro de formación jamás podrá visualizar ni alterar la información, el personal o los recursos de un Centro de Formación distinto al suyo.
+
+### 🧭 Navegación Estricta por Rol (Sidebar)
+La interfaz de navegación lateral (`sidebar.php`) presenta opciones puramente limitadas según el cargo validado tras el `Login`.
+- **Centro de Formación:** Dispone de la gestión estructural (CRUD) de Sedes, Ambientes, Programas, Instructores, Competencias y Coordinaciones. (Adicional: Reportes y Auditoría)
+- **Coordinador Académico:** Se encarga de la operatividad pura del centro: Competencia x Programa, Fichas, Instructor x Competencia, Asignaciones (el motor central del negocio) y Auditoría.
+- **Instructor:** Entorno confinado de solo lectura sobre sus recursos.
+
+### 🧑‍🏫 Vistas Especializadas del Instructor
+El instructor cuenta con un apartado web dedicado llamado **"Mi Espacio"**:
+- **Mis Asignaciones:** Visualización de sus clases programadas y espacios designados.
+- **Mis Competencias:** Listado de los programas y normativas para los cuales el coordinador local lo ha habilitado para enseñar.
+- **Mis Fichas (Líder):** Seguimiento detallado de las fichas específicas de formación donde este instructor ha sido designado como "líder" del programa tecnológico.

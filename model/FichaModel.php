@@ -1,10 +1,8 @@
 <?php
 require_once dirname(__DIR__) . '/Conexion.php';
-require_once __DIR__ . '/SchemaResilienceTrait.php';
 
 class FichaModel
 {
-    use SchemaResilienceTrait;
 
     private $fich_id;
     private $programa_prog_id;
@@ -98,34 +96,24 @@ class FichaModel
 
     public function create()
     {
-        $retryLogic = function () {
-            // Se asume que fich_id es proporcionado manualmente por el usuario
-            if (!$this->fich_id) {
-                throw new Exception("El número de ficha es obligatorio.");
-            }
-            $query = "INSERT INTO FICHA (fich_id, PROGRAMA_prog_id, INSTRUCTOR_inst_id_lider, fich_jornada, COORDINACION_coord_id, fich_fecha_ini_lectiva, fich_fecha_fin_lectiva) 
-                      VALUES (:fich_id, :prog_id, :inst_id, :jornada, :coord_id, :fecha_ini, :fecha_fin)";
-            $stmt = $this->db->prepare($query);
-            $stmt->bindParam(':fich_id', $this->fich_id);
-            $stmt->bindParam(':prog_id', $this->programa_prog_id);
-            $stmt->bindParam(':inst_id', $this->instructor_inst_id_lider);
-            $stmt->bindParam(':jornada', $this->fich_jornada);
-            $stmt->bindParam(':coord_id', $this->coordinacion_coord_id);
-            $stmt->bindParam(':fecha_ini', $this->fich_fecha_ini_lectiva);
-            $stmt->bindParam(':fecha_fin', $this->fich_fecha_fin_lectiva);
-            return $stmt->execute();
-        };
-
-        try {
-            return $retryLogic();
-        } catch (PDOException $e) {
-            return $this->handleTruncation($e, 'ficha', [
-                'fich_jornada' => $this->fich_jornada
-            ], $retryLogic);
+        // Se asume que fich_id es proporcionado manualmente por el usuario
+        if (!$this->fich_id) {
+            throw new Exception("El número de ficha es obligatorio.");
         }
+        $query = "INSERT INTO FICHA (fich_id, PROGRAMA_prog_id, INSTRUCTOR_inst_id_lider, fich_jornada, COORDINACION_coord_id, fich_fecha_ini_lectiva, fich_fecha_fin_lectiva) 
+                  VALUES (:fich_id, :prog_id, :inst_id, :jornada, :coord_id, :fecha_ini, :fecha_fin)";
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':fich_id', $this->fich_id);
+        $stmt->bindParam(':prog_id', $this->programa_prog_id);
+        $stmt->bindParam(':inst_id', $this->instructor_inst_id_lider);
+        $stmt->bindParam(':jornada', $this->fich_jornada);
+        $stmt->bindParam(':coord_id', $this->coordinacion_coord_id);
+        $stmt->bindParam(':fecha_ini', $this->fich_fecha_ini_lectiva);
+        $stmt->bindParam(':fecha_fin', $this->fich_fecha_fin_lectiva);
+        return $stmt->execute();
     }
 
-    public function read()
+    public function read($cent_id = null)
     {
         $sql = "SELECT f.fich_id, f.PROGRAMA_prog_id as programa_prog_id, 
                        f.INSTRUCTOR_inst_id_lider as instructor_inst_id_lider, 
@@ -140,8 +128,8 @@ class FichaModel
                 FROM FICHA f
                 INNER JOIN PROGRAMA p ON f.PROGRAMA_prog_id = p.prog_codigo
                 INNER JOIN TITULO_PROGRAMA tp ON p.TIT_PROGRAMA_titpro_id = tp.titpro_id
-                INNER JOIN INSTRUCTOR i ON f.INSTRUCTOR_inst_id_lider = i.inst_id
-                LEFT JOIN COORDINACION c ON f.COORDINACION_coord_id = c.coord_id
+                INNER JOIN INSTRUCTOR i ON f.INSTRUCTOR_inst_id_lider = i.numero_documento
+                LEFT JOIN COORDINACION c ON f.COORDINACION_coord_id = c.numero_documento
                 LEFT JOIN (
                     SELECT FICHA_fich_id, MAX(ASIG_ID) as asig_id_max 
                     FROM ASIGNACION 
@@ -151,12 +139,19 @@ class FichaModel
                 LEFT JOIN AMBIENTE amb ON a.AMBIENTE_amb_id = amb.amb_id
                 LEFT JOIN SEDE s ON amb.SEDE_sede_id = s.sede_id
                 WHERE f.fich_id = :fich_id";
+
+        $params = [':fich_id' => $this->fich_id];
+        if ($cent_id) {
+            $sql .= " AND (c.CENTRO_FORMACION_cent_id = :cent_id OR i.CENTRO_FORMACION_cent_id = :cent_id)";
+            $params[':cent_id'] = $cent_id;
+        }
+
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([':fich_id' => $this->fich_id]);
+        $stmt->execute($params);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function readAll()
+    public function readAll($cent_id = null)
     {
         $sql = "SELECT f.fich_id, f.PROGRAMA_prog_id as programa_prog_id, 
                        f.INSTRUCTOR_inst_id_lider as instructor_inst_id_lider, 
@@ -171,8 +166,8 @@ class FichaModel
                 FROM FICHA f
                 INNER JOIN PROGRAMA p ON f.PROGRAMA_prog_id = p.prog_codigo
                 INNER JOIN TITULO_PROGRAMA tp ON p.TIT_PROGRAMA_titpro_id = tp.titpro_id
-                INNER JOIN INSTRUCTOR i ON f.INSTRUCTOR_inst_id_lider = i.inst_id
-                LEFT JOIN COORDINACION c ON f.COORDINACION_coord_id = c.coord_id
+                INNER JOIN INSTRUCTOR i ON f.INSTRUCTOR_inst_id_lider = i.numero_documento
+                LEFT JOIN COORDINACION c ON f.COORDINACION_coord_id = c.numero_documento
                 LEFT JOIN (
                     SELECT FICHA_fich_id, MAX(ASIG_ID) as asig_id_max 
                     FROM ASIGNACION 
@@ -180,10 +175,19 @@ class FichaModel
                 ) a_max ON f.fich_id = a_max.FICHA_fich_id
                 LEFT JOIN ASIGNACION a ON a_max.asig_id_max = a.ASIG_ID
                 LEFT JOIN AMBIENTE amb ON a.AMBIENTE_amb_id = amb.amb_id
-                LEFT JOIN SEDE s ON amb.SEDE_sede_id = s.sede_id
-                ORDER BY f.fich_id DESC";
+                LEFT JOIN SEDE s ON amb.SEDE_sede_id = s.sede_id";
+
+        if ($cent_id) {
+            $sql .= " WHERE (c.CENTRO_FORMACION_cent_id = :cent_id OR i.CENTRO_FORMACION_cent_id = :cent_id)";
+        }
+        $sql .= " ORDER BY f.fich_id DESC";
+
         $stmt = $this->db->prepare($sql);
-        $stmt->execute();
+        if ($cent_id) {
+            $stmt->execute([':cent_id' => $cent_id]);
+        } else {
+            $stmt->execute();
+        }
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 

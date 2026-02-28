@@ -11,7 +11,7 @@ class instructorController
         }
         $model = new InstructorModel();
 
-        if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'coordinador' && isset($_SESSION['centro_id'])) {
+        if (isset($_SESSION['centro_id']) && !empty($_SESSION['centro_id'])) {
             $instructores = $model->readByCentro($_SESSION['centro_id']);
         } else {
             $instructores = $model->readAll();
@@ -29,11 +29,14 @@ class instructorController
 
     public function store()
     {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
         $nombres = $_POST['inst_nombres'] ?? null;
         $apellidos = $_POST['inst_apellidos'] ?? null;
         $correo = $_POST['inst_correo'] ?? null;
         $telefono = $_POST['inst_telefono'] ?? null;
-        $cent_id = $_POST['centro_formacion_cent_id'] ?? null;
+        $cent_id = $_POST['centro_formacion_cent_id'] ?? $_SESSION['centro_id'] ?? null;
         $password = $_POST['inst_password'] ?? 'Sena123*'; // Default password
 
         if (!$nombres || !$apellidos || !$correo || !$cent_id) {
@@ -97,12 +100,15 @@ class instructorController
 
     public function update()
     {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
         $id = $_POST['inst_id'] ?? null;
         $nombres = $_POST['inst_nombres'] ?? null;
         $apellidos = $_POST['inst_apellidos'] ?? null;
         $correo = $_POST['inst_correo'] ?? null;
         $telefono = $_POST['inst_telefono'] ?? null;
-        $cent_id = $_POST['centro_formacion_cent_id'] ?? null;
+        $cent_id = $_POST['centro_formacion_cent_id'] ?? $_SESSION['centro_id'] ?? null;
         $password = $_POST['inst_password'] ?? null;
 
         if (!$id || !$nombres || !$apellidos || !$correo || !$cent_id) {
@@ -184,6 +190,20 @@ class instructorController
         try {
             $model = new InstructorModel($id);
             $data = $model->getCompetenciasByInstructor();
+            return $this->sendResponse($data);
+        } catch (Throwable $e) {
+            return $this->sendResponse(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function getFichasLider($id = null)
+    {
+        if (!$id) {
+            return $this->sendResponse(['error' => 'ID no proporcionado'], 400);
+        }
+        try {
+            $model = new InstructorModel($id);
+            $data = $model->getFichasLider();
             return $this->sendResponse($data);
         } catch (Throwable $e) {
             return $this->sendResponse(['error' => $e->getMessage()], 500);

@@ -13,11 +13,16 @@ class AmbienteController
 
     public function index($sede_id = null)
     {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $cent_id = $_SESSION['centro_id'] ?? null;
+
         if ($sede_id) {
             $this->model->setSedeSedeId($sede_id);
-            $ambientes = $this->model->read();
+            $ambientes = $this->model->read($cent_id);
         } else {
-            $ambientes = $this->model->readAll();
+            $ambientes = $this->model->readAll($cent_id);
         }
         $this->sendResponse($ambientes);
     }
@@ -26,11 +31,18 @@ class AmbienteController
     {
         if (!$id) {
             $this->sendResponse(['error' => 'ID de ambiente requerido'], 400);
+            return;
         }
 
-        $ambiente = $this->model->readById($id);
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $cent_id = $_SESSION['centro_id'] ?? null;
+
+        $ambiente = $this->model->readById($id, $cent_id);
         if (!$ambiente) {
-            $this->sendResponse(['error' => 'Ambiente no encontrado'], 404);
+            $this->sendResponse(['error' => 'Ambiente no encontrado o sin acceso'], 404);
+            return;
         }
 
         $this->sendResponse($ambiente);

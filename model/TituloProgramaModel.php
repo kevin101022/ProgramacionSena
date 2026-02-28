@@ -1,10 +1,8 @@
 <?php
 require_once dirname(__DIR__) . '/Conexion.php';
-require_once __DIR__ . '/SchemaResilienceTrait.php';
 
 class TituloProgramaModel
 {
-    use SchemaResilienceTrait;
 
     private $titpro_id;
     private $titpro_nombre;
@@ -48,26 +46,18 @@ class TituloProgramaModel
 
     public function create()
     {
-        $retryLogic = function () {
-            if (!$this->titpro_id) {
-                $this->titpro_id = $this->getNextId();
-            }
-            $query = "INSERT INTO TITULO_PROGRAMA (titpro_id, titpro_nombre) VALUES (:titpro_id, :titpro_nombre)";
-            $stmt = $this->db->prepare($query);
-            $stmt->bindParam(':titpro_id', $this->titpro_id);
-            $stmt->bindParam(':titpro_nombre', $this->titpro_nombre);
-
-            if ($stmt->execute()) {
-                return $this->titpro_id;
-            }
-            return null;
-        };
-
-        try {
-            return $retryLogic();
-        } catch (PDOException $e) {
-            return $this->handleTruncation($e, 'titulo_programa', ['titpro_nombre' => $this->titpro_nombre], $retryLogic);
+        if (!$this->titpro_id) {
+            $this->titpro_id = $this->getNextId();
         }
+        $query = "INSERT INTO TITULO_PROGRAMA (titpro_id, titpro_nombre) VALUES (:titpro_id, :titpro_nombre)";
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':titpro_id', $this->titpro_id);
+        $stmt->bindParam(':titpro_nombre', $this->titpro_nombre);
+
+        if ($stmt->execute()) {
+            return $this->titpro_id;
+        }
+        return null;
     }
 
     public function read()

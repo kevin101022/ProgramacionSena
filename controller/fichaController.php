@@ -5,8 +5,13 @@ class fichaController
 {
     public function index()
     {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $cent_id = $_SESSION['centro_id'] ?? null;
+
         $model = new FichaModel();
-        $fichas = $model->readAll();
+        $fichas = $model->readAll($cent_id);
         $this->sendResponse($fichas);
     }
 
@@ -44,17 +49,23 @@ class fichaController
 
     public function show($id = null)
     {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $cent_id = $_SESSION['centro_id'] ?? null;
+
         if (!$id) {
             $this->sendResponse(['error' => 'Número de ficha requerido'], 400);
+            return;
         }
 
         $model = new FichaModel($id);
-        $ficha = $model->read();
+        $ficha = $model->read($cent_id);
 
         if ($ficha) {
             $this->sendResponse($ficha[0]);
         } else {
-            $this->sendResponse(['error' => 'Ficha no encontrada'], 404);
+            $this->sendResponse(['error' => 'Ficha no encontrada o sin acceso'], 404);
         }
     }
 

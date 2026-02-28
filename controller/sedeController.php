@@ -22,7 +22,11 @@ class SedeController
      */
     public function index()
     {
-        $sedes = $this->model->readAll();
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $cent_id = $_SESSION['centro_id'] ?? null;
+        $sedes = $this->model->readAll($cent_id);
         $this->sendResponse($sedes);
     }
 
@@ -53,16 +57,19 @@ class SedeController
     public function store()
     {
         try {
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
             $nombre = $_POST['sede_nombre'] ?? null;
-            $foto = $this->handleFileUpload('sede_foto');
+            $centro_id = $_POST['centro_formacion_cent_id'] ?? $_SESSION['centro_id'] ?? null;
 
-            if (!$nombre) {
-                $this->sendResponse(['error' => 'El nombre de la sede es obligatorio'], 400);
+            if (!$nombre || !$centro_id) {
+                $this->sendResponse(['error' => 'El nombre de la sede y el centro son obligatorios'], 400);
                 return;
             }
 
             $this->model->setSedeNombre($nombre);
-            $this->model->setSedeFoto($foto);
+            $this->model->setCentroFormacionId($centro_id);
             $createdId = $this->model->create();
 
             if ($createdId) {
@@ -81,24 +88,21 @@ class SedeController
     public function update()
     {
         try {
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
             $id = $_POST['sede_id'] ?? null;
             $nombre = $_POST['sede_nombre'] ?? null;
-            $foto = $this->handleFileUpload('sede_foto');
+            $centro_id = $_POST['centro_formacion_cent_id'] ?? $_SESSION['centro_id'] ?? null;
 
-            if (!$id || !$nombre) {
-                $this->sendResponse(['error' => 'ID y nombre son obligatorios'], 400);
+            if (!$id || !$nombre || !$centro_id) {
+                $this->sendResponse(['error' => 'ID, nombre y centro son obligatorios'], 400);
                 return;
             }
 
             $this->model->setSedeId($id);
             $this->model->setSedeNombre($nombre);
-
-            // Si no se subió foto nueva, mantenemos la actual
-            if (!$foto) {
-                $current = $this->model->read();
-                $foto = !empty($current) ? $current[0]['foto'] : null;
-            }
-            $this->model->setSedeFoto($foto);
+            $this->model->setCentroFormacionId($centro_id);
 
             if ($this->model->update()) {
                 $this->sendResponse(['message' => 'Sede actualizada correctamente']);
@@ -136,32 +140,6 @@ class SedeController
             }
             $this->sendResponse(['error' => $message], 500);
         }
-    }
-
-    /**
-     * Helper para manejar la subida de archivos
-     */
-    private function handleFileUpload($fieldName)
-    {
-        if (!isset($_FILES[$fieldName]) || $_FILES[$fieldName]['error'] !== UPLOAD_ERR_OK) {
-            return null;
-        }
-
-        $uploadDir = dirname(__DIR__) . '/assets/imagenes/';
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0777, true);
-        }
-
-        $fileExtension = pathinfo($_FILES[$fieldName]['name'], PATHINFO_EXTENSION);
-        $fileName = uniqid('sede_') . '.' . $fileExtension;
-        $targetPath = $uploadDir . $fileName;
-
-        if (move_uploaded_file($_FILES[$fieldName]['tmp_name'], $targetPath)) {
-            // Retornamos la ruta relativa para guardar en BD
-            return '../../assets/imagenes/' . $fileName;
-        }
-
-        return null;
     }
 
     public function getProgramas($sede_id = null)

@@ -78,7 +78,7 @@ class CoordinacionManager {
             this.centros = await response.json();
 
             const centroSelect = document.getElementById('centro_id');
-            if (centroSelect) {
+            if (centroSelect && centroSelect.tagName === 'SELECT') {
                 centroSelect.innerHTML = '<option value="">Seleccione un centro...</option>';
                 this.centros.forEach(c => {
                     const opt = document.createElement('option');
@@ -229,13 +229,18 @@ class CoordinacionManager {
                 coordIdInput.style.backgroundColor = '#f3f4f6';
             }
             if (coordNombreInput) coordNombreInput.value = coord.coord_descripcion;
-            if (centroIdInput) centroIdInput.value = coord.centro_formacion_cent_id;
+            if (centroIdInput && centroIdInput.tagName === 'SELECT') {
+                centroIdInput.value = coord.centro_formacion_cent_id;
+            }
         } else {
             if (modalTitle) modalTitle.textContent = 'Nueva Coordinación';
             if (coordIdInput) {
                 coordIdInput.value = '';
                 coordIdInput.readOnly = false;
                 coordIdInput.style.backgroundColor = 'white';
+            }
+            if (centroIdInput && centroIdInput.tagName === 'SELECT') {
+                centroIdInput.value = '';
             }
         }
         if (modal) modal.classList.add('show');

@@ -14,12 +14,16 @@
                     <label class="form-label">Nombre de la Coordinación <span class="text-red-500">*</span></label>
                     <input type="text" id="coord_nombre" name="coord_nombre" required class="search-input" style="padding-left: 12px !important;" placeholder="Ej: Coordinación de Teleinformática">
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Centro de Formación <span class="text-red-500">*</span></label>
-                    <select id="centro_id" name="centro_formacion_cent_id" required class="search-input" style="padding-left: 12px !important;">
-                        <option value="">Seleccione un centro...</option>
-                    </select>
-                </div>
+                <?php if ($_SESSION['rol'] === 'centro'): ?>
+                    <input type="hidden" id="centro_id" name="centro_formacion_cent_id" value="<?php echo $_SESSION['centro_id']; ?>">
+                <?php else: ?>
+                    <div class="form-group" id="centroSelectGroup">
+                        <label class="form-label">Centro de Formación <span class="text-red-500">*</span></label>
+                        <select id="centro_id" name="centro_formacion_cent_id" required class="search-input" style="padding-left: 12px !important;">
+                            <option value="">Seleccione un centro...</option>
+                        </select>
+                    </div>
+                <?php endif; ?>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn-secondary" id="cancelBtn">Cancelar</button>

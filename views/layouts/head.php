@@ -1,3 +1,37 @@
+<?php
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+// Validate session
+if (!isset($_SESSION['rol'])) {
+    header("Location: ../../routing.php?controller=login&action=showLogin");
+    exit;
+}
+
+$rol = $_SESSION['rol'];
+$navItem = isset($activeNavItem) ? $activeNavItem : '';
+
+// RBAC based on activeNavItem
+$allowed = true;
+if ($navItem) {
+    if ($rol === 'centro') {
+        $allowed = in_array($navItem, ['dashboard', 'sedes', 'ambientes', 'programas', 'instructores', 'competencias', 'coordinaciones', 'reportes']);
+    } elseif ($rol === 'coordinador') {
+        $allowed = in_array($navItem, ['dashboard', 'competencias', 'fichas', 'instruc_comp', 'asignaciones', 'reportes']);
+    } elseif ($rol === 'instructor') {
+        $allowed = in_array($navItem, ['asignaciones']);
+    }
+
+    if (!$allowed) {
+        if ($rol === 'centro' || $rol === 'coordinador') {
+            header("Location: ../dashboard/index.php");
+        } else {
+            header("Location: ../asignacion/index.php");
+        }
+        exit;
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="es">
 

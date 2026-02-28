@@ -7,8 +7,13 @@ class AsignacionController
 {
     public function index()
     {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $cent_id = $_SESSION['centro_id'] ?? null;
+
         $model = new AsignacionModel(null, null, null, null, null, null, null);
-        $asignaciones = $model->readAll();
+        $asignaciones = $model->readAll($cent_id);
         $this->sendResponse($asignaciones);
     }
 
@@ -94,13 +99,18 @@ class AsignacionController
 
     public function show()
     {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $cent_id = $_SESSION['centro_id'] ?? null;
+
         $id = $_GET['id'] ?? null;
         if (!$id) {
             $this->sendResponse(['error' => 'ID requerido'], 400);
             return;
         }
         $model = new AsignacionModel($id, null, null, null, null, null, null);
-        $asig = $model->read();
+        $asig = $model->read($cent_id);
         $this->sendResponse($asig[0] ?? ['error' => 'No encontrada'], $asig ? 200 : 404);
     }
 
@@ -185,13 +195,18 @@ class AsignacionController
 
     public function conflicts()
     {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $cent_id = $_SESSION['centro_id'] ?? null;
+
         $id = $_GET['id'] ?? null;
         if (!$id) {
             $this->sendResponse(['error' => 'ID requerido'], 400);
             return;
         }
         $model = new AsignacionModel($id);
-        $asig = $model->read()[0] ?? null;
+        $asig = $model->read($cent_id)[0] ?? null;
         if (!$asig) {
             $this->sendResponse(['error' => 'No encontrada'], 404);
             return;

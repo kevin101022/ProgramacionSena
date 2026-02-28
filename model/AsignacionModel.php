@@ -43,7 +43,7 @@ class AsignacionModel
         }
     }
 
-    public function readAll()
+    public function readAll($cent_id = null)
     {
         $sql = "SELECT a.ASIG_ID as asig_id, a.INSTRUCTOR_inst_id as instructor_inst_id, 
                        a.asig_fecha_ini, a.asig_fecha_fin, 
@@ -52,17 +52,26 @@ class AsignacionModel
                        a.COMPETENCIA_comp_id as competencia_comp_id,
                        i.inst_nombres, i.inst_apellidos, f.fich_id, am.amb_nombre, c.comp_nombre_corto 
                 FROM ASIGNACION a
-                INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.inst_id
+                INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.numero_documento
                 INNER JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
                 INNER JOIN AMBIENTE am ON a.AMBIENTE_amb_id = am.amb_id
-                INNER JOIN COMPETENCIA c ON a.COMPETENCIA_comp_id = c.comp_id
-                ORDER BY a.ASIG_ID DESC";
+                INNER JOIN COMPETENCIA c ON a.COMPETENCIA_comp_id = c.comp_id";
+
+        if ($cent_id) {
+            $sql .= " WHERE i.CENTRO_FORMACION_cent_id = :cent_id";
+        }
+        $sql .= " ORDER BY a.ASIG_ID DESC";
+
         $stmt = $this->db->prepare($sql);
-        $stmt->execute();
+        if ($cent_id) {
+            $stmt->execute([':cent_id' => $cent_id]);
+        } else {
+            $stmt->execute();
+        }
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function read()
+    public function read($cent_id = null)
     {
         $sql = "SELECT a.ASIG_ID as asig_id, a.INSTRUCTOR_inst_id as instructor_inst_id, 
                        a.asig_fecha_ini, a.asig_fecha_fin, 
@@ -71,13 +80,20 @@ class AsignacionModel
                        a.COMPETENCIA_comp_id as competencia_comp_id,
                        i.inst_nombres, i.inst_apellidos, f.fich_id, am.amb_nombre, c.comp_nombre_corto 
                 FROM ASIGNACION a
-                INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.inst_id
+                INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.numero_documento
                 INNER JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
                 INNER JOIN AMBIENTE am ON a.AMBIENTE_amb_id = am.amb_id
                 INNER JOIN COMPETENCIA c ON a.COMPETENCIA_comp_id = c.comp_id
                 WHERE a.ASIG_ID = :asig_id";
+
+        $params = [':asig_id' => $this->asig_id];
+        if ($cent_id) {
+            $sql .= " AND i.CENTRO_FORMACION_cent_id = :cent_id";
+            $params[':cent_id'] = $cent_id;
+        }
+
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([':asig_id' => $this->asig_id]);
+        $stmt->execute($params);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -113,7 +129,7 @@ class AsignacionModel
         // Detect overlaps for: Same Instructor OR Same Environment OR Same Ficha
         $sql = "SELECT a.*, i.inst_nombres, i.inst_apellidos, am.amb_nombre, f.fich_id as ficha_num
                 FROM ASIGNACION a
-                INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.inst_id
+                INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.numero_documento
                 INNER JOIN AMBIENTE am ON a.AMBIENTE_amb_id = am.amb_id
                 INNER JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
                 WHERE (a.INSTRUCTOR_inst_id = :inst_id OR a.AMBIENTE_amb_id = :amb_id OR a.FICHA_fich_id = :fich_id)

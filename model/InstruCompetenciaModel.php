@@ -91,7 +91,7 @@ class InstruCompetenciaModel
                        ic.inscomp_vigencia, 
                        i.inst_nombres, i.inst_apellidos, p.prog_denominacion, c.comp_nombre_corto 
                 FROM INSTRU_COMPETENCIA ic
-                INNER JOIN INSTRUCTOR i ON ic.INSTRUCTOR_inst_id = i.inst_id
+                INNER JOIN INSTRUCTOR i ON ic.INSTRUCTOR_inst_id = i.numero_documento
                 INNER JOIN PROGRAMA p ON ic.COMPETxPROGRAMA_PROGRAMA_prog_id = p.prog_codigo
                 INNER JOIN COMPETENCIA c ON ic.COMPETxPROGRAMA_COMPETENCIA_comp_id = c.comp_id
                 WHERE ic.inscomp_id = :id";
@@ -108,7 +108,7 @@ class InstruCompetenciaModel
                        ic.inscomp_vigencia, 
                        i.inst_nombres, i.inst_apellidos, p.prog_denominacion, c.comp_nombre_corto 
                 FROM INSTRU_COMPETENCIA ic
-                INNER JOIN INSTRUCTOR i ON ic.INSTRUCTOR_inst_id = i.inst_id
+                INNER JOIN INSTRUCTOR i ON ic.INSTRUCTOR_inst_id = i.numero_documento
                 INNER JOIN PROGRAMA p ON ic.COMPETxPROGRAMA_PROGRAMA_prog_id = p.prog_codigo
                 INNER JOIN COMPETENCIA c ON ic.COMPETxPROGRAMA_COMPETENCIA_comp_id = c.comp_id
                 ORDER BY ic.inscomp_id DESC";

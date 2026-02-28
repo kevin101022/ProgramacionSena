@@ -30,6 +30,17 @@ class Conexion
             $dsn = "pgsql:host=$host;port=$port;dbname=$db";
             try {
                 self::$instance = new PDO($dsn, $user, $pass, $pdo_options);
+
+                // Configurar variables de sesión para auditoría si hay sesión activa
+                if (session_status() === PHP_SESSION_NONE) {
+                    session_start();
+                }
+
+                $doc_usuario = isset($_SESSION['id']) ? $_SESSION['id'] : 0;
+                $correo_usuario = isset($_SESSION['correo']) ? $_SESSION['correo'] : 'Sistema';
+
+                $stmt = self::$instance->prepare("SELECT set_config('myapp.documento_usuario', :doc, false), set_config('myapp.correo_usuario', :correo, false)");
+                $stmt->execute([':doc' => (string)$doc_usuario, ':correo' => $correo_usuario]);
             } catch (PDOException $e) {
                 throw new Exception("Error al conectar a PostgreSQL: " . $e->getMessage());
             }

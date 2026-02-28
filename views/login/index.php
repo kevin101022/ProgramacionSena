@@ -22,27 +22,24 @@ $success_message = isset($_GET['success']) ? $_GET['success'] : '';
     <meta charset="utf-8" />
     <meta content="width=device-width, initial-scale=1.0" name="viewport" />
     <title>Login - Programaciones SENA</title>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700&amp;display=swap" rel="stylesheet" />
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet" />
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <!-- Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+    <!-- Tailwind CSS via CDN with Container Queries and Forms plugins -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
-    <script id="tailwind-config">
+    <script>
         tailwind.config = {
             darkMode: "class",
             theme: {
                 extend: {
                     colors: {
-                        "primary": "#38a800", // Adapted to SENA green from #195de6
-                        "background-light": "#f6f6f8",
-                        "background-dark": "#020617",
+                        primary: "#39A900", // SENA Green
+                        "primary-dark": "#2d8a00",
+                        secondary: "#00324D", // SENA Blue
                     },
                     fontFamily: {
-                        "display": ["Manrope", "sans-serif"]
-                    },
-                    borderRadius: {
-                        "DEFAULT": "0.25rem",
-                        "lg": "0.5rem",
-                        "xl": "0.75rem",
-                        "full": "9999px"
+                        sans: ["Manrope", "sans-serif"],
                     },
                 },
             },
@@ -51,89 +48,166 @@ $success_message = isset($_GET['success']) ? $_GET['success'] : '';
     <link rel="stylesheet" href="assets/css/login.css" />
 </head>
 
-<body class="font-display bg-slate-50 text-slate-800 antialiased selection:bg-[#39A900] selection:text-white">
-    <!-- Full Background with Image and Light Overlay -->
-    <div class="relative flex min-h-screen w-full flex-col justify-center items-center overflow-hidden bg-cover bg-center py-12 sm:px-6 lg:px-8" style="background-image: url('assets/imagenes/Foto-nota-2024-01-03T181318.611.webp');">
-        <!-- Bright, semi-transparent overlay to keep it clear but readable -->
-        <div class="absolute inset-0 bg-slate-100/60 backdrop-blur-sm"></div>
+<body class="font-sans antialiased text-slate-800 bg-white h-screen overflow-hidden selection:bg-primary selection:text-white">
 
-        <div class="relative w-full max-w-[400px] z-10 flex flex-col items-center">
+    <!-- SPLIT SCREEN LAYOUT -->
+    <div class="flex h-full w-full relative">
 
-            <!-- Main White Card -->
-            <div class="w-full bg-white shadow-2xl rounded-2xl px-8 py-10 w-full relative z-10 border border-slate-200/60">
-                <div class="mb-6 flex justify-center">
+        <!-- LEFT SIDE: Glassmorphism / Image Background (Hidden on very small screens) -->
+        <div class="hidden lg:flex w-1/2 relative bg-slate-900 items-center justify-center overflow-hidden h-full">
+            <!-- Background Image -->
+            <div class="absolute inset-0 z-0">
+                <img src="assets/imagenes/Foto-nota-2024-01-03T181318.611.webp" alt="SENA Background" class="w-full h-full object-cover opacity-60 mix-blend-overlay transition-transform duration-[20s] ease-in-out hover:scale-110" />
+            </div>
+
+            <!-- Gradient Overlay -->
+            <div class="absolute inset-0 bg-gradient-to-br from-primary/80 to-secondary/90 z-10"></div>
+
+            <!-- Abstract Shapes -->
+            <div class="absolute top-0 left-0 w-full h-full overflow-hidden z-20 pointer-events-none">
+                <div class="absolute -top-24 -left-24 w-96 h-96 bg-white/10 rounded-full blur-3xl"></div>
+                <div class="absolute bottom-10 right-10 w-[30rem] h-[30rem] bg-primary/20 rounded-full blur-3xl"></div>
+            </div>
+
+            <!-- Content Container -->
+            <div class="relative z-30 flex flex-col items-start justify-center h-full px-16 xl:px-24">
+                <div class="glass-panel p-10 rounded-3xl border border-white/20 shadow-[0_8px_32px_0_rgba(31,38,135,0.37)] backdrop-blur-md bg-white/10 text-white max-w-lg">
+                    <img src="assets/imagenes/LOGOsena.png" alt="SENA Logo" class="h-20 mb-8 filter brightness-0 invert drop-shadow-md">
+                    <h1 class="text-4xl xl:text-5xl font-extrabold leading-tight mb-6 tracking-tight drop-shadow-sm">
+                        Sistema de <br />
+                        <span class="text-green-300">Programación</span>
+                    </h1>
+                    <p class="text-lg text-slate-100/90 leading-relaxed font-medium">
+                        Plataforma integral para la gestión, asignación y seguimiento de instructores y ambientes de formación.
+                    </p>
+
+                    <div class="mt-10 flex items-center gap-4 text-sm font-medium text-white/80">
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-green-400">check_circle</span>
+                            Optimización
+                        </div>
+                        <div class="w-1.5 h-1.5 rounded-full bg-white/40"></div>
+                        <div class="flex items-center gap-2">
+                            <span class="material-symbols-outlined text-green-400">insights</span>
+                            Control
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT SIDE: Login Form -->
+        <div class="w-full lg:w-1/2 flex items-center justify-center p-8 sm:p-12 lg:p-16 xl:p-24 bg-white relative h-full overflow-y-auto custom-scrollbar">
+            <!-- Mobile Background (Only visible on small screens) -->
+            <div class="absolute inset-0 z-0 lg:hidden block">
+                <img src="assets/imagenes/Foto-nota-2024-01-03T181318.611.webp" alt="Background" class="w-full h-full object-cover opacity-10">
+                <div class="absolute inset-0 bg-white/90 backdrop-blur-sm"></div>
+            </div>
+
+            <div class="w-full max-w-[420px] relative z-10">
+
+                <!-- Mobile Logo -->
+                <div class="lg:hidden flex justify-center mb-8">
                     <img src="assets/imagenes/LOGOsena.png" alt="Logo SENA" class="h-16 w-auto object-contain">
                 </div>
-                <div class="mb-8 text-center">
-                    <h2 class="text-[28px] leading-tight font-bold tracking-tight text-slate-800 mb-2">
-                        Bienvenido al sistema
+
+                <div class="mb-10 lg:text-left text-center">
+                    <h2 class="text-3xl font-bold tracking-tight text-slate-900 mb-3">
+                        Bienvenido de nuevo
                     </h2>
-                    <p class="text-[15px] text-slate-500">
-                        Ingresa a tu cuenta para continuar.
+                    <p class="text-[15px] text-slate-500 font-medium">
+                        Por favor, ingresa tus credenciales para acceder.
                     </p>
                 </div>
 
+                <!-- Messages -->
                 <?php if ($error_message): ?>
-                    <div class="bg-red-50 border border-red-200 text-red-600 text-sm p-4 rounded-xl mb-6 flex items-center gap-3 shadow-sm">
-                        <span class="material-symbols-outlined text-xl">error</span>
-                        <p><?php echo htmlspecialchars($error_message); ?></p>
+                    <div class="bg-red-50 border-l-4 border-red-500 text-red-700 p-4 rounded-r-lg mb-8 flex items-start gap-3 shadow-sm animate-fade-in">
+                        <span class="material-symbols-outlined text-red-500 mt-0.5">error</span>
+                        <p class="text-sm font-medium"><?php echo htmlspecialchars($error_message); ?></p>
                     </div>
                 <?php endif; ?>
 
                 <?php if ($success_message): ?>
-                    <div class="bg-green-50 border border-green-200 text-[#39A900] text-sm p-4 rounded-xl mb-6 flex items-center gap-3 shadow-sm">
-                        <span class="material-symbols-outlined text-xl">check_circle</span>
-                        <p><?php echo htmlspecialchars($success_message); ?></p>
+                    <div class="bg-green-50 border-l-4 border-primary text-slate-700 p-4 rounded-r-lg mb-8 flex items-start gap-3 shadow-sm animate-fade-in">
+                        <span class="material-symbols-outlined text-primary mt-0.5">check_circle</span>
+                        <p class="text-sm font-medium"><?php echo htmlspecialchars($success_message); ?></p>
                     </div>
                 <?php endif; ?>
 
-                <form action="routing.php?controller=login&action=login" class="space-y-5" method="POST">
+                <!-- Form -->
+                <form action="routing.php?controller=login&action=login" method="POST" class="space-y-6">
                     <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
 
-                    <div class="flex flex-col gap-1.5">
-                        <label class="block text-[13px] font-semibold text-slate-700 ml-0.5" for="email">
+                    <div class="space-y-1.5">
+                        <label class="block text-sm font-semibold text-slate-700" for="email">
                             Correo Electrónico
                         </label>
-                        <div class="relative">
-                            <input autocomplete="email" class="block w-full rounded-xl border border-slate-300 bg-white py-3.5 px-4 text-slate-900 shadow-sm focus:border-[#39A900] focus:ring-1 focus:ring-[#39A900] sm:text-sm transition-colors placeholder:text-slate-400 outline-none" id="email" name="email" placeholder="ejemplo@sena.edu.co" required="" type="email" />
-                        </div>
-                    </div>
-
-                    <div class="flex flex-col gap-1.5">
-                        <label class="block text-[13px] font-semibold text-slate-700 ml-0.5" for="password">
-                            Contraseña
-                        </label>
-                        <div class="relative rounded-lg shadow-sm">
-                            <input autocomplete="current-password" class="block w-full rounded-xl border border-slate-300 bg-white py-3.5 px-4 pr-11 text-slate-900 shadow-sm focus:border-[#39A900] focus:ring-1 focus:ring-[#39A900] sm:text-sm transition-colors placeholder:text-slate-400 outline-none" id="password_input" name="password" placeholder="••••••••" required="" type="password" />
-                            <div class="absolute inset-y-0 right-0 flex items-center justify-center w-11 cursor-pointer text-slate-400 hover:text-slate-600 transition-colors" onclick="togglePassword()">
-                                <span class="material-symbols-outlined text-lg" id="toggle_icon">visibility</span>
+                        <div class="relative group">
+                            <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-slate-400 group-focus-within:text-primary transition-colors">
+                                <span class="material-symbols-outlined text-[20px]">mail</span>
                             </div>
+                            <input autocomplete="email" class="block w-full rounded-xl border-slate-200 bg-slate-50 py-3.5 pl-11 pr-4 text-slate-900 shadow-sm focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/20 sm:text-sm transition-all duration-200 placeholder:text-slate-400 outline-none" id="email" name="email" placeholder="ejemplo@correo.com" required="" type="email" />
                         </div>
                     </div>
 
-                    <div class="flex items-center justify-between pt-1">
-                        <label class="flex items-center gap-2 cursor-pointer group">
-                            <input class="w-4 h-4 rounded border-slate-300 text-[#39A900] focus:ring-[#39A900] bg-white" id="remember-me" name="remember-me" type="checkbox" />
-                            <span class="text-[13px] text-slate-600 group-hover:text-slate-900 transition-colors">Recordarme</span>
-                        </label>
-                        <a class="text-[13px] text-[#39A900] hover:text-[#39A900]/80 transition-colors font-medium" href="#">
-                            ¿Olvidaste tu contraseña?
-                        </a>
+                    <div class="space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <label class="block text-sm font-semibold text-slate-700" for="password">
+                                Contraseña
+                            </label>
+                            <a class="text-sm text-primary hover:text-primary-dark font-semibold transition-colors" href="#">
+                                ¿Olvidaste tu contraseña?
+                            </a>
+                        </div>
+                        <div class="relative group rounded-xl shadow-sm">
+                            <div class="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none text-slate-400 group-focus-within:text-primary transition-colors">
+                                <span class="material-symbols-outlined text-[20px]">lock</span>
+                            </div>
+                            <input autocomplete="current-password" class="block w-full rounded-xl border-slate-200 bg-slate-50 py-3.5 pl-11 pr-12 text-slate-900 shadow-sm focus:border-primary focus:bg-white focus:ring-2 focus:ring-primary/20 sm:text-sm transition-all duration-200 placeholder:text-slate-400 outline-none" id="password_input" name="password" placeholder="••••••••" required="" type="password" />
+                            <button type="button" class="absolute inset-y-0 right-0 flex items-center justify-center w-12 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none" onclick="togglePassword()">
+                                <span class="material-symbols-outlined text-[20px]" id="toggle_icon">visibility</span>
+                            </button>
+                        </div>
                     </div>
 
-                    <div class="pt-2">
-                        <button class="flex w-full justify-center items-center rounded-xl bg-[#39A900] px-4 py-3.5 text-sm font-bold text-white shadow-sm hover:bg-[#39A900]/90 transition-all duration-200 active:scale-[0.99] outline-none" type="submit">
-                            Iniciar Sesión
+                    <div class="flex items-center pt-2">
+                        <label class="flex items-center gap-3 cursor-pointer group">
+                            <div class="relative flex items-center justify-center">
+                                <input class="peer h-5 w-5 cursor-pointer appearance-none rounded-md border-2 border-slate-300 checked:border-primary checked:bg-primary transition-all" id="remember-me" name="remember-me" type="checkbox" />
+                                <span class="material-symbols-outlined absolute text-white opacity-0 peer-checked:opacity-100 pointer-events-none text-[16px]">check</span>
+                            </div>
+                            <span class="text-sm font-medium text-slate-600 group-hover:text-slate-900 transition-colors">Mantener sesión iniciada</span>
+                        </label>
+                    </div>
+
+                    <div class="pt-4">
+                        <button class="relative flex w-full justify-center items-center rounded-xl bg-primary px-4 py-4 text-[15px] font-bold text-white shadow-lg shadow-primary/30 hover:bg-primary-dark hover:shadow-xl hover:shadow-primary/40 hover:-translate-y-0.5 transition-all duration-300 active:scale-[0.98] outline-none overflow-hidden group" type="submit">
+                            <span class="relative z-10 flex items-center gap-2">
+                                Iniciar Sesión
+                                <span class="material-symbols-outlined text-[20px] group-hover:translate-x-1 transition-transform">arrow_forward</span>
+                            </span>
+                            <!-- Button Shine Effect -->
+                            <div class="absolute inset-0 -translate-x-full group-hover:animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/20 to-transparent skew-x-12 z-0"></div>
                         </button>
                     </div>
                 </form>
 
-                <p class="mt-8 text-center text-[13px] text-slate-500">
-                    ¿Eres Coordinador nuevo?
-                    <a class="font-medium text-[#39A900] hover:text-[#39A900]/80 hover:underline underline-offset-2 transition-all" href="routing.php?controller=login&action=registroCoordinador">
-                        Regístrate aquí
-                    </a>
-                </p>
+                <div class="mt-12 text-center lg:text-left">
+                    <p class="text-sm font-medium text-slate-500">
+                        ¿Eres Coordinador nuevo?
+                        <a class="font-bold text-primary hover:text-primary-dark ml-1 hover:underline underline-offset-4 transition-all" href="routing.php?controller=login&action=registroCoordinador">
+                            Crea tu cuenta aquí
+                        </a>
+                    </p>
+                </div>
+
+                <!-- Copyright Footer -->
+                <div class="mt-16 text-center lg:text-left">
+                    <p class="text-xs text-slate-400 font-medium">
+                        &copy; <?php echo date('Y'); ?> SENA. Todos los derechos reservados.
+                    </p>
+                </div>
             </div>
         </div>
     </div>
@@ -145,9 +219,11 @@ $success_message = isset($_GET['success']) ? $_GET['success'] : '';
             if (input.type === 'password') {
                 input.type = 'text';
                 icon.innerText = 'visibility_off';
+                icon.classList.add('text-primary');
             } else {
                 input.type = 'password';
                 icon.innerText = 'visibility';
+                icon.classList.remove('text-primary');
             }
         }
     </script>

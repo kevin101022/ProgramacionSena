@@ -52,9 +52,6 @@ require_once '../layouts/sidebar.php';
                     <!-- SENA Regional Card -->
                     <div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
                         <div class="bg-gray-50 flex flex-col items-center text-center relative overflow-hidden h-64 justify-center border-b border-gray-100">
-                            <div id="sedeFotoCard" class="absolute inset-0 hidden">
-                                <img id="sedeFotoImg" src="" alt="Sede Foto" class="w-full h-full object-cover">
-                            </div>
                             <div id="sedeDefaultInfo" class="flex flex-col items-center px-6">
                                 <div class="w-24 h-24 bg-white rounded-full flex items-center justify-center mb-4 shadow-sm relative z-10 border border-gray-100">
                                     <ion-icon src="../../assets/ionicons/business-outline.svg" class="text-5xl text-gray-200"></ion-icon>

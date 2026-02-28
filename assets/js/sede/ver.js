@@ -351,21 +351,7 @@ class SedeView {
             sedeId.textContent = String(this.sedeData.sede_id).padStart(3, '0');
         }
 
-        // Sede Photo in Regional Card
-        const sedeFotoCard = document.getElementById('sedeFotoCard');
-        const sedeFotoImg = document.getElementById('sedeFotoImg');
-        const sedeDefaultInfo = document.getElementById('sedeDefaultInfo');
 
-        if (sedeFotoCard && sedeFotoImg && sedeDefaultInfo) {
-            if (this.sedeData.sede_foto) {
-                sedeFotoImg.src = this.sedeData.sede_foto;
-                sedeFotoCard.classList.remove('hidden');
-                sedeDefaultInfo.classList.add('hidden');
-            } else {
-                sedeFotoCard.classList.add('hidden');
-                sedeDefaultInfo.classList.remove('hidden');
-            }
-        }
 
         // Statistics
         const totalProgramas = document.getElementById('totalProgramas');

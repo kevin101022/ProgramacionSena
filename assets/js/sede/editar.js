@@ -275,11 +275,7 @@ class SedeEdit {
         formData.append('sede_id', sedeData.sede_id);
         formData.append('sede_nombre', sedeData.sede_nombre);
 
-        // Handle photo if present
-        const photoInput = document.getElementById('sede_foto');
-        if (photoInput && photoInput.files[0]) {
-            formData.append('sede_foto', photoInput.files[0]);
-        }
+
 
         const response = await fetch('../../routing.php', {
             method: 'POST',

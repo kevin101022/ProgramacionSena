@@ -61,42 +61,7 @@ require_once '../layouts/sidebar.php';
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label class="form-label">Foto de la Sede</label>
-                    <div class="flex items-center gap-6 mt-2 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl border-2 border-dashed border-slate-200 dark:border-slate-700">
-                        <div id="imagePreviewContainer" class="w-32 h-32 rounded-lg overflow-hidden flex-shrink-0 flex items-center justify-center bg-gradient-to-br from-sena-green to-emerald-700 text-white shadow-md">
-                            <ion-icon id="placeholderIcon" src="../../assets/ionicons/business-outline.svg" class="text-5xl"></ion-icon>
-                            <img id="imagePreview" src="" alt="Vista previa" class="w-full h-full object-cover hidden">
-                        </div>
-                        <div class="flex-1">
-                            <p class="text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Subir una imagen del campus</p>
-                            <p class="text-xs text-slate-500 mb-4">Formatos sugeridos: JPG, PNG o WEBP (Máx. 2MB)</p>
-                            <label for="sede_foto" class="inline-flex items-center gap-2 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700 text-sena-green border border-sena-green/50 px-4 py-2 rounded-lg text-sm font-semibold cursor-pointer transition-all">
-                                <ion-icon src="../../assets/ionicons/cloud-upload-outline.svg" class="text-lg"></ion-icon>
-                                Seleccionar Imagen
-                            </label>
-                            <input type="file" id="sede_foto" name="sede_foto" class="hidden" accept="image/*">
-                        </div>
-                    </div>
-                </div>
 
-                <script>
-                    document.getElementById('sede_foto').addEventListener('change', function(e) {
-                        const file = e.target.files[0];
-                        const preview = document.getElementById('imagePreview');
-                        const placeholder = document.getElementById('placeholderIcon');
-
-                        if (file) {
-                            const reader = new FileReader();
-                            reader.onload = function(event) {
-                                preview.src = event.target.result;
-                                preview.classList.remove('hidden');
-                                placeholder.classList.add('hidden');
-                            }
-                            reader.readAsDataURL(file);
-                        }
-                    });
-                </script>
 
                 <div class="form-actions">
                     <a href="index.php" class="btn-secondary">

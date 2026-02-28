@@ -5,13 +5,23 @@ class coordinacionController
 {
     public function index()
     {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $cent_id = $_SESSION['centro_id'] ?? null;
+
         $model = new CoordinacionModel();
-        $coordinaciones = $model->getAll();
+        $coordinaciones = $model->getAll($cent_id);
         $this->sendResponse($coordinaciones);
     }
 
     public function store()
     {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $cent_id = $_SESSION['centro_id'] ?? null;
+
         $data = json_decode(file_get_contents('php://input'), true);
         if (!$data || !isset($data['coord_descripcion'])) {
             $this->sendResponse(['error' => 'Descripción de coordinación requerida'], 400);
@@ -21,7 +31,7 @@ class coordinacionController
         $model = new CoordinacionModel(
             null,
             $data['coord_descripcion'],
-            $data['centro_formacion_cent_id'] ?? null,
+            $data['centro_formacion_cent_id'] ?? $cent_id,
             $data['coord_nombre_coordinador'] ?? 'N/A',
             $data['coord_correo'] ?? 'N/A',
             $data['coord_password'] ?? '123456'
@@ -37,31 +47,43 @@ class coordinacionController
 
     public function show($id = null)
     {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $cent_id = $_SESSION['centro_id'] ?? null;
+
         if (!$id) {
             $this->sendResponse(['error' => 'ID requerido'], 400);
+            return;
         }
 
         $model = new CoordinacionModel($id);
-        $coordinacion = $model->read();
+        $coordinacion = $model->read($cent_id);
 
         if ($coordinacion) {
             $this->sendResponse($coordinacion[0]);
         } else {
-            $this->sendResponse(['error' => 'Coordinación no encontrada'], 404);
+            $this->sendResponse(['error' => 'Coordinación no encontrada o sin acceso'], 404);
         }
     }
 
     public function update()
     {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $cent_id = $_SESSION['centro_id'] ?? null;
+
         $data = json_decode(file_get_contents('php://input'), true);
         if (!$data || !isset($data['coord_id'])) {
             $this->sendResponse(['error' => 'Datos incompletos'], 400);
+            return;
         }
 
         $model = new CoordinacionModel(
             $data['coord_id'],
             $data['coord_descripcion'],
-            $data['centro_formacion_cent_id'],
+            $data['centro_formacion_cent_id'] ?? $cent_id,
             $data['coord_nombre_coordinador'],
             $data['coord_correo'],
             $data['coord_password']

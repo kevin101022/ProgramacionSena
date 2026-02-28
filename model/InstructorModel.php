@@ -1,12 +1,10 @@
 <?php
 require_once dirname(__DIR__) . '/Conexion.php';
-require_once __DIR__ . '/SchemaResilienceTrait.php';
 
 class InstructorModel
 {
-    use SchemaResilienceTrait;
 
-    private $inst_id;
+    private $numero_documento;
     private $inst_nombres;
     private $inst_apellidos;
     private $inst_correo;
@@ -15,9 +13,9 @@ class InstructorModel
     private $inst_password;
     private $db;
 
-    public function __construct($inst_id = null, $inst_nombres = null, $inst_apellidos = null, $inst_correo = null, $inst_telefono = null, $cent_id = null, $inst_password = null)
+    public function __construct($numero_documento = null, $inst_nombres = null, $inst_apellidos = null, $inst_correo = null, $inst_telefono = null, $cent_id = null, $inst_password = null)
     {
-        $this->inst_id = $inst_id;
+        $this->numero_documento = $numero_documento;
         $this->inst_nombres = $inst_nombres;
         $this->inst_apellidos = $inst_apellidos;
         $this->inst_correo = $inst_correo;
@@ -28,9 +26,9 @@ class InstructorModel
     }
 
     // Getters
-    public function getInstId()
+    public function getNumeroDocumento()
     {
-        return $this->inst_id;
+        return $this->numero_documento;
     }
     public function getInstNombres()
     {
@@ -58,9 +56,9 @@ class InstructorModel
     }
 
     // Setters
-    public function setInstId($inst_id)
+    public function setNumeroDocumento($numero_documento)
     {
-        $this->inst_id = $inst_id;
+        $this->numero_documento = $numero_documento;
     }
     public function setInstNombres($inst_nombres)
     {
@@ -88,74 +86,51 @@ class InstructorModel
     }
 
     // CRUD
-    public function getNextId()
-    {
-        $query = "SELECT COALESCE(MAX(inst_id), 0) + 1 FROM INSTRUCTOR";
-        $stmt = $this->db->prepare($query);
-        $stmt->execute();
-        return $stmt->fetchColumn();
-    }
-
     public function create()
     {
-        $retryLogic = function () {
-            if (!$this->inst_id) {
-                $this->inst_id = $this->getNextId();
-            }
-            $query = "INSERT INTO INSTRUCTOR (inst_id, inst_nombres, inst_apellidos, inst_correo, inst_telefono, inst_password, CENTRO_FORMACION_cent_id) 
-            VALUES (:inst_id, :inst_nombres, :inst_apellidos, :inst_correo, :inst_telefono, :inst_password, :cent_id)";
+        $query = "INSERT INTO INSTRUCTOR (numero_documento, inst_nombres, inst_apellidos, inst_correo, inst_telefono, inst_password, CENTRO_FORMACION_cent_id, estado) 
+        VALUES (:numero_documento, :inst_nombres, :inst_apellidos, :inst_correo, :inst_telefono, :inst_password, :cent_id, 1)";
 
-            $stmt = $this->db->prepare($query);
+        $stmt = $this->db->prepare($query);
 
-            $stmt->bindParam(':inst_id', $this->inst_id);
-            $stmt->bindParam(':inst_nombres', $this->inst_nombres);
-            $stmt->bindParam(':inst_apellidos', $this->inst_apellidos);
-            $stmt->bindParam(':inst_correo', $this->inst_correo);
-            $stmt->bindParam(':inst_password', $this->inst_password);
+        $stmt->bindParam(':numero_documento', $this->numero_documento);
+        $stmt->bindParam(':inst_nombres', $this->inst_nombres);
+        $stmt->bindParam(':inst_apellidos', $this->inst_apellidos);
+        $stmt->bindParam(':inst_correo', $this->inst_correo);
+        $stmt->bindParam(':inst_password', $this->inst_password);
 
-            $telefono = !empty($this->inst_telefono) ? $this->inst_telefono : null;
-            $stmt->bindParam(':inst_telefono', $telefono);
+        $telefono = !empty($this->inst_telefono) ? $this->inst_telefono : null;
+        $stmt->bindParam(':inst_telefono', $telefono);
 
-            $centId = !empty($this->cent_id) ? $this->cent_id : null;
-            $stmt->bindParam(':cent_id', $centId);
+        $centId = !empty($this->cent_id) ? $this->cent_id : null;
+        $stmt->bindParam(':cent_id', $centId);
 
-            $stmt->execute();
-            return $this->inst_id;
-        };
-
-        try {
-            return $retryLogic();
-        } catch (PDOException $e) {
-            return $this->handleTruncation($e, 'instructor', [
-                'inst_nombres' => $this->inst_nombres,
-                'inst_apellidos' => $this->inst_apellidos,
-                'inst_correo' => $this->inst_correo,
-                'inst_password' => $this->inst_password
-            ], $retryLogic);
-        }
+        $stmt->execute();
+        return $this->numero_documento;
     }
 
     public function read()
     {
-        $sql = "SELECT i.inst_id, i.inst_nombres, i.inst_apellidos, i.inst_correo, i.inst_telefono, 
+        $sql = "SELECT i.numero_documento as inst_id, i.inst_nombres, i.inst_apellidos, i.inst_correo, i.inst_telefono, 
                        i.CENTRO_FORMACION_cent_id as cent_id, i.inst_password,
                        c.cent_nombre 
                 FROM INSTRUCTOR i 
                 LEFT JOIN CENTRO_FORMACION c ON i.CENTRO_FORMACION_cent_id = c.cent_id 
-                WHERE i.inst_id = :inst_id";
+                WHERE i.numero_documento = :numero_documento AND i.estado = 1";
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([':inst_id' => $this->inst_id]);
+        $stmt->execute([':numero_documento' => $this->numero_documento]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
     public function readAll()
     {
-        $sql = "SELECT i.inst_id, i.inst_nombres, i.inst_apellidos, i.inst_correo, i.inst_telefono, 
+        $sql = "SELECT i.numero_documento as inst_id, i.inst_nombres, i.inst_apellidos, i.inst_correo, i.inst_telefono, 
                        i.CENTRO_FORMACION_cent_id as cent_id, i.inst_password,
                        c.cent_nombre 
                 FROM INSTRUCTOR i 
                 LEFT JOIN CENTRO_FORMACION c ON i.CENTRO_FORMACION_cent_id = c.cent_id 
-                ORDER BY i.inst_id DESC";
+                WHERE i.estado = 1
+                ORDER BY i.numero_documento DESC";
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -163,13 +138,13 @@ class InstructorModel
 
     public function readByCentro($cent_id)
     {
-        $sql = "SELECT i.inst_id, i.inst_nombres, i.inst_apellidos, i.inst_correo, i.inst_telefono, 
+        $sql = "SELECT i.numero_documento as inst_id, i.inst_nombres, i.inst_apellidos, i.inst_correo, i.inst_telefono, 
                        i.CENTRO_FORMACION_cent_id as cent_id, i.inst_password,
                        c.cent_nombre 
                 FROM INSTRUCTOR i 
                 LEFT JOIN CENTRO_FORMACION c ON i.CENTRO_FORMACION_cent_id = c.cent_id 
-                WHERE i.CENTRO_FORMACION_cent_id = :cent_id
-                ORDER BY i.inst_id DESC";
+                WHERE i.CENTRO_FORMACION_cent_id = :cent_id AND i.estado = 1
+                ORDER BY i.numero_documento DESC";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([':cent_id' => $cent_id]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -185,7 +160,7 @@ class InstructorModel
                           inst_telefono = :inst_telefono, 
                           inst_password = :inst_password,
                           CENTRO_FORMACION_cent_id = :cent_id 
-                      WHERE inst_id = :inst_id";
+                      WHERE numero_documento = :numero_documento";
 
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':inst_nombres', $this->inst_nombres);
@@ -199,7 +174,7 @@ class InstructorModel
             $centId = !empty($this->cent_id) ? $this->cent_id : null;
             $stmt->bindParam(':cent_id', $centId);
 
-            $stmt->bindParam(':inst_id', $this->inst_id);
+            $stmt->bindParam(':numero_documento', $this->numero_documento);
             return $stmt->execute();
         } catch (PDOException $e) {
             error_log("Error en InstructorModel::update: " . $e->getMessage());
@@ -209,9 +184,9 @@ class InstructorModel
 
     public function delete()
     {
-        $query = "DELETE FROM INSTRUCTOR WHERE inst_id = :inst_id";
+        $query = "UPDATE INSTRUCTOR SET estado = 0 WHERE numero_documento = :numero_documento";
         $stmt = $this->db->prepare($query);
-        $stmt->bindParam(':inst_id', $this->inst_id);
+        $stmt->bindParam(':numero_documento', $this->numero_documento);
         $stmt->execute();
         return $stmt;
     }
@@ -230,10 +205,10 @@ class InstructorModel
                 LEFT JOIN COMPETENCIA comp ON a.COMPETENCIA_comp_id = comp.comp_id
                 LEFT JOIN AMBIENTE amb ON a.AMBIENTE_amb_id = amb.amb_id
                 LEFT JOIN SEDE s ON amb.SEDE_sede_id = s.sede_id
-                WHERE a.INSTRUCTOR_inst_id = :inst_id
+                WHERE a.INSTRUCTOR_inst_id = :numero_documento
                 ORDER BY a.asig_fecha_ini DESC";
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([':inst_id' => $this->inst_id]);
+        $stmt->execute([':numero_documento' => $this->numero_documento]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -245,10 +220,34 @@ class InstructorModel
                 FROM INSTRU_COMPETENCIA ic
                 LEFT JOIN COMPETENCIA comp ON ic.COMPETxPROGRAMA_COMPETENCIA_comp_id = comp.comp_id
                 LEFT JOIN PROGRAMA p ON ic.COMPETxPROGRAMA_PROGRAMA_prog_id = p.prog_codigo
-                WHERE ic.INSTRUCTOR_inst_id = :inst_id
+                WHERE ic.INSTRUCTOR_inst_id = :numero_documento
                 ORDER BY comp.comp_nombre_corto ASC";
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([':inst_id' => $this->inst_id]);
+        $stmt->execute([':numero_documento' => $this->numero_documento]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    public function getFichasLider()
+    {
+        $sql = "SELECT f.fich_id, f.fich_jornada, f.fich_fecha_ini_lectiva, f.fich_fecha_fin_lectiva,
+                       p.prog_denominacion, tp.titpro_nombre,
+                       c.coord_descripcion as coord_nombre, s.sede_nombre
+                FROM FICHA f
+                INNER JOIN PROGRAMA p ON f.PROGRAMA_prog_id = p.prog_codigo
+                INNER JOIN TITULO_PROGRAMA tp ON p.TIT_PROGRAMA_titpro_id = tp.titpro_id
+                LEFT JOIN COORDINACION c ON f.COORDINACION_coord_id = c.numero_documento
+                LEFT JOIN (
+                    SELECT FICHA_fich_id, MAX(ASIG_ID) as asig_id_max 
+                    FROM ASIGNACION 
+                    GROUP BY FICHA_fich_id
+                ) a_max ON f.fich_id = a_max.FICHA_fich_id
+                LEFT JOIN ASIGNACION a ON a_max.asig_id_max = a.ASIG_ID
+                LEFT JOIN AMBIENTE amb ON a.AMBIENTE_amb_id = amb.amb_id
+                LEFT JOIN SEDE s ON amb.SEDE_sede_id = s.sede_id
+                WHERE f.INSTRUCTOR_inst_id_lider = :numero_documento
+                ORDER BY f.fich_fecha_ini_lectiva DESC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':numero_documento' => $this->numero_documento]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

@@ -15,13 +15,27 @@ class ReporteController
      */
     public function instructoresPorCentro()
     {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $cent_id = $_SESSION['centro_id'] ?? null;
+
         $sql = "SELECT cf.cent_id, cf.cent_nombre, 
-                       i.inst_id, i.inst_nombres, i.inst_apellidos, i.inst_correo, i.inst_telefono
+                       i.numero_documento as inst_id, i.inst_nombres, i.inst_apellidos, i.inst_correo, i.inst_telefono
                 FROM INSTRUCTOR i
-                INNER JOIN CENTRO_FORMACION cf ON i.CENTRO_FORMACION_cent_id = cf.cent_id
-                ORDER BY cf.cent_nombre, i.inst_apellidos";
+                INNER JOIN CENTRO_FORMACION cf ON i.CENTRO_FORMACION_cent_id = cf.cent_id";
+
+        if ($cent_id) {
+            $sql .= " WHERE cf.cent_id = :cent_id";
+        }
+        $sql .= " ORDER BY cf.cent_nombre, i.inst_apellidos";
+
         $stmt = $this->db->prepare($sql);
-        $stmt->execute();
+        if ($cent_id) {
+            $stmt->execute([':cent_id' => $cent_id]);
+        } else {
+            $stmt->execute();
+        }
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         // Agrupar por centro
@@ -52,17 +66,31 @@ class ReporteController
      */
     public function fichasActivasPorPrograma()
     {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $cent_id = $_SESSION['centro_id'] ?? null;
+
         $sql = "SELECT p.prog_codigo, p.prog_denominacion, p.prog_tipo,
                        f.fich_id, f.fich_jornada, f.fich_fecha_ini_lectiva, f.fich_fecha_fin_lectiva,
                        i.inst_nombres, i.inst_apellidos,
                        co.coord_descripcion
                 FROM FICHA f
                 INNER JOIN PROGRAMA p ON f.PROGRAMA_prog_id = p.prog_codigo
-                LEFT JOIN INSTRUCTOR i ON f.INSTRUCTOR_inst_id_lider = i.inst_id
-                LEFT JOIN COORDINACION co ON f.COORDINACION_coord_id = co.coord_id
-                ORDER BY p.prog_denominacion, f.fich_id";
+                LEFT JOIN INSTRUCTOR i ON f.INSTRUCTOR_inst_id_lider = i.numero_documento
+                LEFT JOIN COORDINACION co ON f.COORDINACION_coord_id = co.numero_documento";
+
+        if ($cent_id) {
+            $sql .= " WHERE co.CENTRO_FORMACION_cent_id = :cent_id OR i.CENTRO_FORMACION_cent_id = :cent_id";
+        }
+        $sql .= " ORDER BY p.prog_denominacion, f.fich_id";
+
         $stmt = $this->db->prepare($sql);
-        $stmt->execute();
+        if ($cent_id) {
+            $stmt->execute([':cent_id' => $cent_id]);
+        } else {
+            $stmt->execute();
+        }
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $grouped = [];
@@ -94,20 +122,34 @@ class ReporteController
      */
     public function asignacionesPorInstructor()
     {
-        $sql = "SELECT i.inst_id, i.inst_nombres, i.inst_apellidos,
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $cent_id = $_SESSION['centro_id'] ?? null;
+
+        $sql = "SELECT i.numero_documento as inst_id, i.inst_nombres, i.inst_apellidos,
                        a.asig_id, a.asig_fecha_ini, a.asig_fecha_fin,
                        f.fich_id, p.prog_denominacion,
                        c.comp_nombre_corto,
                        amb.amb_id, amb.amb_nombre
                 FROM ASIGNACION a
-                INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.inst_id
+                INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.numero_documento
                 INNER JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
                 INNER JOIN PROGRAMA p ON f.PROGRAMA_prog_id = p.prog_codigo
                 INNER JOIN COMPETENCIA c ON a.COMPETENCIA_comp_id = c.comp_id
-                LEFT JOIN AMBIENTE amb ON a.AMBIENTE_amb_id = amb.amb_id
-                ORDER BY i.inst_apellidos, a.asig_fecha_ini";
+                LEFT JOIN AMBIENTE amb ON a.AMBIENTE_amb_id = amb.amb_id";
+
+        if ($cent_id) {
+            $sql .= " WHERE i.CENTRO_FORMACION_cent_id = :cent_id";
+        }
+        $sql .= " ORDER BY i.inst_apellidos, a.asig_fecha_ini";
+
         $stmt = $this->db->prepare($sql);
-        $stmt->execute();
+        if ($cent_id) {
+            $stmt->execute([':cent_id' => $cent_id]);
+        } else {
+            $stmt->execute();
+        }
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         $grouped = [];

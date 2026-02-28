@@ -1,10 +1,8 @@
 <?php
 require_once dirname(__DIR__) . '/Conexion.php';
-require_once __DIR__ . '/SchemaResilienceTrait.php';
 
 class AmbienteModel
 {
-    use SchemaResilienceTrait;
 
     private $amb_id;
     private $amb_nombre;
@@ -73,57 +71,71 @@ class AmbienteModel
 
     public function create()
     {
-        $retryLogic = function () {
-            if (!$this->amb_id) {
-                $this->amb_id = $this->getNextId();
-            }
-            $query = "INSERT INTO AMBIENTE (amb_id, amb_nombre, SEDE_sede_id, tipo_ambiente) VALUES (:id, :amb_nombre, :sede, :tipo)";
-            $stmt = $this->db->prepare($query);
-            $stmt->bindParam(':id', $this->amb_id);
-            $stmt->bindParam(':amb_nombre', $this->amb_nombre);
-            $stmt->bindParam(':sede', $this->sede_sede_id);
-            $stmt->bindParam(':tipo', $this->tipo_ambiente);
-            return $stmt->execute();
-        };
-
-        try {
-            return $retryLogic();
-        } catch (PDOException $e) {
-            return $this->handleTruncation($e, 'AMBIENTE', [
-                'amb_nombre' => $this->amb_nombre
-            ], $retryLogic);
+        if (!$this->amb_id) {
+            $this->amb_id = $this->getNextId();
         }
+        $query = "INSERT INTO AMBIENTE (amb_id, amb_nombre, SEDE_sede_id, tipo_ambiente) VALUES (:id, :amb_nombre, :sede, :tipo)";
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':id', $this->amb_id);
+        $stmt->bindParam(':amb_nombre', $this->amb_nombre);
+        $stmt->bindParam(':sede', $this->sede_sede_id);
+        $stmt->bindParam(':tipo', $this->tipo_ambiente);
+        return $stmt->execute();
     }
 
-    public function read()
+    public function read($cent_id = null)
     {
         $sql = "SELECT a.amb_id, a.amb_nombre, a.tipo_ambiente, a.SEDE_sede_id as sede_sede_id, s.sede_nombre 
                 FROM AMBIENTE a 
                 INNER JOIN SEDE s ON a.SEDE_sede_id = s.sede_id 
                 WHERE a.SEDE_sede_id = :sede";
+
+        $params = [':sede' => $this->sede_sede_id];
+
+        if ($cent_id) {
+            $sql .= " AND s.CENTRO_FORMACION_cent_id = :cent_id";
+            $params[':cent_id'] = $cent_id;
+        }
+
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([':sede' => $this->sede_sede_id]);
+        $stmt->execute($params);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function readAll()
+    public function readAll($cent_id = null)
     {
         $sql = "SELECT a.amb_id, a.amb_nombre, a.tipo_ambiente, a.SEDE_sede_id as sede_sede_id, s.sede_nombre 
                 FROM AMBIENTE a 
                 INNER JOIN SEDE s ON a.SEDE_sede_id = s.sede_id";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute();
+
+        if ($cent_id) {
+            $sql .= " WHERE s.CENTRO_FORMACION_cent_id = :cent_id";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute([':cent_id' => $cent_id]);
+        } else {
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute();
+        }
+
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function readById($id)
+    public function readById($id, $cent_id = null)
     {
         $sql = "SELECT a.amb_id, a.amb_nombre, a.tipo_ambiente, a.SEDE_sede_id as sede_sede_id, s.sede_nombre 
                 FROM AMBIENTE a 
                 INNER JOIN SEDE s ON a.SEDE_sede_id = s.sede_id 
                 WHERE a.amb_id = :id";
+
+        $params = [':id' => $id];
+
+        if ($cent_id) {
+            $sql .= " AND s.CENTRO_FORMACION_cent_id = :cent_id";
+            $params[':cent_id'] = $cent_id;
+        }
+
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([':id' => $id]);
+        $stmt->execute($params);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 

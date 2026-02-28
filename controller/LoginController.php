@@ -60,19 +60,34 @@ class LoginController
             }
 
             $model = new LoginModel();
+            $user = null;
+            $rol = null;
 
-            // Searh Coordinador first
-            $user = $model->findCoordinatorByEmail($email);
-            $rol = 'coordinador';
+            // Detección automática de rol (Centro -> Coordinador -> Instructor)
+            $user = $model->findCentroFormacionByEmail($email);
+            if ($user) {
+                $rol = 'centro';
+            } else {
+                $user = $model->findCoordinatorByEmail($email);
+                if ($user) {
+                    $rol = 'coordinador';
+                } else {
+                    $user = $model->findInstructorByEmail($email);
+                    if ($user) {
+                        $rol = 'instructor';
+                    }
+                }
+            }
 
-            // If not found, search Instructor
             if (!$user) {
-                $user = $model->findInstructorByEmail($email);
-                $rol = 'instructor';
+                $_SESSION['login_attempts']++;
+                $_SESSION['last_attempt_time'] = time();
+                header("Location: routing.php?controller=login&action=showLogin&error=" . urlencode("Usuario no encontrado o rol no válido."));
+                exit;
             }
 
             // Verify Password using Bcrypt verification
-            if ($user && password_verify($password, $user['password'])) {
+            if (password_verify($password, $user['password'])) {
                 // Success: Regenerate ID securely
                 session_regenerate_id(true);
                 $_SESSION['login_attempts'] = 0;
@@ -80,13 +95,17 @@ class LoginController
                 $_SESSION['id'] = $user['id'];
                 $_SESSION['nombre'] = $user['nombre'];
                 $_SESSION['correo'] = $email;
-                $_SESSION['centro_id'] = $user['centro_id'];
                 $_SESSION['rol'] = $rol;
 
-                // Coordinadores go directly to manage fichas or their dashboard, Instructores go to asignacion
-                if ($rol === 'coordinador') {
-                    header("Location: views/dashboard/index.php"); // Coordinator needs to manage Instructors for their Center
+                if ($rol === 'centro') {
+                    // El Centro de Formación es su propio centro_id
+                    $_SESSION['centro_id'] = $user['id'];
+                    header("Location: views/dashboard/index.php");
+                } else if ($rol === 'coordinador') {
+                    $_SESSION['centro_id'] = $user['centro_id'];
+                    header("Location: views/dashboard/index.php");
                 } else {
+                    $_SESSION['centro_id'] = $user['centro_id'];
                     header("Location: views/asignacion/index.php");
                 }
                 exit;
@@ -94,7 +113,7 @@ class LoginController
                 // Fail
                 $_SESSION['login_attempts']++;
                 $_SESSION['last_attempt_time'] = time();
-                header("Location: routing.php?controller=login&action=showLogin&error=" . urlencode("Credenciales incorrectas."));
+                header("Location: routing.php?controller=login&action=showLogin&error=" . urlencode("Credenciales incorrectas o rol equivocado."));
                 exit;
             }
         }
@@ -127,8 +146,26 @@ class LoginController
     {
         $this->initSession();
         $model = new LoginModel();
-        $coordinaciones = $model->findCoordinaciones();
-        require_once 'views/auth/coordinador_registro.php';
+        // Fetch Centros de Formación instead of coordinaciones
+        $centros = $model->getCentrosFormacion();
+        require_once 'views/login/registro.php';
+    }
+
+    public function getCoordinacionesByCentro()
+    {
+        $this->initSession();
+        $cent_id = filter_input(INPUT_GET, 'centro_id', FILTER_VALIDATE_INT);
+
+        if ($cent_id) {
+            $model = new LoginModel();
+            $coordinaciones = $model->getCoordinacionesDisponiblesByCentro($cent_id);
+            header('Content-Type: application/json');
+            echo json_encode($coordinaciones);
+        } else {
+            header('Content-Type: application/json');
+            echo json_encode([]);
+        }
+        exit;
     }
 
     public function guardarCoordinador()
@@ -142,13 +179,15 @@ class LoginController
                 exit;
             }
 
+            $cent_id = filter_input(INPUT_POST, 'centro_id', FILTER_VALIDATE_INT);
             $coord_id = filter_input(INPUT_POST, 'coordinacion_id', FILTER_VALIDATE_INT);
+            $documento = trim($_POST['documento'] ?? '');
             $nombre = trim($_POST['nombre'] ?? '');
             $correo = filter_input(INPUT_POST, 'correo', FILTER_VALIDATE_EMAIL);
             $password = $_POST['password'] ?? '';
             $password_confirm = $_POST['password_confirm'] ?? '';
 
-            if (!$coord_id || empty($nombre) || !$correo || empty($password)) {
+            if (!$cent_id || !$coord_id || empty($documento) || empty($nombre) || !$correo || empty($password)) {
                 header("Location: ?controller=login&action=registroCoordinador&error=" . urlencode("Todos los campos son obligatorios y el correo debe ser válido."));
                 exit;
             }
@@ -162,13 +201,22 @@ class LoginController
             $password_hash = password_hash($password, PASSWORD_DEFAULT);
 
             $model = new LoginModel();
-            $result = $model->registrarCoordinador($coord_id, $nombre, $correo, $password_hash);
+
+            // Check if email already exists in coordinacion? (Optional but good practice)
+            $existingUser = $model->findCoordinatorByEmail($correo);
+            if ($existingUser) {
+                header("Location: ?controller=login&action=registroCoordinador&error=" . urlencode("El correo ya está registrado."));
+                exit;
+            }
+
+            // registrarCoordinador now does an UPDATE on an unassigned coordination
+            $result = $model->registrarCoordinador($coord_id, $nombre, $correo, $password_hash, $documento);
 
             if ($result) {
                 header("Location: routing.php?controller=login&action=showLogin&success=" . urlencode("Registro exitoso. Ahora puedes iniciar sesión."));
                 exit;
             } else {
-                header("Location: ?controller=login&action=registroCoordinador&error=" . urlencode("Error al registrarse. Intenta más tarde."));
+                header("Location: ?controller=login&action=registroCoordinador&error=" . urlencode("Error al registrarse. Es posible que la coordinación seleccionada ya haya sido ocupada."));
                 exit;
             }
         }

@@ -46,7 +46,7 @@ require_once '../layouts/sidebar.php';
 
                         <div class="form-group">
                             <label class="form-label">Correo Electrónico <span class="text-red-500">*</span></label>
-                            <input type="email" id="inst_correo" name="inst_correo" required class="search-input" style="padding-left: 12px !important;" placeholder="ejemplo@sena.edu.co">
+                            <input type="email" id="inst_correo" name="inst_correo" required class="search-input" style="padding-left: 12px !important;" placeholder="ejemplo@correo.com">
                         </div>
 
                         <div class="form-group">

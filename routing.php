@@ -37,7 +37,8 @@ $controllers = array(
     'instructor' => ['index', 'show', 'showByCentro', 'store', 'update', 'destroy', 'getCentros', 'getAsignaciones', 'getCompetencias'],
     'instru_competencia' => ['index', 'show', 'store', 'update', 'destroy'],
     'reporte' => ['instructoresPorCentro', 'fichasActivasPorPrograma', 'asignacionesPorInstructor', 'competenciasPorPrograma'],
-    'login' => ['showLogin', 'login', 'logout', 'registroCoordinador', 'guardarCoordinador'],
+    'login' => ['showLogin', 'login', 'logout', 'registroCoordinador', 'guardarCoordinador', 'getCoordinacionesByCentro'],
+    'auditoria_asignacion' => ['index'],
     // Agrega más controladores y acciones aquí si lo necesitas
 );
 
@@ -71,16 +72,21 @@ try {
             throw new Exception("No autorizado. Por favor, inicie sesión.");
         }
 
-        // Restricciones estrictas para Instructores
-        if ($_SESSION['rol'] === 'instructor') {
-            $allowedForInstructor = [
-                'instructor' => ['getAsignaciones', 'getCompetencias']
-            ];
+        $rol = $_SESSION['rol'];
+        $isAjax = true; // routing.php maneja backend calls principalmente
 
-            if (!isset($allowedForInstructor[$controller]) || !in_array($action, $allowedForInstructor[$controller])) {
-                http_response_code(403);
-                throw new Exception("Acceso denegado: Permisos limitados para Instructores.");
-            }
+        $allowedControllersByRole = [
+            'centro' => ['sede', 'ambiente', 'programa', 'instructor', 'competencia', 'coordinacion', 'reporte', 'titulo_programa', 'centro_formacion', 'auditoria_asignacion'],
+            'coordinador' => ['competencia_programa', 'ficha', 'instru_competencia', 'asignacion', 'detalle_asignacion', 'reporte', 'auditoria_asignacion'],
+            'instructor' => ['asignacion', 'instructor']
+        ];
+
+        // Reglas de lectura adicionales para Coordinador (Dropdowns)
+        if ($rol === 'coordinador' && in_array($controller, ['programa', 'instructor', 'ambiente', 'competencia', 'centro_formacion'])) {
+            // Permitido para cargar selects en las vistas de asignación y fichas
+        } else if (!in_array($controller, $allowedControllersByRole[$rol] ?? [])) {
+            http_response_code(403);
+            throw new Exception("Acceso denegado: El rol '$rol' no tiene permisos para el módulo '$controller'.");
         }
     }
     // --- END RBAC ---
@@ -149,6 +155,10 @@ try {
         case 'login':
             require_once('model/LoginModel.php');
             $controllerObj = new LoginController();
+            break;
+        case 'auditoria_asignacion':
+            require_once('model/AuditoriaAsignacionModel.php');
+            $controllerObj = new AuditoriaAsignacionController();
             break;
         default:
             throw new Exception("Controlador no soportado: $controller");
