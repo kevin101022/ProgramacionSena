@@ -11,10 +11,10 @@ No escribimos contraseñas dentro del código. Todo se configura en el archivo `
 ```env
 DB_DRIVER=pgsql      # O 'mysql'
 DB_PORT=5432         # 3306 para MySQL
-DB_HOST=localhost
-DB_NAME=programacionesSena
-DB_USER=postgres
-DB_PASS=tu_contraseña
+DB_HOST=localhost    # Cambia esto si tu base de datos está en otro host
+DB_NAME=nombre_de_tu_base_de_datos   # Cambia esto por el nombre de tu base de datos
+DB_USER=postgres     # Cambia esto si tu usuario es diferente
+DB_PASS=tu_contraseña  # Cambia esto por tu contraseña
 ```
 Requisitos del Servidor
 

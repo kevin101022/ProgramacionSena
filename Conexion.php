@@ -39,10 +39,15 @@ class Conexion
                 $doc_usuario = isset($_SESSION['id']) ? $_SESSION['id'] : 0;
                 $correo_usuario = isset($_SESSION['correo']) ? $_SESSION['correo'] : 'Sistema';
 
-                $stmt = self::$instance->prepare("SELECT set_config('myapp.documento_usuario', :doc, false), set_config('myapp.correo_usuario', :correo, false)");
+                if ($driver === 'pgsql') {
+                    $stmt = self::$instance->prepare("SELECT set_config('myapp.documento_usuario', :doc, false), set_config('myapp.correo_usuario', :correo, false)");
+                } else {
+                    // Para MySQL/MariaDB usamos variables de usuario con @
+                    $stmt = self::$instance->prepare("SET @myapp_documento_usuario = :doc, @myapp_correo_usuario = :correo");
+                }
                 $stmt->execute([':doc' => (string)$doc_usuario, ':correo' => $correo_usuario]);
             } catch (PDOException $e) {
-                throw new Exception("Error al conectar a PostgreSQL: " . $e->getMessage());
+                throw new Exception("Error al conectar a la base de datos: " . $e->getMessage());
             }
         }
         return self::$instance;
