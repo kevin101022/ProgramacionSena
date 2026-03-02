@@ -13,11 +13,11 @@ $instructorNombre = isset($_SESSION['nombre']) ? $_SESSION['nombre'] : 'Instruct
 
     <nav class="sidebar-nav">
         <p class="nav-section">Mi Espacio</p>
-        <a href="../asignacion/index.php" class="nav-item <?php echo ($activeNavItem === 'asignaciones') ? 'active' : ''; ?>">
+        <a href="../asignacion/instructor_index.php" class="nav-item <?php echo ($activeNavItem === 'asignaciones') ? 'active' : ''; ?>">
             <ion-icon src="../../assets/ionicons/calendar-outline.svg"></ion-icon>
             Mis Asignaciones
         </a>
-        <a href="../competencia/index.php" class="nav-item <?php echo ($activeNavItem === 'competencias') ? 'active' : ''; ?>">
+        <a href="../instructor/competencias.php" class="nav-item <?php echo ($activeNavItem === 'mis_competencias') ? 'active' : ''; ?>">
             <ion-icon src="../../assets/ionicons/bookmarks-outline.svg"></ion-icon>
             Mis Competencias
         </a>

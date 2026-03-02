@@ -1,6 +1,6 @@
 <?php
 $pageTitle = "Habilitación de Instructores - SENA";
-$activeNavItem = 'habilitaciones';
+$activeNavItem = 'instruc_comp';
 require_once '../layouts/head.php';
 require_once '../layouts/sidebar.php';
 ?>
@@ -36,12 +36,19 @@ require_once '../layouts/sidebar.php';
         <div class="action-bar">
             <div class="search-container flex-1">
                 <ion-icon src="../../assets/ionicons/search-outline.svg" class="search-icon"></ion-icon>
-                <input type="text" id="searchInput" placeholder="Buscar por instructor, programa o competencia..." class="search-input">
+                <input type="text" id="searchInput" placeholder="Buscar por nombre, apellido o documento..." class="search-input">
             </div>
-            <button id="addBtn" class="btn-primary">
-                <ion-icon src="../../assets/ionicons/add-outline.svg"></ion-icon>
-                Nueva Habilitación
-            </button>
+            <div class="filter-container">
+                <select id="competenciaFilter" class="search-input !w-64">
+                    <option value="">Todas las competencias</option>
+                </select>
+            </div>
+            <?php if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'centro'): ?>
+                <button id="addBtn" class="btn-primary">
+                    <ion-icon src="../../assets/ionicons/add-outline.svg"></ion-icon>
+                    Nueva Habilitación
+                </button>
+            <?php endif; ?>
         </div>
 
         <div class="table-container">
@@ -50,14 +57,13 @@ require_once '../layouts/sidebar.php';
                     <tr>
                         <th class="w-16">ID</th>
                         <th>Instructor</th>
-                        <th>Programa</th>
                         <th>Competencia</th>
-                        <th>Vigencia</th>
+
                     </tr>
                 </thead>
                 <tbody id="habilitacionTableBody">
                     <tr>
-                        <td colspan="5" class="text-center py-8">Cargando habilitaciones...</td>
+                        <td colspan="4" class="text-center py-8">Cargando habilitaciones...</td>
                     </tr>
                 </tbody>
             </table>

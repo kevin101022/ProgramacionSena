@@ -50,7 +50,7 @@ if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'instructor') {
         padding: 2px 6px;
         font-size: 0.75rem;
         border: none;
-        cursor: default !important;
+        cursor: pointer !important;
     }
 
     .fc .fc-daygrid-day.fc-day-today {
@@ -115,7 +115,7 @@ if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'instructor') {
                 const events = data.map(asig => {
                     return {
                         id: asig.asig_id,
-                        title: `Ficha: ${asig.fich_numero} | ${asig.comp_codigo} - ${asig.amb_nombre}`,
+                        title: `Amb. ${asig.amb_id || 'N/A'} (${asig.sede_nombre || ''}) | Ficha: ${asig.fich_id} | ${asig.comp_nombre}`,
                         start: asig.asig_fecha_ini,
                         end: asig.asig_fecha_fin,
                         backgroundColor: '#39a900',
@@ -140,8 +140,7 @@ if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'instructor') {
                     },
                     events: events,
                     eventClick: function(info) {
-                        // Prevent default action and any popup
-                        info.jsEvent.preventDefault();
+                        window.location.href = `ver.php?id=${info.event.id}`;
                     }
                 });
 

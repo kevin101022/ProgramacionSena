@@ -64,16 +64,20 @@ require_once '../layouts/sidebar.php';
                             </div>
                         </div>
 
-                        <div class="mt-8 flex flex-col gap-3">
-                            <a href="#" id="editBtn" class="btn-primary w-full justify-center">
-                                <ion-icon src="../../assets/ionicons/create-outline.svg"></ion-icon>
-                                Editar Datos
-                            </a>
-                            <button id="deleteBtn" class="btn-secondary w-full justify-center text-red-600 hover:bg-red-50 border-red-100">
-                                <ion-icon src="../../assets/ionicons/trash-outline.svg"></ion-icon>
-                                Eliminar Instructor
-                            </button>
-                        </div>
+                        <?php
+                        $rol = $_SESSION['rol'] ?? 'centro';
+                        if ($rol === 'centro'): ?>
+                            <div class="mt-8 flex flex-col gap-3">
+                                <a href="#" id="editBtn" class="btn-primary w-full justify-center">
+                                    <ion-icon src="../../assets/ionicons/create-outline.svg"></ion-icon>
+                                    Editar Datos
+                                </a>
+                                <button id="deleteBtn" class="btn-secondary w-full justify-center text-red-600 hover:bg-red-50 border-red-100">
+                                    <ion-icon src="../../assets/ionicons/trash-outline.svg"></ion-icon>
+                                    Eliminar Instructor
+                                </button>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>

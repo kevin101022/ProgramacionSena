@@ -12,7 +12,11 @@ class CompetenciaController
 
     public function index()
     {
-        $competencias = $this->model->readAll();
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $cent_id = $_SESSION['centro_id'] ?? null;
+        $competencias = $this->model->readAll($cent_id);
         $this->sendResponse($competencias);
     }
 
@@ -31,6 +35,7 @@ class CompetenciaController
 
         $competencia = $result[0];
         $competencia['programas'] = $this->model->getProgramasByCompetencia();
+        $competencia['instructores'] = $this->model->getInstructoresByCompetencia();
 
         $this->sendResponse($competencia);
     }
@@ -51,6 +56,12 @@ class CompetenciaController
             $this->model->setCompNombreCorto($nombre_corto);
             $this->model->setCompHoras($horas);
             $this->model->setCompNombreUnidadCompetencia($unidad);
+
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+            $cent_id = $_SESSION['centro_id'] ?? null;
+            $this->model->setCentroFormacionId($cent_id);
 
             $id = $this->model->create();
             if ($id) {
@@ -83,6 +94,12 @@ class CompetenciaController
             $this->model->setCompNombreCorto($nombre_corto);
             $this->model->setCompHoras($horas);
             $this->model->setCompNombreUnidadCompetencia($unidad);
+
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+            $cent_id = $_SESSION['centro_id'] ?? null;
+            $this->model->setCentroFormacionId($cent_id);
 
             if ($this->model->update()) {
                 $this->model->assignProgramas($programas);

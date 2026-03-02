@@ -8,14 +8,16 @@ class ProgramaModel
     private $prog_denominacion;
     private $tit_programa_titpro_id;
     private $prog_tipo;
+    private $centro_formacion_cent_id;
     private $db;
 
-    public function __construct($prog_codigo = null, $prog_denominacion = null, $tit_programa_titpro_id = null, $prog_tipo = null)
+    public function __construct($prog_codigo = null, $prog_denominacion = null, $tit_programa_titpro_id = null, $prog_tipo = null, $centro_formacion_cent_id = null)
     {
         $this->prog_codigo = $prog_codigo;
         $this->prog_denominacion = $prog_denominacion;
         $this->tit_programa_titpro_id = $tit_programa_titpro_id;
         $this->prog_tipo = $prog_tipo;
+        $this->centro_formacion_cent_id = $centro_formacion_cent_id;
         $this->db = Conexion::getConnect();
     }
 
@@ -54,6 +56,14 @@ class ProgramaModel
     {
         $this->prog_tipo = $prog_tipo;
     }
+    public function getCentroFormacionId()
+    {
+        return $this->centro_formacion_cent_id;
+    }
+    public function setCentroFormacionId($id)
+    {
+        $this->centro_formacion_cent_id = $id;
+    }
 
     // CRUD helpers
     public function getNextId()
@@ -70,35 +80,52 @@ class ProgramaModel
         if (!$this->prog_codigo) {
             throw new Exception("El código del programa es obligatorio.");
         }
-        $query = "INSERT INTO PROGRAMA (prog_codigo, prog_denominacion, TIT_PROGRAMA_titpro_id, prog_tipo) 
-                  VALUES (:prog_codigo, :prog_denominacion, :tit_programa_titpro_id, :prog_tipo)";
+        $query = "INSERT INTO PROGRAMA (prog_codigo, prog_denominacion, TIT_PROGRAMA_titpro_id, prog_tipo, centro_formacion_cent_id) 
+                  VALUES (:prog_codigo, :prog_denominacion, :tit_programa_titpro_id, :prog_tipo, :centro_formacion_cent_id)";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':prog_codigo', $this->prog_codigo);
         $stmt->bindParam(':prog_denominacion', $this->prog_denominacion);
         $stmt->bindParam(':tit_programa_titpro_id', $this->tit_programa_titpro_id);
         $stmt->bindParam(':prog_tipo', $this->prog_tipo);
+        $stmt->bindParam(':centro_formacion_cent_id', $this->centro_formacion_cent_id);
         return $stmt->execute();
     }
 
-    public function read()
+    public function read($cent_id = null)
     {
-        $sql = "SELECT p.prog_codigo, p.prog_denominacion, p.TIT_PROGRAMA_titpro_id as titpro_id, p.prog_tipo, t.titpro_nombre 
+        $sql = "SELECT p.prog_codigo, p.prog_denominacion, p.TIT_PROGRAMA_titpro_id as titpro_id, p.prog_tipo, COALESCE(t.titpro_nombre, 'Sin título') as titpro_nombre 
                 FROM PROGRAMA p
-                INNER JOIN TITULO_PROGRAMA t ON p.TIT_PROGRAMA_titpro_id = t.titpro_id
+                LEFT JOIN TITULO_PROGRAMA t ON p.TIT_PROGRAMA_titpro_id = t.titpro_id
                 WHERE p.prog_codigo = :prog_codigo";
+
+        $params = [':prog_codigo' => $this->prog_codigo];
+
+        if ($cent_id) {
+            $sql .= " AND p.centro_formacion_cent_id = :cent_id";
+            $params[':cent_id'] = $cent_id;
+        }
+
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([':prog_codigo' => $this->prog_codigo]);
+        $stmt->execute($params);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function readAll()
+    public function readAll($cent_id = null)
     {
-        $sql = "SELECT p.prog_codigo, p.prog_denominacion, p.TIT_PROGRAMA_titpro_id as titpro_id, p.prog_tipo, t.titpro_nombre 
+        $sql = "SELECT p.prog_codigo, p.prog_denominacion, p.TIT_PROGRAMA_titpro_id as titpro_id, p.prog_tipo, COALESCE(t.titpro_nombre, 'Sin título') as titpro_nombre, p.centro_formacion_cent_id 
                 FROM PROGRAMA p
-                INNER JOIN TITULO_PROGRAMA t ON p.TIT_PROGRAMA_titpro_id = t.titpro_id
-                ORDER BY p.prog_codigo DESC";
+                LEFT JOIN TITULO_PROGRAMA t ON p.TIT_PROGRAMA_titpro_id = t.titpro_id";
+
+        $params = [];
+        if ($cent_id) {
+            $sql .= " WHERE p.centro_formacion_cent_id = :cent_id OR p.centro_formacion_cent_id IS NULL";
+            $params[':cent_id'] = $cent_id;
+        }
+
+        $sql .= " ORDER BY p.prog_denominacion ASC";
+
         $stmt = $this->db->prepare($sql);
-        $stmt->execute();
+        $stmt->execute($params);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -107,12 +134,14 @@ class ProgramaModel
         $query = "UPDATE PROGRAMA 
                   SET prog_denominacion = :prog_denominacion, 
                       TIT_PROGRAMA_titpro_id = :tit_programa_titpro_id, 
-                      prog_tipo = :prog_tipo
+                      prog_tipo = :prog_tipo,
+                      centro_formacion_cent_id = :centro_formacion_cent_id
                   WHERE prog_codigo = :prog_codigo";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':prog_denominacion', $this->prog_denominacion);
         $stmt->bindParam(':tit_programa_titpro_id', $this->tit_programa_titpro_id);
         $stmt->bindParam(':prog_tipo', $this->prog_tipo);
+        $stmt->bindParam(':centro_formacion_cent_id', $this->centro_formacion_cent_id);
         $stmt->bindParam(':prog_codigo', $this->prog_codigo);
         return $stmt->execute();
     }

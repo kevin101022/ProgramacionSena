@@ -16,7 +16,7 @@ class InstruCompetenciaModel
         $this->instructor_inst_id = $instructor_inst_id;
         $this->competxprograma_programa_prog_id = $competxprograma_programa_prog_id;
         $this->competxprograma_competencia_comp_id = $competxprograma_competencia_comp_id;
-        $this->inscomp_vigencia = $inscomp_vigencia;
+        $this->inscomp_vigencia = $inscomp_vigencia ?: date('Y-12-31'); // Por defecto fin de año
         $this->db = Conexion::getConnect();
     }
 
@@ -37,32 +37,7 @@ class InstruCompetenciaModel
     {
         return $this->competxprograma_competencia_comp_id;
     }
-    public function getInscompVigencia()
-    {
-        return $this->inscomp_vigencia;
-    }
 
-    // Setters
-    public function setInscompId($inscomp_id)
-    {
-        $this->inscomp_id = $inscomp_id;
-    }
-    public function setInstructorInstId($instructor_inst_id)
-    {
-        $this->instructor_inst_id = $instructor_inst_id;
-    }
-    public function setCompetxprogramaProgramaProgId($prog_id)
-    {
-        $this->competxprograma_programa_prog_id = $prog_id;
-    }
-    public function setCompetxprogramaCompetenciaCompId($comp_id)
-    {
-        $this->competxprograma_competencia_comp_id = $comp_id;
-    }
-    public function setInscompVigencia($vigencia)
-    {
-        $this->inscomp_vigencia = $vigencia;
-    }
 
     // CRUD
     public function create()
@@ -88,32 +63,40 @@ class InstruCompetenciaModel
         $sql = "SELECT ic.inscomp_id, ic.INSTRUCTOR_inst_id as instructor_inst_id, 
                        ic.COMPETxPROGRAMA_PROGRAMA_prog_id as competxprograma_programa_prog_id, 
                        ic.COMPETxPROGRAMA_COMPETENCIA_comp_id as competxprograma_competencia_comp_id, 
-                       ic.inscomp_vigencia, 
-                       i.inst_nombres, i.inst_apellidos, p.prog_denominacion, c.comp_nombre_corto 
+                       i.inst_nombres, i.inst_apellidos, i.inst_correo, i.inst_telefono,
+                       p.prog_denominacion, c.comp_nombre_corto, cf.cent_nombre
                 FROM INSTRU_COMPETENCIA ic
                 INNER JOIN INSTRUCTOR i ON ic.INSTRUCTOR_inst_id = i.numero_documento
                 INNER JOIN PROGRAMA p ON ic.COMPETxPROGRAMA_PROGRAMA_prog_id = p.prog_codigo
                 INNER JOIN COMPETENCIA c ON ic.COMPETxPROGRAMA_COMPETENCIA_comp_id = c.comp_id
+                LEFT JOIN CENTRO_FORMACION cf ON i.CENTRO_FORMACION_cent_id = cf.cent_id
                 WHERE ic.inscomp_id = :id";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([':id' => $this->inscomp_id]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function readAll()
+    public function readAll($centro_id = null)
     {
         $sql = "SELECT ic.inscomp_id, ic.INSTRUCTOR_inst_id as instructor_inst_id, 
                        ic.COMPETxPROGRAMA_PROGRAMA_prog_id as competxprograma_programa_prog_id, 
                        ic.COMPETxPROGRAMA_COMPETENCIA_comp_id as competxprograma_competencia_comp_id, 
-                       ic.inscomp_vigencia, 
-                       i.inst_nombres, i.inst_apellidos, p.prog_denominacion, c.comp_nombre_corto 
+                       i.inst_nombres, i.inst_apellidos, c.comp_nombre_corto 
                 FROM INSTRU_COMPETENCIA ic
                 INNER JOIN INSTRUCTOR i ON ic.INSTRUCTOR_inst_id = i.numero_documento
-                INNER JOIN PROGRAMA p ON ic.COMPETxPROGRAMA_PROGRAMA_prog_id = p.prog_codigo
                 INNER JOIN COMPETENCIA c ON ic.COMPETxPROGRAMA_COMPETENCIA_comp_id = c.comp_id
-                ORDER BY ic.inscomp_id DESC";
+                WHERE 1=1";
+
+        $params = [];
+        if ($centro_id) {
+            $sql .= " AND i.CENTRO_FORMACION_cent_id = :centro_id";
+            $params[':centro_id'] = $centro_id;
+        }
+
+        $sql .= " ORDER BY ic.inscomp_id DESC";
+
         $stmt = $this->db->prepare($sql);
-        $stmt->execute();
+        $stmt->execute($params);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -123,8 +106,8 @@ class InstruCompetenciaModel
             $query = "UPDATE INSTRU_COMPETENCIA 
                       SET INSTRUCTOR_inst_id = :inst_id, 
                           COMPETxPROGRAMA_PROGRAMA_prog_id = :prog_id, 
-                          COMPETxPROGRAMA_COMPETENCIA_comp_id = :comp_id, 
-                          inscomp_vigencia = :vigencia 
+                          COMPETxPROGRAMA_COMPETENCIA_comp_id = :comp_id,
+                          inscomp_vigencia = :vigencia
                       WHERE inscomp_id = :id";
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':inst_id', $this->instructor_inst_id);

@@ -125,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         </div>
                         <div>
                             <p class="text-sm font-bold text-gray-900">${a.inst_nombres} ${a.inst_apellidos} · ${a.comp_nombre_corto || 'Competencia'}</p>
-                            <p class="text-xs text-gray-500">${a.amb_nombre || 'Ambiente'} · ${fechas}</p>
+                            <p class="text-xs text-gray-500"><span class="font-semibold">Ambiente:</span> ${a.amb_nombre || 'N/A'} | <span class="font-semibold">Sede:</span> ${a.sede_nombre || 'N/A'} · ${fechas}</p>
                         </div>
                     </div>
                     <ion-icon src="../../assets/ionicons/chevron-forward-outline.svg" class="text-gray-400"></ion-icon>

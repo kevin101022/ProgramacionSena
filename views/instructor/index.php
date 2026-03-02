@@ -57,11 +57,6 @@ require_once '../layouts/sidebar.php';
                     <ion-icon src="../../assets/ionicons/search-outline.svg" class="search-icon"></ion-icon>
                     <input type="text" id="searchInput" placeholder="Buscar por nombre, apellido o correo..." class="search-input">
                 </div>
-                <div class="filter-container">
-                    <select id="sedeFilter" class="search-input" style="padding-left: 12px !important; width: 240px;">
-                        <option value="">Todos los Centros</option>
-                    </select>
-                </div>
             </div>
 
             <a href="crear.php" class="btn-primary">

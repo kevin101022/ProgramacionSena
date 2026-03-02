@@ -1,6 +1,5 @@
 /**
- * Coordinacion Management JavaScript
- * Refactored to Class-based manager with Pagination support.
+ * Coordinacion Management JavaScript - Premium Refactor
  */
 class CoordinacionManager {
     constructor() {
@@ -8,7 +7,7 @@ class CoordinacionManager {
         this.centros = [];
         this.filteredCoordinaciones = [];
         this.currentPage = 1;
-        this.itemsPerPage = 5;
+        this.itemsPerPage = 10; // Aumentado para mejor visualización en tablas premium
 
         this.init();
     }
@@ -51,8 +50,11 @@ class CoordinacionManager {
             });
         }
 
-        const addBtn = document.getElementById('addBtn');
-        if (addBtn) addBtn.onclick = () => this.openModal();
+        const addBtn = document.querySelector('[onclick="coordinacionModule.openModal()"]') || document.getElementById('addBtn');
+        // No es necesario bindear el onclick si ya está en el HTML, pero por si acaso:
+        window.coordinacionModule = {
+            openModal: (coord) => this.openModal(coord)
+        };
 
         const closeBtn = document.getElementById('closeModal');
         if (closeBtn) closeBtn.onclick = () => this.closeModal();
@@ -65,8 +67,11 @@ class CoordinacionManager {
             form.onsubmit = (e) => this.handleFormSubmit(e);
         }
 
-        // Global delete trigger
         window.deleteCoordinacion = (id) => this.confirmDelete(id);
+        window.editCoordinacion = (id) => {
+            const coord = this.coordinaciones.find(c => c.coord_id == id);
+            this.openModal(coord);
+        };
     }
 
     async loadCentros() {
@@ -104,17 +109,20 @@ class CoordinacionManager {
             this.renderTable();
         } catch (error) {
             console.error('Error:', error);
-            NotificationService.showError('No pudimos cargar las coordinaciones.');
+            if (window.NotificationService) {
+                NotificationService.showError('No pudimos cargar las coordinaciones.');
+            }
         }
     }
 
     getFilteredData() {
         const searchInput = document.getElementById('searchInput');
-        const term = (searchInput ? searchInput.value : '').toLowerCase();
+        const term = (searchInput ? searchInput.value : '').toLowerCase().trim();
 
         return this.coordinaciones.filter(c =>
             (c.coord_descripcion || '').toLowerCase().includes(term) ||
-            (c.cent_nombre || '').toLowerCase().includes(term)
+            (c.cent_nombre || '').toLowerCase().includes(term) ||
+            (c.coord_nombre_coordinador || '').toLowerCase().includes(term)
         );
     }
 
@@ -123,65 +131,65 @@ class CoordinacionManager {
         if (!tableBody) return;
 
         const filtered = this.getFilteredData();
-        const total = filtered.length;
+        const totalFiltered = filtered.length;
 
-        // Update stats
+        // Metadata counters
         const totalLabel = document.getElementById('totalCoordinaciones');
-        const totalRecords = document.getElementById('totalRecords');
-        if (totalLabel) totalLabel.textContent = this.coordinaciones.length;
-        if (totalRecords) totalRecords.textContent = total;
+        const activeCount = document.getElementById('totalRecords');
 
-        const totalPages = Math.ceil(total / this.itemsPerPage);
+        if (totalLabel) totalLabel.textContent = this.coordinaciones.length;
+        if (activeCount) activeCount.textContent = totalFiltered;
+
+        const totalPages = Math.ceil(totalFiltered / this.itemsPerPage);
         if (this.currentPage > totalPages && totalPages > 0) this.currentPage = totalPages;
 
         const start = (this.currentPage - 1) * this.itemsPerPage;
-        const end = Math.min(start + this.itemsPerPage, total);
+        const end = Math.min(start + this.itemsPerPage, totalFiltered);
         const paginated = filtered.slice(start, end);
 
         tableBody.innerHTML = '';
 
         if (paginated.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="4" class="text-center py-8 text-gray-500">No se encontraron coordinaciones</td></tr>';
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="3" class="text-center py-20">
+                        <div class="flex flex-col items-center">
+                            <div class="w-16 h-16 bg-slate-50 text-slate-200 rounded-full flex items-center justify-center mb-4">
+                                <ion-icon src="../../assets/ionicons/search-outline.svg" class="text-3xl"></ion-icon>
+                            </div>
+                            <p class="text-slate-400 font-medium italic">No se encontraron coordinaciones con esos criterios.</p>
+                        </div>
+                    </td>
+                </tr>
+            `;
         } else {
             paginated.forEach((c, index) => {
                 const tr = document.createElement('tr');
-                tr.className = 'hover:bg-green-50/30 transition-all cursor-pointer group';
+                tr.className = 'hover:bg-slate-50 transition-all cursor-pointer group border-b border-slate-50/50';
                 tr.onclick = () => window.location.href = `ver.php?id=${c.coord_id}`;
                 tr.innerHTML = `
-                    <td class="text-xs font-semibold text-gray-400">
+                    <td class="pl-6 py-4 text-[11px] font-black text-slate-300">
                         ${String(start + index + 1).padStart(2, '0')}
                     </td>
-                    <td>
-                        <div class="user-cell">
-                            <div class="user-avatar-sm">
-                                <ion-icon src="../../assets/ionicons/people-circle-outline.svg"></ion-icon>
-                            </div>
-                            <div class="user-info-sm">
-                                <div class="user-name-sm">${c.coord_descripcion}</div>
-                                <div class="user-meta-sm">Coordinación Académica</div>
-                            </div>
+                    <td class="py-4">
+                        <span class="font-black text-sm text-slate-700">${c.coord_descripcion}</span>
+                    </td>
+                    <td class="py-4">
+                        <span class="text-xs font-black text-slate-600">${c.cent_nombre || 'N/A'}</span>
+                    </td>
+                    <td class="py-4 pr-6 text-right">
+                        <div class="flex items-center justify-end gap-2 text-sena-green font-black text-[10px] opacity-0 group-hover:opacity-100 transition-all">
+                            VER DETALLE
+                            <ion-icon src="../../assets/ionicons/chevron-forward-outline.svg" class="text-lg"></ion-icon>
                         </div>
                     </td>
-                    <td>
-                        <div class="contact-cell">
-                            <div class="contact-item">
-                                <ion-icon src="../../assets/ionicons/business-outline.svg" class="text-sena-green"></ion-icon>
-                                <span>${c.cent_nombre || 'N/A'}</span>
-                            </div>
-                        </div>
-                    </td>
-                    <td class="text-right">
-                        <button class="btn-more-glass" onclick="event.stopPropagation(); window.location.href='ver.php?id=${c.coord_id}'">
-                            <span>Ver más</span>
-                            <ion-icon src="../../assets/ionicons/chevron-forward-outline.svg"></ion-icon>
-                        </button>
-                    </td>
-                `;
+                </tr>
+            `;
                 tableBody.appendChild(tr);
             });
         }
 
-        this.updatePagination(totalPages, start, end, total);
+        this.updatePagination(totalPages, start, end, totalFiltered);
     }
 
     updatePagination(totalPages, start, end, total) {
@@ -200,9 +208,10 @@ class CoordinacionManager {
             paginationNumbers.innerHTML = '';
             for (let i = 1; i <= totalPages; i++) {
                 const btn = document.createElement('button');
-                btn.className = `pagination-number ${i === this.currentPage ? 'active' : ''}`;
+                btn.className = `w-7 h-7 rounded-lg text-[10px] font-black transition-all ${i === this.currentPage ? 'bg-sena-green text-white shadow-md' : 'bg-white text-slate-400 border border-slate-100 hover:border-sena-green hover:text-sena-green'}`;
                 btn.textContent = i;
-                btn.onclick = () => {
+                btn.onclick = (e) => {
+                    e.stopPropagation();
                     this.currentPage = i;
                     this.renderTable();
                 };
@@ -211,37 +220,72 @@ class CoordinacionManager {
         }
     }
 
-    openModal(coord = null) {
+    async loadDisponibles() {
+        try {
+            const select = document.getElementById('coordinador_actual');
+            if (!select) return;
+
+            const response = await fetch('../../routing.php?controller=coordinacion&action=get_coordinadores_disponibles');
+            if (response.ok) {
+                const data = await response.json();
+                this.coordinadoresDisponibles = data;
+            }
+        } catch (error) {
+            console.error('Error cargando coordinadores disponibles', error);
+        }
+    }
+
+    async openModal(coord = null) {
         const modal = document.getElementById('coordinacionModal');
         const form = document.getElementById('coordinacionForm');
         const modalTitle = document.getElementById('modalTitle');
         const coordIdInput = document.getElementById('coord_id');
         const coordNombreInput = document.getElementById('coord_nombre');
         const centroIdInput = document.getElementById('centro_id');
+        const coordinadorSelect = document.getElementById('coordinador_actual');
 
         if (form) form.reset();
 
+        await this.loadDisponibles();
+
+        if (coordinadorSelect) {
+            coordinadorSelect.innerHTML = '<option value="">Nadie (Vacante)</option>';
+            if (this.coordinadoresDisponibles) {
+                this.coordinadoresDisponibles.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.numero_documento;
+                    opt.textContent = `${c.coord_nombre_coordinador} (${c.numero_documento})`;
+                    coordinadorSelect.appendChild(opt);
+                });
+            }
+        }
+
         if (coord) {
             if (modalTitle) modalTitle.textContent = 'Editar Coordinación';
-            if (coordIdInput) {
-                coordIdInput.value = coord.coord_id;
-                coordIdInput.readOnly = true;
-                coordIdInput.style.backgroundColor = '#f3f4f6';
-            }
+            if (coordIdInput) coordIdInput.value = coord.coord_id;
             if (coordNombreInput) coordNombreInput.value = coord.coord_descripcion;
             if (centroIdInput && centroIdInput.tagName === 'SELECT') {
-                centroIdInput.value = coord.centro_formacion_cent_id;
+                centroIdInput.value = coord.cent_id || coord.centro_formacion_cent_id;
+            }
+            if (coordinadorSelect) {
+                if (coord.numero_documento && coord.numero_documento !== 'Vacante') {
+                    const existe = Array.from(coordinadorSelect.options).some(opt => opt.value == coord.numero_documento);
+                    if (!existe) {
+                        const opt = document.createElement('option');
+                        opt.value = coord.numero_documento;
+                        opt.textContent = `${coord.coord_nombre_coordinador} (${coord.numero_documento}) - Actualmente asignado`;
+                        coordinadorSelect.appendChild(opt);
+                    }
+                    coordinadorSelect.value = coord.numero_documento;
+                } else {
+                    coordinadorSelect.value = '';
+                }
             }
         } else {
             if (modalTitle) modalTitle.textContent = 'Nueva Coordinación';
-            if (coordIdInput) {
-                coordIdInput.value = '';
-                coordIdInput.readOnly = false;
-                coordIdInput.style.backgroundColor = 'white';
-            }
-            if (centroIdInput && centroIdInput.tagName === 'SELECT') {
-                centroIdInput.value = '';
-            }
+            if (coordIdInput) coordIdInput.value = '';
+            if (centroIdInput && centroIdInput.tagName === 'SELECT') centroIdInput.value = '';
+            if (coordinadorSelect) coordinadorSelect.value = '';
         }
         if (modal) modal.classList.add('show');
     }
@@ -261,9 +305,7 @@ class CoordinacionManager {
         const data = {
             coord_descripcion: document.getElementById('coord_nombre').value,
             centro_formacion_cent_id: document.getElementById('centro_id').value,
-            coord_nombre_coordinador: document.getElementById('coord_coordinador')?.value || 'N/A',
-            coord_correo: document.getElementById('coord_correo')?.value || 'N/A',
-            coord_password: document.getElementById('coord_password')?.value || '123456'
+            coordinador_actual: document.getElementById('coordinador_actual')?.value || ''
         };
         if (isEdit) data.coord_id = id;
 
@@ -278,18 +320,26 @@ class CoordinacionManager {
             });
 
             if (response.ok) {
-                NotificationService.showSuccess(isEdit ? '¡Coordinación actualizada!' : '¡Coordinación creada!');
+                if (window.NotificationService) {
+                    NotificationService.showSuccess(isEdit ? '¡Coordinación actualizada!' : '¡Coordinación creada!');
+                }
                 this.closeModal();
                 await this.loadCoordinaciones();
             } else {
-                NotificationService.showError('No se pudo guardar la coordinación.');
+                if (window.NotificationService) {
+                    NotificationService.showError('No se pudo guardar la coordinación.');
+                }
             }
         } catch (error) {
-            NotificationService.showError('Error de conexión.');
+            console.error(error);
+            if (window.NotificationService) {
+                NotificationService.showError('Error de conexión.');
+            }
         }
     }
 
     confirmDelete(id) {
+        if (!window.NotificationService) return;
         NotificationService.showConfirm(
             '¿Estás seguro de que deseas eliminar esta coordinación? Esta acción no se puede deshacer.',
             async () => {

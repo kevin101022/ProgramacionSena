@@ -24,21 +24,23 @@ set_error_handler(function ($errno, $errstr, $errfile, $errline) {
 
 $controllers = array(
     'sede' => ['index', 'show', 'store', 'update', 'destroy', 'getProgramas', 'getFichas'],
-    'coordinacion' => ['index', 'show', 'store', 'update', 'destroy', 'getProgramas'],
+    'coordinacion' => ['index', 'show', 'store', 'update', 'destroy', 'getProgramas', 'get_coordinadores_disponibles', 'desvincular'],
     'asignacion' => ['index', 'show', 'store', 'update', 'destroy'],
     'detalle_asignacion' => ['index', 'show', 'store', 'update', 'destroy'],
     'ambiente' => ['index', 'show', 'store', 'update', 'destroy', 'getProgramacion'],
     'programa' => ['index', 'show', 'store', 'update', 'destroy', 'getTitulos'],
     'ficha' => ['index', 'show', 'store', 'update', 'destroy'],
     'competencia' => ['index', 'show', 'store', 'update', 'destroy'],
-    'competencia_programa' => ['index', 'sync', 'getByPrograma'],
+    'competencia_programa' => ['index', 'sync', 'getByPrograma', 'getAllPairs'],
     'titulo_programa' => ['index', 'show', 'store', 'update', 'destroy'],
     'centro_formacion' => ['index', 'show', 'store', 'update', 'destroy', 'getInstructores', 'getCoordinaciones'],
     'instructor' => ['index', 'show', 'showByCentro', 'store', 'update', 'destroy', 'getCentros', 'getAsignaciones', 'getCompetencias'],
     'instru_competencia' => ['index', 'show', 'store', 'update', 'destroy'],
     'reporte' => ['instructoresPorCentro', 'fichasActivasPorPrograma', 'asignacionesPorInstructor', 'competenciasPorPrograma'],
     'login' => ['showLogin', 'login', 'logout', 'registroCoordinador', 'guardarCoordinador', 'getCoordinacionesByCentro'],
-    'auditoria_asignacion' => ['index'],
+    'auditoria_asignacion' => ['index', 'show'],
+    'usuario_coordinador' => ['index', 'show', 'store', 'update', 'toggle'],
+    'setdata' => ['index', 'upload'],
     // Agrega más controladores y acciones aquí si lo necesitas
 );
 
@@ -53,7 +55,13 @@ try {
         $action = 'index';
     }
 
-    $controllerFile = 'controller/' . $controller . 'Controller.php';
+    if ($controller === 'usuario_coordinador') {
+        $controllerFile = 'controller/usuarioCoordinadorController.php';
+    } elseif ($controller === 'auditoria_asignacion') {
+        $controllerFile = 'controller/auditoria_asignacionController.php';
+    } else {
+        $controllerFile = 'controller/' . $controller . 'Controller.php';
+    }
 
     // Verificar que el archivo del controlador existe
     if (!file_exists($controllerFile)) {
@@ -76,14 +84,21 @@ try {
         $isAjax = true; // routing.php maneja backend calls principalmente
 
         $allowedControllersByRole = [
-            'centro' => ['sede', 'ambiente', 'programa', 'instructor', 'competencia', 'coordinacion', 'reporte', 'titulo_programa', 'centro_formacion', 'auditoria_asignacion'],
-            'coordinador' => ['competencia_programa', 'ficha', 'instru_competencia', 'asignacion', 'detalle_asignacion', 'reporte', 'auditoria_asignacion'],
+            'centro' => ['sede', 'ambiente', 'programa', 'titulo_programa', 'instructor', 'competencia', 'competencia_programa', 'coordinacion', 'usuario_coordinador', 'reporte', 'centro_formacion', 'auditoria_asignacion'],
+            'coordinador' => ['competencia_programa', 'ficha', 'instru_competencia', 'asignacion', 'detalle_asignacion', 'reporte', 'auditoria_asignacion', 'coordinacion', 'setdata'],
             'instructor' => ['asignacion', 'instructor']
         ];
 
-        // Reglas de lectura adicionales para Coordinador (Dropdowns)
-        if ($rol === 'coordinador' && in_array($controller, ['programa', 'instructor', 'ambiente', 'competencia', 'centro_formacion'])) {
-            // Permitido para cargar selects en las vistas de asignación y fichas
+        // Reglas de lectura adicionales para roles cruzados (Usado por Dashboard y Dropdowns)
+        if ($rol === 'coordinador' && in_array($controller, ['programa', 'instructor', 'ambiente', 'competencia', 'centro_formacion', 'sede']) && in_array($action, ['index', 'show'])) {
+            // Permitido para cargar selects, stats en dashboard y consultas de solo lectura
+        } else if ($rol === 'coordinador' && in_array($controller, ['programa', 'instructor', 'ambiente', 'centro_formacion'])) {
+            // Permitido para cargar acciones misceláneas de selects
+        } else if ($rol === 'coordinador' && $controller === 'competencia' && !in_array($action, ['index', 'show'])) {
+            http_response_code(403);
+            throw new Exception("Acceso denegado: Los coordinadores solo pueden consultar competencias, no modificarlas.");
+        } else if ($rol === 'centro' && in_array($controller, ['ficha', 'asignacion']) && $action === 'index') {
+            // Permitido a centro para cargar estadísticas del dashboard
         } else if (!in_array($controller, $allowedControllersByRole[$rol] ?? [])) {
             http_response_code(403);
             throw new Exception("Acceso denegado: El rol '$rol' no tiene permisos para el módulo '$controller'.");
@@ -101,6 +116,11 @@ try {
         case 'coordinacion':
             require_once('model/CoordinacionModel.php');
             $controllerObj = new CoordinacionController();
+            break;
+        case 'usuario_coordinador':
+            require_once('model/UsuarioCoordinadorModel.php');
+            require_once('controller/usuarioCoordinadorController.php');
+            $controllerObj = new usuarioCoordinadorController();
             break;
         case 'asignacion':
             require_once('model/AsignacionModel.php');
@@ -159,6 +179,10 @@ try {
         case 'auditoria_asignacion':
             require_once('model/AuditoriaAsignacionModel.php');
             $controllerObj = new AuditoriaAsignacionController();
+            break;
+        case 'setdata':
+            require_once('model/SetdataModel.php');
+            $controllerObj = new SetdataController();
             break;
         default:
             throw new Exception("Controlador no soportado: $controller");

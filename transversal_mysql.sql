@@ -39,7 +39,10 @@ CREATE TABLE `competencia` (
   `comp_nombre_corto` varchar(30) NOT NULL,
   `comp_horas` int(11) NOT NULL,
   `comp_nombre_unidad_competencia` varchar(150) NOT NULL,
-  PRIMARY KEY (`comp_id`)
+  `centro_formacion_cent_id` int(11) DEFAULT NULL,
+  PRIMARY KEY (`comp_id`),
+  KEY `fk_competencia_centro_formacion` (`centro_formacion_cent_id`),
+  CONSTRAINT `fk_competencia_centro_formacion` FOREIGN KEY (`centro_formacion_cent_id`) REFERENCES `centro_formacion` (`cent_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -81,9 +84,12 @@ CREATE TABLE `programa` (
   `prog_denominacion` varchar(100) NOT NULL,
   `tit_programa_titpro_id` int(11) NOT NULL,
   `prog_tipo` varchar(30) NOT NULL,
+  `centro_formacion_cent_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`prog_codigo`),
   KEY `fk_programa_tipo_programa` (`tit_programa_titpro_id`),
-  CONSTRAINT `fk_programa_tipo_programa` FOREIGN KEY (`tit_programa_titpro_id`) REFERENCES `titulo_programa` (`titpro_id`)
+  KEY `fk_programa_centro_formacion` (`centro_formacion_cent_id`),
+  CONSTRAINT `fk_programa_tipo_programa` FOREIGN KEY (`tit_programa_titpro_id`) REFERENCES `titulo_programa` (`titpro_id`),
+  CONSTRAINT `fk_programa_centro_formacion` FOREIGN KEY (`centro_formacion_cent_id`) REFERENCES `centro_formacion` (`cent_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------

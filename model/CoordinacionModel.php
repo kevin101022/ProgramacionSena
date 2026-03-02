@@ -3,30 +3,26 @@ require_once dirname(__DIR__) . '/Conexion.php';
 
 class CoordinacionModel
 {
-
-    private $numero_documento;
+    private $coord_id;
     private $coord_descripcion;
     private $centro_formacion_cent_id;
-    private $coord_nombre_coordinador;
-    private $coord_correo;
-    private $coord_password;
+    private $coordinador_actual;
+    private $estado;
     private $db;
 
-    public function __construct($numero_documento = null, $coord_descripcion = null, $centro_formacion_cent_id = null, $coord_nombre_coordinador = null, $coord_correo = null, $coord_password = null)
+    public function __construct($coord_id = null, $coord_descripcion = null, $centro_formacion_cent_id = null, $coordinador_actual = null, $estado = 1)
     {
-        $this->numero_documento = $numero_documento;
+        $this->coord_id = $coord_id;
         $this->coord_descripcion = $coord_descripcion;
         $this->centro_formacion_cent_id = $centro_formacion_cent_id;
-        $this->coord_nombre_coordinador = $coord_nombre_coordinador;
-        $this->coord_correo = $coord_correo;
-        $this->coord_password = $coord_password;
+        $this->coordinador_actual = $coordinador_actual;
+        $this->estado = $estado;
         $this->db = Conexion::getConnect();
     }
 
-    // Getters
-    public function getNumeroDocumento()
+    public function getCoordId()
     {
-        return $this->numero_documento;
+        return $this->coord_id;
     }
     public function getCoordDescripcion()
     {
@@ -36,47 +32,37 @@ class CoordinacionModel
     {
         return $this->centro_formacion_cent_id;
     }
-    public function getCoordNombreCoordinador()
+    public function getCoordinadorActual()
     {
-        return $this->coord_nombre_coordinador;
-    }
-    public function getCoordCorreo()
-    {
-        return $this->coord_correo;
-    }
-
-    // Setters (Opcionales si se usan en controlador)
-    public function setCoordDescripcion($desc)
-    {
-        $this->coord_descripcion = $desc;
+        return $this->coordinador_actual;
     }
 
     public function create()
     {
-        $query = "INSERT INTO COORDINACION (numero_documento, coord_descripcion, CENTRO_FORMACION_cent_id, coord_nombre_coordinador, coord_correo, coord_password, estado) 
-                  VALUES (:numero_documento, :descripcion, :cent_id, :coordinador, :correo, :password, 1)";
+        $query = "INSERT INTO COORDINACION (coord_descripcion, centro_formacion_cent_id, coordinador_actual, estado) 
+                  VALUES (:descripcion, :cent_id, :coordinador, :estado)";
         $stmt = $this->db->prepare($query);
-        $stmt->bindParam(':numero_documento', $this->numero_documento);
         $stmt->bindParam(':descripcion', $this->coord_descripcion);
         $stmt->bindParam(':cent_id', $this->centro_formacion_cent_id);
-        $stmt->bindParam(':coordinador', $this->coord_nombre_coordinador);
-        $stmt->bindParam(':correo', $this->coord_correo);
-        $stmt->bindParam(':password', $this->coord_password);
+        $stmt->bindParam(':coordinador', $this->coordinador_actual);
+        $stmt->bindParam(':estado', $this->estado);
         return $stmt->execute();
     }
 
     public function read($cent_id = null)
     {
-        $query = "SELECT c.numero_documento as coord_id, c.coord_descripcion, c.CENTRO_FORMACION_cent_id as cent_id, 
-                         c.coord_nombre_coordinador, c.coord_correo, c.coord_password,
+        $query = "SELECT c.coord_id, c.coord_descripcion, c.centro_formacion_cent_id as cent_id, 
+                         c.coordinador_actual as numero_documento,
+                         u.coord_nombre_coordinador, u.coord_correo,
                          cf.cent_nombre 
                   FROM COORDINACION c 
-                  INNER JOIN CENTRO_FORMACION cf ON c.CENTRO_FORMACION_cent_id = cf.cent_id 
-                  WHERE c.numero_documento = :numero_documento AND c.estado = 1";
+                  LEFT JOIN usuario_coordinador u ON c.coordinador_actual = u.numero_documento
+                  INNER JOIN CENTRO_FORMACION cf ON c.centro_formacion_cent_id = cf.cent_id 
+                  WHERE c.coord_id = :coord_id AND c.estado = 1";
 
-        $params = [':numero_documento' => $this->numero_documento];
+        $params = [':coord_id' => $this->coord_id];
         if ($cent_id) {
-            $query .= " AND c.CENTRO_FORMACION_cent_id = :cent_id";
+            $query .= " AND c.centro_formacion_cent_id = :cent_id";
             $params[':cent_id'] = $cent_id;
         }
 
@@ -87,15 +73,18 @@ class CoordinacionModel
 
     public function getAll($cent_id = null)
     {
-        $query = "SELECT c.numero_documento as coord_id, c.coord_descripcion, c.CENTRO_FORMACION_cent_id as cent_id, 
-                         c.coord_nombre_coordinador, c.coord_correo, c.coord_password,
+        $query = "SELECT c.coord_id, c.coord_descripcion, c.centro_formacion_cent_id as cent_id, 
+                         c.coordinador_actual as numero_documento,
+                         COALESCE(u.coord_nombre_coordinador, 'Vacante') as coord_nombre_coordinador, 
+                         COALESCE(u.coord_correo, 'N/A') as coord_correo,
                          cf.cent_nombre 
                   FROM COORDINACION c 
-                  INNER JOIN CENTRO_FORMACION cf ON c.CENTRO_FORMACION_cent_id = cf.cent_id 
+                  LEFT JOIN usuario_coordinador u ON c.coordinador_actual = u.numero_documento
+                  INNER JOIN CENTRO_FORMACION cf ON c.centro_formacion_cent_id = cf.cent_id 
                   WHERE c.estado = 1";
 
         if ($cent_id) {
-            $query .= " AND c.CENTRO_FORMACION_cent_id = :cent_id";
+            $query .= " AND c.centro_formacion_cent_id = :cent_id";
         }
         $query .= " ORDER BY c.coord_descripcion ASC";
 
@@ -113,18 +102,14 @@ class CoordinacionModel
         try {
             $query = "UPDATE COORDINACION 
                       SET coord_descripcion = :descripcion, 
-                          CENTRO_FORMACION_cent_id = :cent_id,
-                          coord_nombre_coordinador = :coordinador,
-                          coord_correo = :correo,
-                          coord_password = :password
-                      WHERE numero_documento = :numero_documento";
+                          centro_formacion_cent_id = :cent_id,
+                          coordinador_actual = :coordinador
+                      WHERE coord_id = :coord_id";
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':descripcion', $this->coord_descripcion);
             $stmt->bindParam(':cent_id', $this->centro_formacion_cent_id);
-            $stmt->bindParam(':coordinador', $this->coord_nombre_coordinador);
-            $stmt->bindParam(':correo', $this->coord_correo);
-            $stmt->bindParam(':password', $this->coord_password);
-            $stmt->bindParam(':numero_documento', $this->numero_documento);
+            $stmt->bindParam(':coordinador', $this->coordinador_actual);
+            $stmt->bindParam(':coord_id', $this->coord_id);
             return $stmt->execute();
         } catch (PDOException $e) {
             error_log("Error en CoordinacionModel::update: " . $e->getMessage());
@@ -132,23 +117,37 @@ class CoordinacionModel
         }
     }
 
+    public function desvincular()
+    {
+        // En esta arquitectura normalizada, desvincular significa asignar NULL al coordinador
+        // manteniendo la dependencia activa.
+        $query = "UPDATE COORDINACION 
+                  SET coordinador_actual = NULL
+                  WHERE coord_id = :coord_id";
+        $stmt = $this->db->prepare($query);
+        $stmt->bindParam(':coord_id', $this->coord_id);
+        return $stmt->execute();
+    }
+
     public function delete()
     {
-        $query = "UPDATE COORDINACION SET estado = 0 WHERE numero_documento = :numero_documento";
+        $query = "UPDATE COORDINACION SET estado = 0 WHERE coord_id = :coord_id";
         $stmt = $this->db->prepare($query);
-        $stmt->bindParam(':numero_documento', $this->numero_documento);
+        $stmt->bindParam(':coord_id', $this->coord_id);
         return $stmt->execute();
     }
 
     public function getProgramas()
     {
+        // Esta consulta busca todos los programas que tienen al menos una ficha
+        // vinculada a esta coordinación específica.
         $sql = "SELECT DISTINCT p.prog_codigo, p.prog_denominacion 
                 FROM PROGRAMA p 
                 INNER JOIN FICHA f ON p.prog_codigo = f.PROGRAMA_prog_id 
-                WHERE f.COORDINACION_coord_id = :numero_documento
+                WHERE f.COORDINACION_coord_id = :coord_id
                 ORDER BY p.prog_denominacion ASC";
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([':numero_documento' => $this->numero_documento]);
+        $stmt->execute([':coord_id' => $this->coord_id]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

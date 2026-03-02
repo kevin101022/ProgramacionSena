@@ -1,32 +1,74 @@
 <?php
 require_once dirname(__DIR__) . '/model/FichaModel.php';
+require_once dirname(__DIR__) . '/Conexion.php';
 
 class fichaController
 {
+    /**
+     * Obtiene en tiempo real el coord_id del coordinador logueado desde la DB.
+     * Así si le cambian la coordinación, ve solo la nueva inmediatamente.
+     */
+    private function getCoordIdActual(): ?int
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        $rol = $_SESSION['rol'] ?? null;
+        if ($rol !== 'coordinador') return null;
+
+        $num_doc = $_SESSION['id'] ?? null;
+        if (!$num_doc) return null;
+
+        $db = Conexion::getConnect();
+        $stmt = $db->prepare(
+            "SELECT coord_id FROM COORDINACION WHERE coordinador_actual = :num_doc AND estado = 1 LIMIT 1"
+        );
+        $stmt->execute([':num_doc' => $num_doc]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ? (int)$row['coord_id'] : null;
+    }
+
     public function index()
     {
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
+        $rol = $_SESSION['rol'] ?? null;
         $cent_id = $_SESSION['centro_id'] ?? null;
 
+        // Si es coordinador, filtramos por SU coordinación actual (consultada en DB)
+        $coord_id = null;
+        if ($rol === 'coordinador') {
+            $coord_id = $this->getCoordIdActual();
+        }
+
         $model = new FichaModel();
-        $fichas = $model->readAll($cent_id);
+        $fichas = $model->readAll($cent_id, $coord_id);
         $this->sendResponse($fichas);
     }
 
     public function store()
     {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
         $id = $_POST['fich_id'] ?? null;
         $prog_id = $_POST['programa_prog_id'] ?? null;
         $inst_id = $_POST['instructor_inst_id'] ?? null;
         $jornada = $_POST['fich_jornada'] ?? null;
-        $coord_id = $_POST['coordinacion_id'] ?? null;
         $fecha_ini = $_POST['fich_fecha_ini_lectiva'] ?? null;
         $fecha_fin = $_POST['fich_fecha_fin_lectiva'] ?? null;
 
+        // Auto-asignar coordinación consultando la DB en tiempo real
+        $rol = $_SESSION['rol'] ?? null;
+        if ($rol === 'coordinador') {
+            $coord_id = $this->getCoordIdActual(); // Siempre fresco desde la DB
+        } else {
+            $coord_id = $_POST['coordinacion_id'] ?? null;
+        }
+
         if (!$id || !$prog_id) {
-            $this->sendResponse(['error' => 'Datos incompletos'], 400);
+            $this->sendResponse(['error' => 'Datos incompletos: Número de ficha y programa son obligatorios'], 400);
             return;
         }
 

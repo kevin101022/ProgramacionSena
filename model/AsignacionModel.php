@@ -50,12 +50,13 @@ class AsignacionModel
                        a.FICHA_fich_id as ficha_fich_id, 
                        a.AMBIENTE_amb_id as ambiente_amb_id, 
                        a.COMPETENCIA_comp_id as competencia_comp_id,
-                       i.inst_nombres, i.inst_apellidos, f.fich_id, am.amb_nombre, c.comp_nombre_corto 
+                       i.inst_nombres, i.inst_apellidos, f.fich_id, am.amb_nombre, c.comp_nombre_corto, s.sede_nombre
                 FROM ASIGNACION a
                 INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.numero_documento
                 INNER JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
                 INNER JOIN AMBIENTE am ON a.AMBIENTE_amb_id = am.amb_id
-                INNER JOIN COMPETENCIA c ON a.COMPETENCIA_comp_id = c.comp_id";
+                INNER JOIN COMPETENCIA c ON a.COMPETENCIA_comp_id = c.comp_id
+                INNER JOIN SEDE s ON am.SEDE_sede_id = s.sede_id";
 
         if ($cent_id) {
             $sql .= " WHERE i.CENTRO_FORMACION_cent_id = :cent_id";
@@ -78,12 +79,13 @@ class AsignacionModel
                        a.FICHA_fich_id as ficha_fich_id, 
                        a.AMBIENTE_amb_id as ambiente_amb_id, 
                        a.COMPETENCIA_comp_id as competencia_comp_id,
-                       i.inst_nombres, i.inst_apellidos, f.fich_id, am.amb_nombre, c.comp_nombre_corto 
+                       i.inst_nombres, i.inst_apellidos, f.fich_id, am.amb_nombre, c.comp_nombre_corto, s.sede_nombre
                 FROM ASIGNACION a
                 INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.numero_documento
                 INNER JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
                 INNER JOIN AMBIENTE am ON a.AMBIENTE_amb_id = am.amb_id
                 INNER JOIN COMPETENCIA c ON a.COMPETENCIA_comp_id = c.comp_id
+                INNER JOIN SEDE s ON am.SEDE_sede_id = s.sede_id
                 WHERE a.ASIG_ID = :asig_id";
 
         $params = [':asig_id' => $this->asig_id];

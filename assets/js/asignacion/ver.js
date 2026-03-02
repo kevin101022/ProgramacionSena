@@ -17,9 +17,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            // Cargar opciones para los selects (para el modal)
-            await loadSelectOptions();
-
             // Cargar datos de la asignación
             await loadAsignacionData();
 
@@ -86,19 +83,33 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('detInstructor').textContent = `${asig.inst_nombres} ${asig.inst_apellidos}`;
         document.getElementById('detInstInic').textContent = `${asig.inst_nombres[0]}${asig.inst_apellidos[0]}`;
         document.getElementById('detFicha').textContent = `Ficha ${asig.fich_id || asig.ficha_fich_id}`;
-        document.getElementById('detAmbiente').textContent = asig.amb_nombre || 'N/A';
+        document.getElementById('detAmbiente').textContent = `Ambiente: ${asig.ambiente_amb_id || 'ID'} - ${asig.amb_nombre || 'N/A'}`;
         document.getElementById('detCompetencia').textContent = asig.comp_nombre_corto || asig.comp_nombre || 'N/A';
         document.getElementById('detFechaIni').textContent = formatDate(asig.asig_fecha_ini);
         document.getElementById('detFechaFin').textContent = formatDate(asig.asig_fecha_fin);
+        const detSede = document.getElementById('detSede');
+        if (detSede) detSede.textContent = `Sede: ${asig.sede_nombre || 'Sin Sede'}`;
 
         // Links
-        document.getElementById('instLink').href = `../instructor/ver.php?id=${asig.instructor_inst_id}`;
-        document.getElementById('fichaLink').href = `../ficha/ver.php?id=${asig.ficha_fich_id || asig.fich_id}`;
-        document.getElementById('manageHorariosBtn').href = `detalles.php?id=${asig.asig_id}`;
+        const instLink = document.getElementById('instLink');
+        const fichaLink = document.getElementById('fichaLink');
+        const manageHorariosBtn = document.getElementById('manageHorariosBtn');
+
+        if (instLink) instLink.href = `../instructor/ver.php?id=${asig.instructor_inst_id}`;
+        if (fichaLink) fichaLink.href = `../ficha/ver.php?id=${asig.ficha_fich_id || asig.fich_id}`;
+        if (manageHorariosBtn) manageHorariosBtn.href = `detalles.php?id=${asig.asig_id}`;
 
         // Buttons
-        document.getElementById('deleteBtn').onclick = () => handleDelete(asig.asig_id);
-        document.getElementById('editBtn').onclick = () => openEditModal(asig);
+        const deleteBtn = document.getElementById('deleteBtn');
+        const editBtn = document.getElementById('editBtn');
+
+        if (deleteBtn) deleteBtn.onclick = () => handleDelete(asig.asig_id);
+        if (editBtn) {
+            editBtn.onclick = () => {
+                loadSelectOptions(); // Lazy load options only when editing
+                openEditModal(asig);
+            };
+        }
 
         // Load time slots (franjas)
         loadFranjas(asig.asig_id);
@@ -107,7 +118,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const formatTime = (timeStr) => {
         if (!timeStr) return '--:--';
-        // Handle HH:MM:SS or YYYY-MM-DD HH:MM:SS
         const timePart = timeStr.includes(' ') ? timeStr.split(' ')[1] : timeStr;
         const parts = timePart.split(':');
         if (parts.length >= 2) {
@@ -118,7 +128,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const formatDate = (dateStr) => {
         if (!dateStr) return '--/--/--';
-        // Take only the YYYY-MM-DD part
         return dateStr.split(' ')[0];
     };
 
@@ -203,21 +212,25 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     const openEditModal = (asig) => {
-        document.getElementById('modalTitle').textContent = 'Editar Asignación';
-        document.getElementById('asig_id').value = asig.asig_id;
-        // Fix for hidden input for ficha_id
+        const modalTitle = document.getElementById('modalTitle');
+        const asigIdInput = document.getElementById('asig_id');
         const modalFichaId = document.getElementById('modal_ficha_id');
-        if (modalFichaId) modalFichaId.value = asig.ficha_fich_id || asig.fich_id || '';
-
-        // Ficha display for readonly input in modal
         const fichaDisplay = document.getElementById('fichaDisplay');
-        if (fichaDisplay) fichaDisplay.value = `Ficha ${asig.fich_id || asig.ficha_fich_id}`;
+        const instSelect = document.getElementById('instructor_id');
+        const ambSelect = document.getElementById('ambiente_id');
+        const compSelect = document.getElementById('competencia_id');
+        const startInput = document.getElementById('asig_fecha_ini');
+        const endInput = document.getElementById('asig_fecha_fin');
 
-        document.getElementById('instructor_id').value = asig.instructor_inst_id || '';
-        document.getElementById('ambiente_id').value = asig.ambiente_amb_id || '';
-        document.getElementById('competencia_id').value = asig.competencia_comp_id || '';
-        document.getElementById('asig_fecha_ini').value = asig.asig_fecha_ini || '';
-        document.getElementById('asig_fecha_fin').value = asig.asig_fecha_fin || '';
+        if (modalTitle) modalTitle.textContent = 'Editar Asignación';
+        if (asigIdInput) asigIdInput.value = asig.asig_id;
+        if (modalFichaId) modalFichaId.value = asig.ficha_fich_id || asig.fich_id || '';
+        if (fichaDisplay) fichaDisplay.value = `Ficha ${asig.fich_id || asig.ficha_fich_id}`;
+        if (instSelect) instSelect.value = asig.instructor_inst_id || '';
+        if (ambSelect) ambSelect.value = asig.ambiente_amb_id || '';
+        if (compSelect) compSelect.value = asig.competencia_comp_id || '';
+        if (startInput) startInput.value = asig.asig_fecha_ini || '';
+        if (endInput) endInput.value = asig.asig_fecha_fin || '';
 
         modal.classList.add('show');
     };
@@ -242,55 +255,60 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Modal Events
-    document.getElementById('closeModal').onclick = () => modal.classList.remove('show');
-    document.getElementById('cancelBtn').onclick = () => modal.classList.remove('show');
+    const closeModal = document.getElementById('closeModal');
+    const cancelBtn = document.getElementById('cancelBtn');
 
-    form.onsubmit = async (e) => {
-        e.preventDefault();
-        const data = {
-            asig_id: document.getElementById('asig_id').value,
-            instructor_inst_id: document.getElementById('instructor_id').value,
-            ficha_fich_id: document.getElementById('ficha_id').value,
-            ambiente_amb_id: document.getElementById('ambiente_id').value,
-            competencia_comp_id: document.getElementById('competencia_id').value,
-            asig_fecha_ini: document.getElementById('asig_fecha_ini').value,
-            asig_fecha_fin: document.getElementById('asig_fecha_fin').value
-        };
+    if (closeModal) closeModal.onclick = () => modal.classList.remove('show');
+    if (cancelBtn) cancelBtn.onclick = () => modal.classList.remove('show');
 
-        try {
-            const response = await fetch(`../../routing.php?controller=asignacion&action=update`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify(data)
-            });
+    if (form) {
+        form.onsubmit = async (e) => {
+            e.preventDefault();
+            const data = {
+                asig_id: document.getElementById('asig_id').value,
+                instructor_inst_id: document.getElementById('instructor_id').value,
+                ficha_fich_id: document.getElementById('modal_ficha_id').value,
+                ambiente_amb_id: document.getElementById('ambiente_id').value,
+                competencia_comp_id: document.getElementById('competencia_id').value,
+                asig_fecha_ini: document.getElementById('asig_fecha_ini').value,
+                asig_fecha_fin: document.getElementById('asig_fecha_fin').value
+            };
 
-            if (response.ok) {
-                NotificationService.showSuccess('Asignación actualizada');
-                modal.classList.remove('show');
-                await loadAsignacionData();
-            } else {
-                const res = await response.json();
-                NotificationService.showError(res.error || 'Error al actualizar');
+            try {
+                const response = await fetch(`../../routing.php?controller=asignacion&action=update`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                if (response.ok) {
+                    NotificationService.showSuccess('Asignación actualizada');
+                    modal.classList.remove('show');
+                    await loadAsignacionData();
+                } else {
+                    const res = await response.json();
+                    NotificationService.showError(res.error || 'Error al actualizar');
+                }
+            } catch (err) {
+                NotificationService.showError('Error de servidor');
             }
-        } catch (err) {
-            NotificationService.showError('Error de servidor');
-        }
-    };
+        };
+    }
 
     const showDetails = () => {
-        loadingState.style.display = 'none';
-        detailsContainer.style.display = 'grid';
-        errorState.style.display = 'none';
+        if (loadingState) loadingState.style.display = 'none';
+        if (detailsContainer) detailsContainer.style.display = 'grid';
+        if (errorState) errorState.style.display = 'none';
     };
 
     const showError = (msg) => {
-        loadingState.style.display = 'none';
-        detailsContainer.style.display = 'none';
-        errorState.style.display = 'block';
-        errorMessage.textContent = msg;
+        if (loadingState) loadingState.style.display = 'none';
+        if (detailsContainer) detailsContainer.style.display = 'none';
+        if (errorState) errorState.style.display = 'block';
+        if (errorMessage) errorMessage.textContent = msg;
     };
 
     init();

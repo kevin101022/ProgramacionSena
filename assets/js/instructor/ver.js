@@ -46,8 +46,10 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('instTelefono').textContent = inst.inst_telefono || 'Sin teléfono';
         document.getElementById('instCentro').textContent = inst.cent_nombre || 'Sin centro asignado';
 
-        document.getElementById('editBtn').href = `editar.php?id=${inst.inst_id}`;
-        document.getElementById('deleteBtn').onclick = () => deleteInstructor(inst.inst_id);
+        const editBtn = document.getElementById('editBtn');
+        const deleteBtn = document.getElementById('deleteBtn');
+        if (editBtn) editBtn.href = `editar.php?id=${inst.inst_id}`;
+        if (deleteBtn) deleteBtn.onclick = () => deleteInstructor(inst.inst_id);
     };
 
     // ── Fichas donde el instructor es líder ───────────────────
@@ -131,7 +133,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <div class="flex-1">
                         <p class="text-sm font-bold text-gray-900 group-hover:text-sena-green transition-colors">Ficha ${a.fich_id} — ${a.prog_denominacion || 'Programa'}</p>
                         <p class="text-xs text-gray-600 mt-1"><span class="font-semibold">Competencia:</span> ${a.comp_nombre || 'N/A'}</p>
-                        <p class="text-xs text-gray-500 mt-0.5"><span class="font-semibold">Ambiente:</span> ${a.amb_nombre || 'N/A'} · ${a.sede_nombre || ''}</p>
+                        <p class="text-xs text-gray-500 mt-0.5"><span class="font-semibold">Ambiente:</span> ${a.amb_id || 'ID'} - ${a.amb_nombre || 'N/A'} | <span class="font-semibold">Sede:</span> ${a.sede_nombre || 'N/A'}</p>
                         <div class="mt-2 flex items-center gap-4 text-[10px] text-gray-400 font-medium">
                              <span class="flex items-center gap-1"><ion-icon src="../../assets/ionicons/calendar-outline.svg"></ion-icon> ${a.asig_fecha_ini || ''}</span>
                              <span class="flex items-center gap-1"><ion-icon src="../../assets/ionicons/calendar-outline.svg"></ion-icon> ${a.asig_fecha_fin || ''}</span>
@@ -171,7 +173,18 @@ document.addEventListener('DOMContentLoaded', () => {
             if (section) section.style.display = 'block';
 
             container.innerHTML = '';
+            // Agrupar por competencia (puede venir duplicada por programa)
+            const uniqueComps = {};
             competencias.forEach(c => {
+                const key = c.comp_id || c.competxprograma_competencia_comp_id;
+                if (!uniqueComps[key]) {
+                    uniqueComps[key] = c;
+                }
+            });
+            const comps = Object.values(uniqueComps);
+            if (countEl) countEl.textContent = comps.length;
+
+            comps.forEach(c => {
                 const item = document.createElement('div');
                 item.className = 'p-3 bg-green-50 rounded-xl border border-green-100 flex items-start gap-3';
                 item.innerHTML = `
@@ -179,8 +192,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         <ion-icon src="../../assets/ionicons/ribbon-outline.svg" class="text-white text-sm"></ion-icon>
                     </div>
                     <div>
-                        <p class="text-sm font-bold text-gray-900">${c.comp_nombre || 'Competencia'}</p>
-                        <p class="text-xs text-gray-500">${c.prog_denominacion || 'Programa'} · Vigencia: ${c.hab_vigencia || 'N/A'}</p>
+                        <p class="text-sm font-bold text-gray-900">${c.comp_nombre || c.comp_nombre_corto || 'Competencia'}</p>
+                        <p class="text-xs text-gray-500">${c.comp_descripcion || c.comp_nombre_unidad_competencia || ''}</p>
                     </div>
                 `;
                 container.appendChild(item);

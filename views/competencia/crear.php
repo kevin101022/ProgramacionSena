@@ -2,6 +2,13 @@
 $pageTitle = 'Registrar Competencia - Programaciones';
 $activeNavItem = 'competencias';
 require_once '../layouts/head.php';
+
+// Solo el Centro de Formación puede crear competencias
+if (isset($_SESSION['rol']) && $_SESSION['rol'] !== 'centro') {
+    header("Location: index.php");
+    exit;
+}
+
 require_once '../layouts/sidebar.php';
 ?>
 

@@ -122,6 +122,21 @@ class InstructorModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    /** Devuelve un único instructor por numero_documento (para aislamiento del rol instructor) */
+    public function readById($numero_documento)
+    {
+        $sql = "SELECT i.numero_documento as inst_id, i.inst_nombres, i.inst_apellidos, i.inst_correo, i.inst_telefono,
+                       i.CENTRO_FORMACION_cent_id as cent_id,
+                       c.cent_nombre
+                FROM INSTRUCTOR i
+                LEFT JOIN CENTRO_FORMACION c ON i.CENTRO_FORMACION_cent_id = c.cent_id
+                WHERE i.numero_documento = :numero_documento AND i.estado = 1
+                LIMIT 1";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':numero_documento' => $numero_documento]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
     public function readAll()
     {
         $sql = "SELECT i.numero_documento as inst_id, i.inst_nombres, i.inst_apellidos, i.inst_correo, i.inst_telefono, 
@@ -130,7 +145,7 @@ class InstructorModel
                 FROM INSTRUCTOR i 
                 LEFT JOIN CENTRO_FORMACION c ON i.CENTRO_FORMACION_cent_id = c.cent_id 
                 WHERE i.estado = 1
-                ORDER BY i.numero_documento DESC";
+                ORDER BY i.inst_nombres ASC, i.inst_apellidos ASC";
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -144,7 +159,7 @@ class InstructorModel
                 FROM INSTRUCTOR i 
                 LEFT JOIN CENTRO_FORMACION c ON i.CENTRO_FORMACION_cent_id = c.cent_id 
                 WHERE i.CENTRO_FORMACION_cent_id = :cent_id AND i.estado = 1
-                ORDER BY i.numero_documento DESC";
+                ORDER BY i.inst_nombres ASC, i.inst_apellidos ASC";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([':cent_id' => $cent_id]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -197,6 +212,7 @@ class InstructorModel
                        f.fich_id, f.fich_jornada,
                        p.prog_denominacion,
                        comp.comp_nombre_corto as comp_nombre,
+                       amb.amb_id,
                        amb.amb_nombre,
                        s.sede_nombre
                 FROM ASIGNACION a
@@ -214,7 +230,7 @@ class InstructorModel
 
     public function getCompetenciasByInstructor()
     {
-        $sql = "SELECT ic.inscomp_id, ic.inscomp_vigencia as hab_vigencia,
+        $sql = "SELECT ic.inscomp_id,
                        comp.comp_id, comp.comp_nombre_corto as comp_nombre, comp.comp_nombre_unidad_competencia as comp_descripcion,
                        p.prog_codigo, p.prog_denominacion
                 FROM INSTRU_COMPETENCIA ic
@@ -229,9 +245,12 @@ class InstructorModel
 
     public function getFichasLider()
     {
-        $sql = "SELECT f.fich_id, f.fich_jornada, f.fich_fecha_ini_lectiva, f.fich_fecha_fin_lectiva,
-                       p.prog_denominacion, tp.titpro_nombre,
-                       c.coord_descripcion as coord_nombre, s.sede_nombre
+        if (empty($this->numero_documento)) return [];
+        $sql = "SELECT f.fich_id as fich_id, f.fich_jornada as fich_jornada, 
+                       f.fich_fecha_ini_lectiva as fich_fecha_ini_lectiva, 
+                       f.fich_fecha_fin_lectiva as fich_fecha_fin_lectiva,
+                       p.prog_denominacion as prog_denominacion, tp.titpro_nombre as titpro_nombre,
+                       c.coord_descripcion as coord_nombre, s.sede_nombre as sede_nombre
                 FROM FICHA f
                 INNER JOIN PROGRAMA p ON f.PROGRAMA_prog_id = p.prog_codigo
                 INNER JOIN TITULO_PROGRAMA tp ON p.TIT_PROGRAMA_titpro_id = tp.titpro_id

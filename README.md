@@ -99,7 +99,17 @@ class Conexion {
 Este sistema no es solo una base de datos; tiene un motor de validaciones que garantiza que la programación académica sea coherente.
 
 ### 🛡️ Habilitación de Instructores
-- Solo puedes asignar a un instructor si está previamente **habilitado** para la Competencia y el Programa específicos (tabla `INSTRU_COMPETENCIA`).
+- Solo puedes asignar a un instructor si está previamente **habilitado** para la Competencia específica (tabla `INSTRU_COMPETENCIA`).
+
+#### 📌 Registro Simplificado de Competencias
+Al registrar o editar un instructor desde el **Centro de Formación**, se muestra una lista plana de todas las competencias disponibles. El usuario simplemente marca con checkboxes cuáles competencias puede dictar ese instructor (puede ser **una o varias**). Ya no es necesario seleccionar los programas manualmente; el sistema se encarga internamente de vincular las competencias con los programas que correspondan.
+
+#### 👀 Instructores por Competencia
+Desde la vista de detalle de una **Competencia** (al hacer clic en ella desde la consulta), se puede ver la lista de todos los **instructores habilitados** para dictarla. Cada instructor muestra su nombre, correo y los programas en los que está vinculado con esa competencia.
+
+#### 🔐 Permisos sobre Instructores y Habilitaciones
+- **Centro de Formación:** Responsable exclusivo de registrar instructores y habilitarlos para sus respectivas competencias. Tiene control total: crear, editar y eliminar.
+- **Coordinador:** Solo tiene **vistas de consulta**. Puede ver la ficha del instructor (sus competencias habilitadas) y la lista general de habilitaciones ("Instructor x Competencia"), pero **no puede registrar, editar ni eliminar** ninguna relación o instructor.
 
 ### ⏰ Control de Horarios (Nivel Franjas Horarias)
 Al registrar una hora (ej: 7:00 AM a 10:00 AM), el sistema realiza un **Escaneo Global** y aplica estos bloqueos:
@@ -112,14 +122,34 @@ Al registrar una hora (ej: 7:00 AM a 10:00 AM), el sistema realiza un **Escaneo 
 5. **Jornada Institucional:** Solo se permite programar entre las **06:00 AM y 10:00 PM**.
 6. **Fechas Vigentes:** No se puede iniciar una programación en una fecha que ya pasó.
 
+#### 📍 Ubicación en el Código
+| # | Restricción | Archivo | Método / Líneas |
+|---|---|---|---|
+| 1 | Cruce de Instructor | `model/DetalleAsignacionModel.php` | `checkGlobalConflicts()` — valida solapamiento de horas + fechas por instructor |
+| 2 | Cruce de Ambiente | `model/DetalleAsignacionModel.php` | `checkGlobalConflicts()` — misma consulta, filtra por `AMBIENTE_amb_id` |
+| 3 | Cruce de Ficha | `model/DetalleAsignacionModel.php` | `checkGlobalConflicts()` — misma consulta, filtra por `FICHA_fich_id` |
+| 4 | Coherencia Cronológica | `controller/detalle_asignacionController.php` | `store()` y `update()` — `hora_ini >= hora_fin` retorna error 400 |
+| 5 | Jornada Institucional | `controller/detalle_asignacionController.php` | `store()` y `update()` — verifica `< 06:00` o `> 22:00` |
+| 6 | Fechas Vigentes | `controller/asignacionController.php` | `store()` y `update()` — `fecha_ini < date('Y-m-d')` retorna error 400 |
+| 🎁 | Habilitación Instructor-Competencia | `controller/asignacionController.php` | `store()` y `update()` — `InstruCompetenciaModel::isQualified()` |
+
+> **Nota:** Los cruces (1-3) se validan en **dos niveles**: a nivel de **Asignación** (`AsignacionModel::checkConflicts` — solapamiento de fechas) y a nivel de **Detalle/Franja Horaria** (`DetalleAsignacionModel::checkGlobalConflicts` — solapamiento de horas dentro de fechas solapadas). El bloqueo real que impide guardar ocurre en el nivel de Detalle.
+
 #### ✅ Precisión Quirúrgica
 - **Empalmes:** Se permite que una clase termine a las 9:00 y la siguiente empiece a las 9:00.
 - **Alcance Global:** La validación revisa todas las asignaciones existentes, no solo la actual.
 
 ### 🏢 Control de Acceso y Estructura Organizacional
 El sistema está modelado para respetar la estructura física de los centros SENA bajo un modelo de accesos estrictos:
-1. **Coordinaciones por Defecto:** Al inicializar la base de datos, el sistema se despliega con **4 coordinaciones fijas** pre-ancladas a sus respectivos *Centros de Formación* (Industria y Comercio, Industria, Comercio, y Moda/Turismo/Tecnología).
-2. **Auto-registro Inteligente (Coordinadores):** Un coordinador no digita su centro de formación. Selecciona una de las coordinaciones vacantes de la base de datos, heredando **automáticamente** el perfil de su `Centro de Formación` asociado. Esto evita inconsistencias de tipado y relaciona directamente al usuario con su contexto.
+1. **Desacoplamiento Funcionario-Dependencia (Coordinador vs Coordinación):** 
+   A nivel de arquitectura de base de datos se manejan dos entidades independientes:
+   - **`usuario_coordinador`:** Representa a la persona física (Nombre, Correo, Credenciales de acceso, Estado).
+   - **`coordinacion`:** Representa a la dependencia o departamento administrativo.
+   Esta separación permite que una dependencia cambie de líder sin perder su historial, y que un coordinador pueda ser "Desvinculado" (vacante) para posteriormente ser asignado a otra coordinación, o ser dado de baja (deshabilitado).
+2. **Creación Controlada (Cero Auto-registros):** Se eliminó por completo el "Auto-registro" de coordinadores por razones de seguridad. **Unicamente el Centro de Formación** tiene el poder de:
+   - Crear el perfíl del coordinador (Persona).
+   - Crear el área de coordinación (Dependencia).
+   - Asignar o Desvincular un coordinador a una dependencia.
 3. **Visibilidad Restringida (Aislamiento de Información):** Al ingresar al sistema, a los Coordinadores **solo se les listan los Instructores que pertenezcan a su mismo Centro de Formación**, ocultando por diseño toda la red de instructores de otras sedes del país.
 4. **Vistas Limitadas para Instructores (RBAC):** El sistema cuenta con Control de Acceso Basado en Roles. Si un Instructor inicia sesión, es redirigido a un entorno de **solo lectura** ("Mi Espacio"). Solo pueden visualizar las Asignaciones y Competencias que les corresponden. Cualquier intento de un Instructor por acceder a vistas de Coordinador o alterar datos a través del enrutador (`routing.php`) es bloqueado automáticamente devolviendo un error HTTP 403 (Acceso Denegado).
 
@@ -190,23 +220,57 @@ Se implementa un esquema de auditoría robusto y transparente a nivel de motor d
 
 - **Trazabilidad Pura:** Mediante inyección de variables de sesión (`myapp.documento_usuario` y `myapp.correo_usuario`) en la instancia de conexión PDO, el motor de BD rastrea con precisión inquebrantable qué usuario del sistema originó la modificación.
 
+### 📊 Acceso desde la Interfaz por Rol
+El sistema expone estos registros de auditoría de manera controlada:
+1. **Centro de Formación:** Tiene acceso a la auditoría **completa de su centro**. Puede supervisar todas las acciones realizadas por cualquier coordinador vinculado a su sede.
+2. **Coordinador:** Tiene acceso a su propio historial de **"Mis Acciones"**. Esto le permite verificar qué cambios ha realizado personalmente en las programaciones para mantener su propio control.
+
+Esta vista de Auditoría se encuentra disponible directamente desde el menú lateral (Sidebar) en la sección de Gestión correspondiente.
+
 ---
 
 ## 7. 🛡️ Aislamiento de Datos por Centro y Vistas por Rol
 
 El sistema implementa una estricta política de multitenencia (multi-tenant) lógica, donde la información se aísla dependiendo del **Centro de Formación** (`centro_id`) al que pertenece el usuario autenticado:
 
-### 🏢 Aislamiento Global (Centro ID)
-Absolutamente todas las entidades principales (**Sedes, Instructores, Ambientes, Fichas, Coordinaciones, Asignaciones, Reportes y Auditoría**) filtran sus datos en el backend comparando contra el `centro_id` guardado en la sesión activa. Un usuario administrador de un centro de formación jamás podrá visualizar ni alterar la información, el personal o los recursos de un Centro de Formación distinto al suyo.
+### 🏢 Aislamiento Global (SaaS Multi-Tenant)
+Absolutamente todas las entidades principales están diseñadas bajo un esquema estricto Multi-Tenant lógico. Esto incluye: 
+**Sedes, Instructores, Ambientes, Fichas, Coordinaciones, Asignaciones, Reportes, Auditoría**, y desde la última actualización arquitectónica, también los **Programas y Competencias**. 
+
+Los datos se filtran en el backend usando el `centro_id` de la sesión del usuario autenticado. Esto significa que si un Centro registra un Programa (ej. "Análisis de Software"), otro centro en el país no podrá ver ni usar ese mismo registro; cada centro gestiona estrictamente sus propios catálogos como si fuera una base de datos exclusiva para ellos, impidiendo colisiones y garantizando la autonomía total.
 
 ### 🧭 Navegación Estricta por Rol (Sidebar)
 La interfaz de navegación lateral (`sidebar.php`) presenta opciones puramente limitadas según el cargo validado tras el `Login`.
-- **Centro de Formación:** Dispone de la gestión estructural (CRUD) de Sedes, Ambientes, Programas, Instructores, Competencias y Coordinaciones. (Adicional: Reportes y Auditoría)
-- **Coordinador Académico:** Se encarga de la operatividad pura del centro: Competencia x Programa, Fichas, Instructor x Competencia, Asignaciones (el motor central del negocio) y Auditoría.
+- **Centro de Formación:** Dispone de la gestión estructural de: **Sedes, Ambientes, Programas, Instructores, Competencias y Coordinaciones** (incluyendo la gestión de Títulos y el registro de Personas Coordinadoras).
+- **Coordinador Académico:** Se encarga de la operatividad académica: **Competencia x Programa, Ficha, Instructor x Competencia y Asignación**. (Adicional: Auditoría de sus cambios).
 - **Instructor:** Entorno confinado de solo lectura sobre sus recursos.
+
+### 🧭 Navegación Robusta
+Se utiliza un esquema de navegación basado en rutas relativas directas (`../modulo/index.php`) y carga de datos asíncrona (AJAX) para garantizar que los enlaces del menú lateral sean funcionales desde cualquier profundidad de la aplicación, evitando errores de enrutamiento 404.
 
 ### 🧑‍🏫 Vistas Especializadas del Instructor
 El instructor cuenta con un apartado web dedicado llamado **"Mi Espacio"**:
 - **Mis Asignaciones:** Visualización de sus clases programadas y espacios designados.
 - **Mis Competencias:** Listado de los programas y normativas para los cuales el coordinador local lo ha habilitado para enseñar.
 - **Mis Fichas (Líder):** Seguimiento detallado de las fichas específicas de formación donde este instructor ha sido designado como "líder" del programa tecnológico.
+
+## 8. 📊 Sincronización y Dashboard SetData
+
+El sistema incluye un motor de visualización de datos externos diseñado para transformar archivos crudos en tableros de control inteligentes.
+
+### 📁 Procesamiento de Archivos "SetData"
+- **Origen Flexible:** Acepta cualquier archivo CSV (exportado de FET, Excel o plataformas externas).
+- **Detección Automática:** El motor identifica el delimitador (`,`, `;`, `\t`), los encabezados y la naturaleza de los datos (numéricos vs. texto).
+- **Zero Persistence:** Por diseño, estos datos externos no se guardan en la base de datos SQL del proyecto. Se procesan "en vivo" para garantizar que el coordinador siempre visualice la versión más reciente del archivo cargado.
+
+### 📈 Análisis Visual Automático
+El dashboard genera dinámicamente:
+1. **Tarjetas de Totales:** Suma automática de columnas numéricas (ej. Total Horas, Sesiones).
+2. **Distribución de Frecuencia:** Gráficos de barras automáticos para cualquier categoría con menos de 30 valores únicos (ej. Horas por Instructor, por Ficha o por Competencia).
+3. **Tabla de Exploración:** Vista previa filtrable con búsqueda instantánea para inspeccionar los datos fila por fila.
+
+### 📄 Exportación de Reportes Premium
+A diferencia de una simple exportación a texto, el sistema permite generar un **Reporte Visual en PDF**:
+- **Fidelidad Total:** El PDF captura exactamente los gráficos y tarjetas que se ven en pantalla a través de renderizado por canvas.
+- **Identidad Institucional:** Incluye encabezados del SENA y marcas de tiempo, convirtiendo los datos crudos en documentos profesionales listos para ser presentados.
+- **Acceso:** Exclusivo para el rol **Coordinador Académico** desde el menú "Sincronizar Datos (CSV)".

@@ -10,6 +10,14 @@ class instructorController
             session_start();
         }
         $model = new InstructorModel();
+        $rol = $_SESSION['rol'] ?? null;
+
+        // Si es un instructor logueado, solo devuelve su propia información
+        if ($rol === 'instructor' && !empty($_SESSION['id'])) {
+            $instructores = $model->readById($_SESSION['id']);
+            // Devolver como array para mantener consistencia
+            return $this->sendResponse($instructores ? [$instructores] : []);
+        }
 
         if (isset($_SESSION['centro_id']) && !empty($_SESSION['centro_id'])) {
             $instructores = $model->readByCentro($_SESSION['centro_id']);
@@ -32,19 +40,21 @@ class instructorController
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
+        $numero_documento = $_POST['numero_documento'] ?? null;
         $nombres = $_POST['inst_nombres'] ?? null;
         $apellidos = $_POST['inst_apellidos'] ?? null;
         $correo = $_POST['inst_correo'] ?? null;
         $telefono = $_POST['inst_telefono'] ?? null;
-        $cent_id = $_POST['centro_formacion_cent_id'] ?? $_SESSION['centro_id'] ?? null;
-        $password = $_POST['inst_password'] ?? 'Sena123*'; // Default password
+        $cent_id = $_SESSION['centro_id'] ?? null;
+        $rawPassword = $_POST['inst_password'] ?? 'Sena123*';
+        $password = password_hash($rawPassword, PASSWORD_BCRYPT);
 
-        if (!$nombres || !$apellidos || !$correo || !$cent_id) {
+        if (!$numero_documento || !$nombres || !$apellidos || !$correo || !$cent_id) {
             return $this->sendResponse(['error' => 'Datos obligatorios faltantes'], 400);
         }
 
         $model = new InstructorModel(
-            null,
+            $numero_documento,
             $nombres,
             $apellidos,
             $correo,
@@ -53,26 +63,45 @@ class instructorController
             $password
         );
 
-        $id = $model->create();
+        try {
+            $id = $model->create();
+        } catch (PDOException $e) {
+            return $this->sendResponse(['error' => 'El número de documento ya está registrado o hay error en BD'], 500);
+        }
         if ($id) {
             // Guardar habilitaciones (competencias seleccionadas)
             $competencias = $_POST['competencias'] ?? [];
 
             if (!empty($competencias)) {
                 require_once dirname(__DIR__) . '/model/InstruCompetenciaModel.php';
-                $vigencia = (date('Y') + 1) . '-12-31'; // Vigencia por defecto: 31 dic del año siguiente
+                require_once dirname(__DIR__) . '/model/CompetenciaProgramaModel.php';
+                $cpModel = new CompetenciaProgramaModel();
 
                 foreach ($competencias as $compData) {
-                    if (strpos($compData, '|') !== false) {
-                        list($progId, $compId) = explode('|', $compData);
-                        $instruCompModel = new InstruCompetenciaModel(
-                            null,
-                            $id, // Nuevo ID del instructor
-                            $progId,
-                            $compId,
-                            $vigencia
-                        );
-                        $instruCompModel->create();
+                    try {
+                        if (strpos($compData, '|') !== false) {
+                            list($progId, $compId) = explode('|', $compData);
+                            $instruCompModel = new InstruCompetenciaModel(null, $id, $progId, $compId);
+                            $instruCompModel->create();
+                        } else {
+                            $compId = $compData;
+                            $programas = $cpModel->getProgramasByCompetencia($compId);
+                            if (!empty($programas)) {
+                                foreach ($programas as $prog) {
+                                    try {
+                                        $instruCompModel = new InstruCompetenciaModel(null, $id, $prog['prog_codigo'], $compId);
+                                        $instruCompModel->create();
+                                    } catch (PDOException $innerEx) {
+                                        // Duplicado u otro error individual, continuar con el siguiente
+                                        error_log("Habilitación duplicada o error: " . $innerEx->getMessage());
+                                    }
+                                }
+                            } else {
+                                error_log("Competencia $compId no tiene programas asociados en COMPETxPROGRAMA, no se puede habilitar aún.");
+                            }
+                        }
+                    } catch (PDOException $ex) {
+                        error_log("Error habilitando competencia: " . $ex->getMessage());
                     }
                 }
             }
@@ -103,55 +132,80 @@ class instructorController
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
-        $id = $_POST['inst_id'] ?? null;
-        $nombres = $_POST['inst_nombres'] ?? null;
-        $apellidos = $_POST['inst_apellidos'] ?? null;
-        $correo = $_POST['inst_correo'] ?? null;
-        $telefono = $_POST['inst_telefono'] ?? null;
-        $cent_id = $_POST['centro_formacion_cent_id'] ?? $_SESSION['centro_id'] ?? null;
-        $password = $_POST['inst_password'] ?? null;
 
-        if (!$id || !$nombres || !$apellidos || !$correo || !$cent_id) {
-            return $this->sendResponse(['error' => 'Datos incompletos'], 400);
-        }
+        try {
+            $id = $_POST['numero_documento'] ?? $_POST['inst_id'] ?? null;
+            $nombres = $_POST['inst_nombres'] ?? null;
+            $apellidos = $_POST['inst_apellidos'] ?? null;
+            $correo = $_POST['inst_correo'] ?? null;
+            $telefono = $_POST['inst_telefono'] ?? null;
+            $cent_id = $_SESSION['centro_id'] ?? null;
+            $rawPassword = $_POST['inst_password'] ?? null;
+            // Solo hashear si el usuario envió una contraseña nueva
+            $password = !empty($rawPassword) ? password_hash($rawPassword, PASSWORD_BCRYPT) : null;
 
-        $model = new InstructorModel(
-            $id,
-            $nombres,
-            $apellidos,
-            $correo,
-            $telefono,
-            $cent_id,
-            $password
-        );
-
-        if ($model->update()) {
-            // Actualizar habilitaciones (competencias seleccionadas multi-programa)
-            $competencias = $_POST['competencias'] ?? [];
-
-            require_once dirname(__DIR__) . '/model/InstruCompetenciaModel.php';
-            $instruCompModel = new InstruCompetenciaModel();
-
-            // Limpiar habilitaciones previas antes de insertar las nuevas (opción simple)
-            $instruCompModel->deleteByInstructor($id);
-
-            if (!empty($competencias)) {
-                $vigencia = (date('Y') + 1) . '-12-31';
-                foreach ($competencias as $compData) {
-                    if (strpos($compData, '|') !== false) {
-                        list($progId, $compId) = explode('|', $compData);
-                        $instruCompModel->setInstructorInstId($id);
-                        $instruCompModel->setCompetxprogramaProgramaProgId($progId);
-                        $instruCompModel->setCompetxprogramaCompetenciaCompId($compId);
-                        $instruCompModel->setInscompVigencia($vigencia);
-                        $instruCompModel->create();
-                    }
-                }
+            if (!$id || !$nombres || !$apellidos || !$correo || !$cent_id) {
+                return $this->sendResponse(['error' => 'Datos incompletos'], 400);
             }
 
-            return $this->sendResponse(['message' => 'Instructor actualizado correctamente']);
+            $model = new InstructorModel(
+                $id,
+                $nombres,
+                $apellidos,
+                $correo,
+                $telefono,
+                $cent_id,
+                $password
+            );
+
+            if ($model->update()) {
+                // Actualizar habilitaciones (competencias seleccionadas)
+                $competencias = $_POST['competencias'] ?? [];
+
+                require_once dirname(__DIR__) . '/model/InstruCompetenciaModel.php';
+                require_once dirname(__DIR__) . '/model/CompetenciaProgramaModel.php';
+                $instruCompModel = new InstruCompetenciaModel();
+                $cpModel = new CompetenciaProgramaModel();
+
+                // Limpiar habilitaciones previas antes de insertar las nuevas
+                $instruCompModel->deleteByInstructor($id);
+
+                if (!empty($competencias)) {
+                    foreach ($competencias as $compData) {
+                        try {
+                            if (strpos($compData, '|') !== false) {
+                                list($progId, $compId) = explode('|', $compData);
+                                $newModel = new InstruCompetenciaModel(null, $id, $progId, $compId);
+                                $newModel->create();
+                            } else {
+                                $compId = $compData;
+                                $programas = $cpModel->getProgramasByCompetencia($compId);
+                                if (!empty($programas)) {
+                                    foreach ($programas as $prog) {
+                                        try {
+                                            $newModel = new InstruCompetenciaModel(null, $id, $prog['prog_codigo'], $compId);
+                                            $newModel->create();
+                                        } catch (PDOException $innerEx) {
+                                            error_log("Habilitación duplicada o error: " . $innerEx->getMessage());
+                                        }
+                                    }
+                                } else {
+                                    error_log("Competencia $compId no tiene programas en COMPETxPROGRAMA, no se puede habilitar.");
+                                }
+                            }
+                        } catch (PDOException $ex) {
+                            error_log("Error habilitando competencia: " . $ex->getMessage());
+                        }
+                    }
+                }
+
+                return $this->sendResponse(['message' => 'Instructor actualizado correctamente']);
+            }
+            return $this->sendResponse(['error' => 'Error al actualizar el instructor'], 500);
+        } catch (Throwable $e) {
+            error_log("Error en InstructorController::update: " . $e->getMessage());
+            return $this->sendResponse(['error' => 'Error interno: ' . $e->getMessage()], 500);
         }
-        return $this->sendResponse(['error' => 'Error al actualizar el instructor'], 500);
     }
 
     public function destroy()

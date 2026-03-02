@@ -72,16 +72,18 @@ require_once '../layouts/sidebar.php';
                             </div>
                         </div>
 
-                        <div class="mt-8 pt-6 border-t border-gray-50 flex flex-col gap-3">
-                            <button id="editBtn" class="btn-primary w-full justify-center">
-                                <ion-icon src="../../assets/ionicons/create-outline.svg"></ion-icon>
-                                Editar Asignación
-                            </button>
-                            <button id="deleteBtn" class="btn-secondary w-full justify-center text-red-600 border-red-100 hover:bg-red-50">
-                                <ion-icon src="../../assets/ionicons/trash-outline.svg"></ion-icon>
-                                Eliminar Registro
-                            </button>
-                        </div>
+                        <?php if ($_SESSION['rol'] !== 'instructor'): ?>
+                            <div class="mt-8 pt-6 border-t border-gray-50 flex flex-col gap-3">
+                                <button id="editBtn" class="btn-primary w-full justify-center">
+                                    <ion-icon src="../../assets/ionicons/create-outline.svg"></ion-icon>
+                                    Editar Asignación
+                                </button>
+                                <button id="deleteBtn" class="btn-secondary w-full justify-center text-red-600 border-red-100 hover:bg-red-50">
+                                    <ion-icon src="../../assets/ionicons/trash-outline.svg"></ion-icon>
+                                    Eliminar Registro
+                                </button>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -104,7 +106,7 @@ require_once '../layouts/sidebar.php';
                                 </div>
                                 <div>
                                     <p id="detAmbiente" class="font-bold text-gray-800">--</p>
-                                    <p class="text-xs text-gray-500 mt-1">Sede Principal</p>
+                                    <p id="detSede" class="text-xs text-gray-500 mt-1">Sede</p>
                                 </div>
                             </div>
                         </div>
@@ -145,10 +147,12 @@ require_once '../layouts/sidebar.php';
                     <div class="mt-8">
                         <div class="flex items-center justify-between mb-4">
                             <h4 class="text-sm font-bold text-gray-900 uppercase tracking-wider">Horarios Programados</h4>
-                            <a href="#" id="manageHorariosBtn" class="text-xs font-bold text-sena-green hover:underline flex items-center gap-1">
-                                <ion-icon src="../../assets/ionicons/time-outline.svg"></ion-icon>
-                                Gestionar Horarios
-                            </a>
+                            <?php if ($_SESSION['rol'] !== 'instructor'): ?>
+                                <a href="#" id="manageHorariosBtn" class="text-xs font-bold text-sena-green hover:underline flex items-center gap-1">
+                                    <ion-icon src="../../assets/ionicons/time-outline.svg"></ion-icon>
+                                    Gestionar Horarios
+                                </a>
+                            <?php endif; ?>
                         </div>
                         <div id="franjasContainer" class="space-y-2">
                             <p class="text-xs text-gray-500 italic">No hay horarios específicos registrados para este periodo.</p>

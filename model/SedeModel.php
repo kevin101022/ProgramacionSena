@@ -81,10 +81,12 @@ class SedeModel
         $sql = "SELECT sede_id, sede_nombre, CENTRO_FORMACION_cent_id FROM SEDE";
         if ($cent_id) {
             $sql .= " WHERE CENTRO_FORMACION_cent_id = :cent_id";
+            $sql .= " ORDER BY sede_nombre ASC";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([':cent_id' => $cent_id]);
             return $stmt->fetchAll(PDO::FETCH_ASSOC);
         }
+        $sql .= " ORDER BY sede_nombre ASC";
         $stmt = $this->db->prepare($sql);
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -119,7 +121,7 @@ class SedeModel
                 FROM FICHA f
                 INNER JOIN PROGRAMA p ON f.PROGRAMA_prog_id = p.prog_codigo
                 INNER JOIN TITULO_PROGRAMA tp ON p.TIT_PROGRAMA_titpro_id = tp.titpro_id
-                LEFT JOIN INSTRUCTOR i ON f.INSTRUCTOR_inst_id_lider = i.inst_id
+                LEFT JOIN INSTRUCTOR i ON f.INSTRUCTOR_inst_id_lider = i.numero_documento
                 INNER JOIN (
                     SELECT FICHA_fich_id, AMBIENTE_amb_id 
                     FROM ASIGNACION 

@@ -20,7 +20,13 @@ require_once '../layouts/sidebar.php';
                 <ion-icon src="../../assets/ionicons/chevron-forward-outline.svg"></ion-icon>
                 <span>Competencias</span>
             </div>
-            <h1 class="page-title">Competencias</h1>
+            <h1 class="page-title">
+                <?php if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'coordinador'): ?>
+                    Competencias (Consulta)
+                <?php else: ?>
+                    Competencias
+                <?php endif; ?>
+            </h1>
         </div>
         <div class="header-actions">
         </div>
@@ -64,10 +70,12 @@ require_once '../layouts/sidebar.php';
                 <!-- Additional filters can be added here -->
             </div>
 
-            <a href="crear.php" class="btn-primary">
-                <ion-icon src="../../assets/ionicons/add-outline.svg"></ion-icon>
-                Nueva Competencia
-            </a>
+            <?php if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'centro'): ?>
+                <a href="crear.php" class="btn-primary">
+                    <ion-icon src="../../assets/ionicons/add-outline.svg"></ion-icon>
+                    Nueva Competencia
+                </a>
+            <?php endif; ?>
         </div>
 
         <div class="table-container">

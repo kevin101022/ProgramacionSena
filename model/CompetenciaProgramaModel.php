@@ -102,4 +102,27 @@ class CompetenciaProgramaModel
         $stmt->execute([':comp_id' => $compId]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public function getAllWithProgramas($cent_id = null)
+    {
+        $sql = "SELECT c.comp_id, 
+                       cp.PROGRAMA_prog_id as prog_id,
+                       c.comp_nombre_corto, 
+                       c.comp_nombre_unidad_competencia,
+                       p.prog_denominacion
+                FROM COMPETENCIA c
+                LEFT JOIN COMPETxPROGRAMA cp ON c.comp_id = cp.COMPETENCIA_comp_id
+                LEFT JOIN PROGRAMA p ON cp.PROGRAMA_prog_id = p.prog_codigo";
+
+        $params = [];
+        if ($cent_id) {
+            $sql .= " WHERE c.centro_formacion_cent_id = :cent_id OR c.centro_formacion_cent_id IS NULL";
+            $params[':cent_id'] = $cent_id;
+        }
+        $sql .= " ORDER BY c.comp_nombre_corto ASC";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
 }

@@ -8,7 +8,6 @@ class InstructorManager {
         this.currentPage = 1;
         this.itemsPerPage = 5;
         this.instructores = [];
-        this.centros = [];
         this.filteredInstructores = [];
 
         this.init();
@@ -16,24 +15,13 @@ class InstructorManager {
 
     async init() {
         this.bindEvents();
-        await Promise.all([
-            this.loadCentros(),
-            this.loadInstructores()
-        ]);
+        await this.loadInstructores();
     }
 
     bindEvents() {
         const searchInput = document.getElementById('searchInput');
         if (searchInput) {
             searchInput.addEventListener('input', () => {
-                this.currentPage = 1;
-                this.renderTable();
-            });
-        }
-
-        const sedeFilter = document.getElementById('sedeFilter');
-        if (sedeFilter) {
-            sedeFilter.addEventListener('change', () => {
                 this.currentPage = 1;
                 this.renderTable();
             });
@@ -70,29 +58,6 @@ class InstructorManager {
         window.deleteInstructor = (id) => this.confirmDelete(id);
     }
 
-    async loadCentros() {
-        try {
-            const response = await fetch('../../routing.php?controller=instructor&action=getCentros', {
-                headers: { 'Accept': 'application/json' }
-            });
-            if (!response.ok) throw new Error('Error al cargar centros');
-            this.centros = await response.json();
-
-            const sedeFilter = document.getElementById('sedeFilter');
-            if (sedeFilter) {
-                sedeFilter.innerHTML = '<option value="">Todos los Centros</option>';
-                this.centros.forEach(centro => {
-                    const option = document.createElement('option');
-                    option.value = centro.cent_id;
-                    option.textContent = centro.cent_nombre;
-                    sedeFilter.appendChild(option);
-                });
-            }
-        } catch (error) {
-            console.error('Error loading centros:', error);
-        }
-    }
-
     async loadInstructores() {
         try {
             const response = await fetch('../../routing.php?controller=instructor&action=index', {
@@ -114,15 +79,12 @@ class InstructorManager {
 
     getFilteredData() {
         const searchInput = document.getElementById('searchInput');
-        const sedeFilter = document.getElementById('sedeFilter');
         const searchTerm = (searchInput ? searchInput.value : '').toLowerCase();
-        const sedeId = sedeFilter ? sedeFilter.value : '';
 
         return this.instructores.filter(inst => {
             const names = (inst.inst_nombres + ' ' + inst.inst_apellidos).toLowerCase();
             const matchesSearch = names.includes(searchTerm) || inst.inst_correo.toLowerCase().includes(searchTerm);
-            const matchesSede = !sedeId || inst.centro_formacion_cent_id == sedeId;
-            return matchesSearch && matchesSede;
+            return matchesSearch;
         });
     }
 

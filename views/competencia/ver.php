@@ -57,10 +57,12 @@ require_once '../layouts/sidebar.php';
                         <div class="p-6">
                             <div class="flex items-center justify-between mb-4">
                                 <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">DATOS DE LA COMPETENCIA</h4>
-                                <a href="#" id="editLink" class="text-sena-green hover:text-emerald-700 transition-colors flex items-center gap-1 text-sm font-medium">
-                                    <ion-icon src="../../assets/ionicons/create-outline.svg"></ion-icon>
-                                    Editar
-                                </a>
+                                <?php if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'centro'): ?>
+                                    <a href="#" id="editLink" class="text-sena-green hover:text-emerald-700 transition-colors flex items-center gap-1 text-sm font-medium">
+                                        <ion-icon src="../../assets/ionicons/create-outline.svg"></ion-icon>
+                                        Editar
+                                    </a>
+                                <?php endif; ?>
                             </div>
                             <div class="space-y-4">
                                 <div class="py-2 border-b border-slate-100 dark:border-slate-700">
@@ -102,6 +104,23 @@ require_once '../layouts/sidebar.php';
                             <div class="p-8 text-center text-slate-400 dark:text-slate-500 italic">Cargando programas asociados...</div>
                         </div>
                     </div>
+
+                    <!-- Instructores Habilitados -->
+                    <div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
+                            <div>
+                                <h3 class="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                    <ion-icon src="../../assets/ionicons/people-outline.svg" class="text-slate-400"></ion-icon>
+                                    Instructores Habilitados
+                                </h3>
+                                <p class="text-sm text-slate-500 dark:text-slate-400">Instructores que pueden dictar esta competencia</p>
+                            </div>
+                            <span class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-1.5 rounded-lg text-sm font-bold text-slate-700 dark:text-slate-300" id="instructorCount">0 instructores</span>
+                        </div>
+                        <div id="instructoresList" class="divide-y divide-slate-100 dark:divide-slate-700 max-h-[400px] overflow-y-auto">
+                            <div class="p-8 text-center text-slate-400 dark:text-slate-500 italic">Cargando instructores...</div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -120,12 +139,14 @@ require_once '../layouts/sidebar.php';
         </div>
 
         <!-- Static Delete Button -->
-        <div id="deleteButtonWrapper" class="flex justify-end pt-4" style="display: none;">
-            <button id="deleteBtn" class="flex items-center gap-2 bg-white dark:bg-slate-800 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 px-4 py-3 rounded-xl shadow-md border border-red-100 dark:border-red-900/30 transition-all duration-300 hover:translate-y-[-2px] active:translate-y-[0px] group">
-                <ion-icon src="../../assets/ionicons/trash-outline.svg" class="text-xl"></ion-icon>
-                <span class="font-bold text-sm">Eliminar Competencia</span>
-            </button>
-        </div>
+        <?php if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'centro'): ?>
+            <div id="deleteButtonWrapper" class="flex justify-end pt-4" style="display: none;">
+                <button id="deleteBtn" class="flex items-center gap-2 bg-white dark:bg-slate-800 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 px-4 py-3 rounded-xl shadow-md border border-red-100 dark:border-red-900/30 transition-all duration-300 hover:translate-y-[-2px] active:translate-y-[0px] group">
+                    <ion-icon src="../../assets/ionicons/trash-outline.svg" class="text-xl"></ion-icon>
+                    <span class="font-bold text-sm">Eliminar Competencia</span>
+                </button>
+            </div>
+        <?php endif; ?>
 
         <!-- Delete Confirmation Modal -->
         <div id="deleteModal" class="fixed inset-0 z-50 hidden">

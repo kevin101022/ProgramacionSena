@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict UsCgKKWbOEcryS9xHhlf3NIh6t8Wpl2k2UzWz5bXAufuGmeUfy1V99fBeWsceEb
+\restrict gYEaKC6PQ9PrkSh0g007mj0TdEWcNDD4xHoFUBUDZUyrv4TRYdOgK0v8HN8ATyb
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.1
@@ -27,7 +27,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
 
 
 --
--- Name: EXTENSION pgcrypto; Type: COMMENT; Schema: -; Owner: 
+-- Name: EXTENSION pgcrypto; Type: COMMENT; Schema: -; Owner:
 --
 
 COMMENT ON EXTENSION pgcrypto IS 'cryptographic functions';
@@ -217,7 +217,8 @@ CREATE TABLE public.competencia (
     comp_id integer NOT NULL,
     comp_nombre_corto character varying(30) NOT NULL,
     comp_horas integer NOT NULL,
-    comp_nombre_unidad_competencia character varying(150) NOT NULL
+    comp_nombre_unidad_competencia character varying(150) NOT NULL,
+    centro_formacion_cent_id integer
 );
 
 
@@ -368,7 +369,8 @@ CREATE TABLE public.programa (
     prog_codigo integer NOT NULL,
     prog_denominacion character varying(100) NOT NULL,
     tit_programa_titpro_id integer NOT NULL,
-    prog_tipo character varying(30) NOT NULL
+    prog_tipo character varying(30) NOT NULL,
+    centro_formacion_cent_id integer
 );
 
 
@@ -380,7 +382,7 @@ ALTER TABLE public.programa OWNER TO postgres;
 
 CREATE TABLE public.sede (
     sede_id integer NOT NULL,
-    sede_nombre character varying(45) NOT NULL,
+    sede_nombre character varying(100) NOT NULL,
     centro_formacion_cent_id integer
 );
 
@@ -393,7 +395,8 @@ ALTER TABLE public.sede OWNER TO postgres;
 
 CREATE TABLE public.titulo_programa (
     titpro_id integer NOT NULL,
-    titpro_nombre character varying(45) NOT NULL
+    titpro_nombre character varying(150) NOT NULL,
+    centro_formacion_cent_id integer
 );
 
 
@@ -587,6 +590,14 @@ ALTER TABLE ONLY public.asignacion
 
 
 --
+-- Name: competencia fk_competencia_centro; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.competencia
+    ADD CONSTRAINT fk_competencia_centro FOREIGN KEY (centro_formacion_cent_id) REFERENCES public.centro_formacion(cent_id);
+
+
+--
 -- Name: competxprograma fk_competxprograma_competencia1; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -667,6 +678,14 @@ ALTER TABLE ONLY public.instructor
 
 
 --
+-- Name: programa fk_programa_centro; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.programa
+    ADD CONSTRAINT fk_programa_centro FOREIGN KEY (centro_formacion_cent_id) REFERENCES public.centro_formacion(cent_id);
+
+
+--
 -- Name: programa fk_programa_tipo_programa; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -675,8 +694,15 @@ ALTER TABLE ONLY public.programa
 
 
 --
+-- Name: titulo_programa fk_titulo_programa_centro; Type: FK CONSTRAINT; Schema: public; Owner: postgres
+--
+
+ALTER TABLE ONLY public.titulo_programa
+    ADD CONSTRAINT fk_titulo_programa_centro FOREIGN KEY (centro_formacion_cent_id) REFERENCES public.centro_formacion(cent_id);
+
+
+--
 -- PostgreSQL database dump complete
 --
 
-\unrestrict UsCgKKWbOEcryS9xHhlf3NIh6t8Wpl2k2UzWz5bXAufuGmeUfy1V99fBeWsceEb
-
+\unrestrict gYEaKC6PQ9PrkSh0g007mj0TdEWcNDD4xHoFUBUDZUyrv4TRYdOgK0v8HN8ATyb

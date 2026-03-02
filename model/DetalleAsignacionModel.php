@@ -77,7 +77,7 @@ class DetalleAsignacionModel
                        i.inst_nombres, i.inst_apellidos, am.amb_nombre, f.fich_id as ficha_num
                 FROM DETALLExASIGNACION d
                 INNER JOIN ASIGNACION a ON d.ASIGNACION_asig_id = a.ASIG_ID
-                INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.inst_id
+                INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.numero_documento
                 INNER JOIN AMBIENTE am ON a.AMBIENTE_amb_id = am.amb_id
                 INNER JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
                 WHERE (a.asig_fecha_ini <= :fecha_fin AND a.asig_fecha_fin >= :fecha_ini)

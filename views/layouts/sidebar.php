@@ -37,6 +37,10 @@ $nombre_usuario = isset($_SESSION['nombre']) ? $_SESSION['nombre'] : 'Usuario';
                 <ion-icon src="../../assets/ionicons/school-outline.svg"></ion-icon>
                 Programas
             </a>
+            <a href="../titulo_programa/index.php" class="nav-item <?php echo ($activeNavItem === 'titulos') ? 'active' : ''; ?>">
+                <ion-icon src="../../assets/ionicons/ribbon-outline.svg"></ion-icon>
+                Títulos de Programa
+            </a>
             <a href="../instructor/index.php" class="nav-item <?php echo ($activeNavItem === 'instructores') ? 'active' : ''; ?>">
                 <ion-icon src="../../assets/ionicons/people-outline.svg"></ion-icon>
                 Instructores
@@ -45,9 +49,17 @@ $nombre_usuario = isset($_SESSION['nombre']) ? $_SESSION['nombre'] : 'Usuario';
                 <ion-icon src="../../assets/ionicons/bookmarks-outline.svg"></ion-icon>
                 Competencias
             </a>
+            <a href="../usuario_coordinador/index.php" class="nav-item <?php echo ($activeNavItem === 'usuarios_coordinadores') ? 'active' : ''; ?>">
+                <ion-icon src="../../assets/ionicons/person-add-outline.svg"></ion-icon>
+                Coordinadores (Persona)
+            </a>
             <a href="../coordinacion/index.php" class="nav-item <?php echo ($activeNavItem === 'coordinaciones') ? 'active' : ''; ?>">
                 <ion-icon src="../../assets/ionicons/people-circle-outline.svg"></ion-icon>
-                Coordinaciones
+                Áreas de Coordinación
+            </a>
+            <a href="../auditoria_asignacion/index.php" class="nav-item <?php echo ($activeNavItem === 'auditoria_asignacion') ? 'active' : ''; ?>">
+                <ion-icon src="../../assets/ionicons/receipt-outline.svg"></ion-icon>
+                Auditoría
             </a>
 
 
@@ -55,8 +67,8 @@ $nombre_usuario = isset($_SESSION['nombre']) ? $_SESSION['nombre'] : 'Usuario';
             <!-- Menú Coordinador -->
             <p class="nav-section">Gestión Académica</p>
             <a href="../competencia/index.php" class="nav-item <?php echo ($activeNavItem === 'competencias') ? 'active' : ''; ?>">
-                <ion-icon src="../../assets/ionicons/git-network-outline.svg"></ion-icon>
-                Competencia x Programa
+                <ion-icon src="../../assets/ionicons/bookmarks-outline.svg"></ion-icon>
+                Competencias (Consulta)
             </a>
             <a href="../ficha/index.php" class="nav-item <?php echo ($activeNavItem === 'fichas') ? 'active' : ''; ?>">
                 <ion-icon src="../../assets/ionicons/layers-outline.svg"></ion-icon>
@@ -69,6 +81,14 @@ $nombre_usuario = isset($_SESSION['nombre']) ? $_SESSION['nombre'] : 'Usuario';
             <a href="../asignacion/index.php" class="nav-item <?php echo ($activeNavItem === 'asignaciones') ? 'active' : ''; ?>">
                 <ion-icon src="../../assets/ionicons/calendar-outline.svg"></ion-icon>
                 Asignaciones
+            </a>
+            <a href="../auditoria_asignacion/index.php" class="nav-item <?php echo ($activeNavItem === 'auditoria_asignacion') ? 'active' : ''; ?>">
+                <ion-icon src="../../assets/ionicons/receipt-outline.svg"></ion-icon>
+                Auditoría
+            </a>
+            <a href="../setdata/index.php" class="nav-item <?php echo ($activeNavItem === 'setdata') ? 'active' : ''; ?>">
+                <ion-icon src="../../assets/ionicons/analytics-outline.svg"></ion-icon>
+                Sincronizar Datos (CSV)
             </a>
 
         <?php elseif ($rol_usuario === 'instructor'): ?>

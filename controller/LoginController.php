@@ -86,8 +86,8 @@ class LoginController
                 exit;
             }
 
-            // Verify Password using Bcrypt verification
-            if (password_verify($password, $user['password'])) {
+            // Verify Password using Bcrypt verification or fallback to plain text for old records
+            if (password_verify($password, $user['password']) || $password === $user['password']) {
                 // Success: Regenerate ID securely
                 session_regenerate_id(true);
                 $_SESSION['login_attempts'] = 0;
@@ -103,10 +103,12 @@ class LoginController
                     header("Location: views/dashboard/index.php");
                 } else if ($rol === 'coordinador') {
                     $_SESSION['centro_id'] = $user['centro_id'];
+                    // NO se guarda coord_id en sesión: siempre se consulta la DB en tiempo real
                     header("Location: views/dashboard/index.php");
                 } else {
+                    // instructor
                     $_SESSION['centro_id'] = $user['centro_id'];
-                    header("Location: views/asignacion/index.php");
+                    header("Location: views/asignacion/instructor_index.php");
                 }
                 exit;
             } else {
@@ -142,83 +144,5 @@ class LoginController
         exit;
     }
 
-    public function registroCoordinador()
-    {
-        $this->initSession();
-        $model = new LoginModel();
-        // Fetch Centros de Formación instead of coordinaciones
-        $centros = $model->getCentrosFormacion();
-        require_once 'views/login/registro.php';
-    }
-
-    public function getCoordinacionesByCentro()
-    {
-        $this->initSession();
-        $cent_id = filter_input(INPUT_GET, 'centro_id', FILTER_VALIDATE_INT);
-
-        if ($cent_id) {
-            $model = new LoginModel();
-            $coordinaciones = $model->getCoordinacionesDisponiblesByCentro($cent_id);
-            header('Content-Type: application/json');
-            echo json_encode($coordinaciones);
-        } else {
-            header('Content-Type: application/json');
-            echo json_encode([]);
-        }
-        exit;
-    }
-
-    public function guardarCoordinador()
-    {
-        $this->initSession();
-
-        if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            // CSRF verify
-            if (empty($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
-                header("Location: ?controller=login&action=registroCoordinador&error=" . urlencode("Error de validación de seguridad (CSRF)."));
-                exit;
-            }
-
-            $cent_id = filter_input(INPUT_POST, 'centro_id', FILTER_VALIDATE_INT);
-            $coord_id = filter_input(INPUT_POST, 'coordinacion_id', FILTER_VALIDATE_INT);
-            $documento = trim($_POST['documento'] ?? '');
-            $nombre = trim($_POST['nombre'] ?? '');
-            $correo = filter_input(INPUT_POST, 'correo', FILTER_VALIDATE_EMAIL);
-            $password = $_POST['password'] ?? '';
-            $password_confirm = $_POST['password_confirm'] ?? '';
-
-            if (!$cent_id || !$coord_id || empty($documento) || empty($nombre) || !$correo || empty($password)) {
-                header("Location: ?controller=login&action=registroCoordinador&error=" . urlencode("Todos los campos son obligatorios y el correo debe ser válido."));
-                exit;
-            }
-
-            if ($password !== $password_confirm) {
-                header("Location: ?controller=login&action=registroCoordinador&error=" . urlencode("Las contraseñas no coinciden."));
-                exit;
-            }
-
-            // Secure hash (Bcrypt automatically with PASSWORD_DEFAULT)
-            $password_hash = password_hash($password, PASSWORD_DEFAULT);
-
-            $model = new LoginModel();
-
-            // Check if email already exists in coordinacion? (Optional but good practice)
-            $existingUser = $model->findCoordinatorByEmail($correo);
-            if ($existingUser) {
-                header("Location: ?controller=login&action=registroCoordinador&error=" . urlencode("El correo ya está registrado."));
-                exit;
-            }
-
-            // registrarCoordinador now does an UPDATE on an unassigned coordination
-            $result = $model->registrarCoordinador($coord_id, $nombre, $correo, $password_hash, $documento);
-
-            if ($result) {
-                header("Location: routing.php?controller=login&action=showLogin&success=" . urlencode("Registro exitoso. Ahora puedes iniciar sesión."));
-                exit;
-            } else {
-                header("Location: ?controller=login&action=registroCoordinador&error=" . urlencode("Error al registrarse. Es posible que la coordinación seleccionada ya haya sido ocupada."));
-                exit;
-            }
-        }
-    }
+    // Métodos removidos correspondientes al autoregistro de coordinadores
 }

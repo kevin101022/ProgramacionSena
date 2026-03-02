@@ -193,14 +193,7 @@ $success_message = isset($_GET['success']) ? $_GET['success'] : '';
                     </div>
                 </form>
 
-                <div class="mt-12 text-center lg:text-left">
-                    <p class="text-sm font-medium text-slate-500">
-                        ¿Eres Coordinador nuevo?
-                        <a class="font-bold text-primary hover:text-primary-dark ml-1 hover:underline underline-offset-4 transition-all" href="routing.php?controller=login&action=registroCoordinador">
-                            Crea tu cuenta aquí
-                        </a>
-                    </p>
-                </div>
+                <!-- Creación de cuentas fue centralizada. Por políticas de seguridad ya no existe autoregistro. -->
 
                 <!-- Copyright Footer -->
                 <div class="mt-16 text-center lg:text-left">

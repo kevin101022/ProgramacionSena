@@ -1,192 +1,146 @@
+/**
+ * Detail View Manager - Coordinacion Premium
+ */
 document.addEventListener('DOMContentLoaded', () => {
     const loadingState = document.getElementById('loadingState');
-    const detailsContainer = document.getElementById('coordinacionDetails');
+    const coordinacionDetails = document.getElementById('coordinacionDetails');
     const errorState = document.getElementById('errorState');
     const errorMessage = document.getElementById('errorMessage');
 
-    const coordId = new URLSearchParams(window.location.search).get('id');
+    const urlParams = new URLSearchParams(window.location.search);
+    const coordId = urlParams.get('id');
 
-    // UI Elements for Modal
-    const modal = document.getElementById('coordinacionModal');
-    const form = document.getElementById('coordinacionForm');
-    const centroSelect = document.getElementById('centro_id');
+    if (!coordId) {
+        showError('No se proporcionó el ID de la coordinación.');
+        return;
+    }
 
-    const init = async () => {
-        if (!coordId) {
-            showError('ID de coordinación no proporcionado');
-            return;
-        }
-
+    async function loadDetail() {
         try {
-            // Cargar centros para el modal primero
-            await loadCentros();
+            const response = await fetch(`../../routing.php?controller=coordinacion&action=show&id=${coordId}`, {
+                headers: { 'Accept': 'application/json' }
+            });
 
-            // Cargar datos de la coordinación
-            await loadCoordinacionData();
+            if (!response.ok) throw new Error('Error al cargar datos del servidor');
 
-            // Cargar programas vinculados
+            const data = await response.json();
+            if (data.error) throw new Error(data.error);
+
+            renderDetail(data);
             await loadProgramas();
-
         } catch (error) {
-            console.error('Error:', error);
+            console.error(error);
             showError(error.message);
         }
-    };
+    }
 
-    const loadCentros = async () => {
-        try {
-            const response = await fetch('../../routing.php?controller=centro_formacion&action=index', {
-                headers: { 'Accept': 'application/json' }
-            });
-            const centros = await response.json();
-            centroSelect.innerHTML = '<option value="">Seleccione un centro...</option>';
-            centros.forEach(c => {
-                const opt = document.createElement('option');
-                opt.value = c.cent_id;
-                opt.textContent = c.cent_nombre;
-                centroSelect.appendChild(opt);
-            });
-        } catch (err) {
-            console.warn('No se pudieron cargar los centros');
-        }
-    };
+    function renderDetail(data) {
+        const detCoordNombre = document.getElementById('detCoordNombre');
+        const detCentroPertenece = document.getElementById('detCentroPertenece');
+        const detCoordNombreCoordinador = document.getElementById('detCoordNombreCoordinador');
+        const detCoordDoc = document.getElementById('detCoordDoc');
+        const detCoordCorreo = document.getElementById('detCoordCorreo');
+        const vacanteState = document.getElementById('vacanteState');
+        const coordinadorInfo = document.getElementById('coordinadorInfo');
 
-    const loadCoordinacionData = async () => {
-        const response = await fetch(`../../routing.php?controller=coordinacion&action=index`, {
-            headers: { 'Accept': 'application/json' }
-        });
-        const coordinaciones = await response.json();
-        const coord = coordinaciones.find(c => c.coord_id == coordId);
+        detCoordNombre.textContent = data.coord_descripcion;
+        detCentroPertenece.lastElementChild.textContent = data.cent_nombre || 'Centro no especificado';
 
-        if (!coord) {
-            throw new Error('Coordinación no encontrada');
+        if (data.numero_documento) {
+            detCoordNombreCoordinador.textContent = data.coord_nombre_coordinador;
+            detCoordDoc.textContent = data.numero_documento;
+            detCoordCorreo.textContent = data.coord_correo;
+
+            vacanteState.style.display = 'none';
+            coordinadorInfo.style.display = 'grid';
+        } else {
+            vacanteState.style.display = 'block';
+            coordinadorInfo.style.display = 'none';
         }
 
-        populateUI(coord);
-        showDetails();
-    };
-
-    const loadProgramas = async () => {
-        try {
-            const response = await fetch(`../../routing.php?controller=coordinacion&action=getProgramas&id=${coordId}`, {
-                headers: { 'Accept': 'application/json' }
-            });
-            const programas = await response.json();
-
-            const list = document.getElementById('programasList');
-            const noData = document.getElementById('noProgramas');
-            const countEl = document.getElementById('countProgramas');
-
-            countEl.textContent = programas.length;
-
-            if (programas.length === 0) {
-                list.innerHTML = '';
-                noData.classList.remove('hidden');
-                return;
-            }
-
-            noData.classList.add('hidden');
-            list.innerHTML = '';
-
-            programas.forEach(p => {
-                const item = document.createElement('div');
-                item.className = 'flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors cursor-pointer group';
-                item.onclick = () => window.location.href = `../programa/ver.php?id=${p.prog_codigo}`;
-
-                item.innerHTML = `
-                    <div class="flex items-center gap-3">
-                        <div class="p-2 bg-white rounded-lg shadow-sm group-hover:bg-sena-green/10 transition-colors">
-                            <ion-icon src="../../assets/ionicons/journal-outline.svg" class="text-sena-green text-lg"></ion-icon>
-                        </div>
-                        <div>
-                            <p class="text-xs font-bold text-gray-800">${p.prog_denominacion}</p>
-                            <p class="text-[10px] text-gray-400 uppercase tracking-tighter">Código: ${p.prog_codigo}</p>
-                        </div>
-                    </div>
-                    <ion-icon src="../../assets/ionicons/chevron-forward-outline.svg" class="text-gray-300 group-hover:text-sena-green transition-all"></ion-icon>
-                `;
-                list.appendChild(item);
-            });
-        } catch (err) {
-            console.error('Error loading programs:', err);
-        }
-    };
-
-    const populateUI = (c) => {
-        document.getElementById('detCoordNombre').textContent = c.coord_descripcion;
-        document.getElementById('detCentroPertenece').textContent = c.cent_nombre || 'Centro no asignado';
-
-        document.getElementById('editBtn').onclick = () => openEditModal(c);
-        document.getElementById('deleteBtn').onclick = () => handleDelete(c.coord_id);
-    };
-
-    const openEditModal = (c) => {
-        document.getElementById('modalTitle').textContent = 'Editar Coordinación';
-        document.getElementById('coord_id').value = c.coord_id;
-        document.getElementById('coord_nombre').value = c.coord_descripcion;
-        document.getElementById('centro_id').value = c.centro_formacion_cent_id || '';
-        modal.classList.add('show');
-    };
-
-    const handleDelete = async (id) => {
-        NotificationService.showConfirm('¿Realmente desea eliminar esta coordinación académica?', async () => {
-            try {
-                const response = await fetch(`../../routing.php?controller=coordinacion&action=destroy&id=${id}`);
-                if (response.ok) {
-                    NotificationService.showSuccess('Coordinación eliminada');
-                    setTimeout(() => window.location.href = 'index.php', 1500);
-                } else {
-                    NotificationService.showError('No se pudo eliminar el registro');
+        const editBtn = document.getElementById('editBtn');
+        if (editBtn) {
+            editBtn.onclick = () => {
+                if (window.coordinacionManager) {
+                    window.coordinacionManager.openModal(data);
                 }
-            } catch (err) {
-                NotificationService.showError('Error de red');
-            }
-        });
-    };
-
-    // Modal Control
-    document.getElementById('closeModal').onclick = () => modal.classList.remove('show');
-    document.getElementById('cancelBtn').onclick = () => modal.classList.remove('show');
-
-    form.onsubmit = async (e) => {
-        e.preventDefault();
-        const data = {
-            coord_id: document.getElementById('coord_id').value,
-            coord_descripcion: document.getElementById('coord_nombre').value,
-            centro_formacion_cent_id: document.getElementById('centro_id').value
-        };
-
-        try {
-            const response = await fetch(`../../routing.php?controller=coordinacion&action=update`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            });
-
-            if (response.ok) {
-                NotificationService.showSuccess('Coordinación actualizada');
-                modal.classList.remove('show');
-                loadCoordinacionData(); // Refrescar vista
-            } else {
-                NotificationService.showError('Error al guardar cambios');
-            }
-        } catch (err) {
-            NotificationService.showError('Error de conexión');
+            };
         }
-    };
 
-    const showDetails = () => {
-        loadingState.style.display = 'none';
-        detailsContainer.style.display = 'grid';
-        errorState.style.display = 'none';
-    };
+        const deleteBtn = document.getElementById('deleteBtn');
+        if (deleteBtn) {
+            deleteBtn.onclick = () => {
+                if (window.NotificationService) {
+                    NotificationService.showConfirm('¿Estás seguro de que deseas desvincular a este coordinador de esta área?', async () => {
+                        try {
+                            const response = await fetch(`../../routing.php?controller=coordinacion&action=desvincular&id=${coordId}`);
+                            if (response.ok) {
+                                NotificationService.showSuccess('Coordinador desvinculado.');
+                                location.reload();
+                            } else {
+                                NotificationService.showError('Error al desvincular.');
+                            }
+                        } catch (e) {
+                            NotificationService.showError('Error de red.');
+                        }
+                    });
+                }
+            };
+            if (!data.numero_documento) deleteBtn.style.display = 'none';
+        }
 
-    const showError = (msg) => {
         loadingState.style.display = 'none';
-        detailsContainer.style.display = 'none';
+        coordinacionDetails.style.display = 'grid';
+    }
+
+    async function loadProgramas() {
+        try {
+            const response = await fetch(`../../routing.php?controller=coordinacion&action=getProgramas&id=${coordId}`);
+            if (response.ok) {
+                const programas = await response.json();
+                renderProgramas(programas);
+            }
+        } catch (e) {
+            console.error('Error cargando programas', e);
+        }
+    }
+
+    function renderProgramas(programas) {
+        const countEl = document.getElementById('countProgramas');
+        const listEl = document.getElementById('programasList');
+        const emptyEl = document.getElementById('noProgramas');
+
+        if (countEl) countEl.textContent = programas.length;
+
+        if (!listEl) return;
+        listEl.innerHTML = '';
+
+        if (programas.length === 0) {
+            emptyEl.classList.remove('hidden');
+        } else {
+            emptyEl.classList.add('hidden');
+            programas.forEach(p => {
+                const card = document.createElement('div');
+                card.className = 'p-4 bg-slate-50 border border-slate-100 rounded-2xl flex items-start gap-3 hover:bg-white hover:shadow-md transition-all group';
+                card.innerHTML = `
+                    <div class="w-8 h-8 rounded-lg bg-blue-100 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                        <ion-icon src="../../assets/ionicons/school-outline.svg"></ion-icon>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-xs font-black text-slate-800 leading-tight">${p.prog_denominacion}</p>
+                        <p class="text-[10px] font-bold text-slate-400 mt-1 uppercase tracking-tighter">CÓDIGO: ${p.prog_codigo}</p>
+                    </div>
+                `;
+                listEl.appendChild(card);
+            });
+        }
+    }
+
+    function showError(msg) {
+        loadingState.style.display = 'none';
         errorState.style.display = 'block';
         errorMessage.textContent = msg;
-    };
+    }
 
-    init();
+    loadDetail();
 });

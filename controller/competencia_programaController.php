@@ -38,6 +38,19 @@ class CompetenciaProgramaController
     }
 
     /**
+     * Obtener todas las competencias con sus programas para selección rápida
+     */
+    public function getAllPairs()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $cent_id = $_SESSION['centro_id'] ?? null;
+        $competencias = $this->model->getAllWithProgramas($cent_id);
+        $this->sendResponse($competencias);
+    }
+
+    /**
      * Sincronizar programas (vía POST)
      */
     public function sync()

@@ -1,5 +1,6 @@
 <?php
 require_once dirname(__DIR__) . '/model/CoordinacionModel.php';
+require_once dirname(__DIR__) . '/model/UsuarioCoordinadorModel.php';
 
 class coordinacionController
 {
@@ -15,6 +16,18 @@ class coordinacionController
         $this->sendResponse($coordinaciones);
     }
 
+    public function get_coordinadores_disponibles()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $cent_id = $_SESSION['centro_id'] ?? null;
+
+        $userModel = new UsuarioCoordinadorModel();
+        $disponibles = $userModel->getActivosDisponibles($cent_id);
+        $this->sendResponse($disponibles);
+    }
+
     public function store()
     {
         if (session_status() === PHP_SESSION_NONE) {
@@ -24,17 +37,18 @@ class coordinacionController
 
         $data = json_decode(file_get_contents('php://input'), true);
         if (!$data || !isset($data['coord_descripcion'])) {
-            $this->sendResponse(['error' => 'Descripción de coordinación requerida'], 400);
+            $this->sendResponse(['error' => 'La descripción de coordinación es requerida'], 400);
             return;
         }
 
+        $coordinador = !empty($data['coordinador_actual']) ? $data['coordinador_actual'] : null;
+
         $model = new CoordinacionModel(
-            null,
+            null, // ID autoincremental
             $data['coord_descripcion'],
             $data['centro_formacion_cent_id'] ?? $cent_id,
-            $data['coord_nombre_coordinador'] ?? 'N/A',
-            $data['coord_correo'] ?? 'N/A',
-            $data['coord_password'] ?? '123456'
+            $coordinador,
+            1 // Estado
         );
 
         $newId = $model->create();
@@ -80,19 +94,33 @@ class coordinacionController
             return;
         }
 
+        $coordinador = !empty($data['coordinador_actual']) ? $data['coordinador_actual'] : null;
+
         $model = new CoordinacionModel(
             $data['coord_id'],
             $data['coord_descripcion'],
             $data['centro_formacion_cent_id'] ?? $cent_id,
-            $data['coord_nombre_coordinador'],
-            $data['coord_correo'],
-            $data['coord_password']
+            $coordinador
         );
 
         if ($model->update()) {
             $this->sendResponse(['message' => 'Coordinación actualizada correctamente']);
         } else {
             $this->sendResponse(['error' => 'Error al actualizar coordinación'], 500);
+        }
+    }
+
+    public function desvincular($id = null)
+    {
+        if (!$id) {
+            $this->sendResponse(['error' => 'ID requerido'], 400);
+        }
+
+        $model = new CoordinacionModel($id);
+        if ($model->desvincular()) {
+            $this->sendResponse(['message' => 'Coordinador desvinculado correctamente']);
+        } else {
+            $this->sendResponse(['error' => 'Error al desvincular al coordinador'], 500);
         }
     }
 

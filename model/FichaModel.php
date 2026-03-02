@@ -129,7 +129,7 @@ class FichaModel
                 INNER JOIN PROGRAMA p ON f.PROGRAMA_prog_id = p.prog_codigo
                 INNER JOIN TITULO_PROGRAMA tp ON p.TIT_PROGRAMA_titpro_id = tp.titpro_id
                 INNER JOIN INSTRUCTOR i ON f.INSTRUCTOR_inst_id_lider = i.numero_documento
-                LEFT JOIN COORDINACION c ON f.COORDINACION_coord_id = c.numero_documento
+                LEFT JOIN COORDINACION c ON f.COORDINACION_coord_id = c.coord_id
                 LEFT JOIN (
                     SELECT FICHA_fich_id, MAX(ASIG_ID) as asig_id_max 
                     FROM ASIGNACION 
@@ -151,7 +151,7 @@ class FichaModel
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
-    public function readAll($cent_id = null)
+    public function readAll($cent_id = null, $coord_id = null)
     {
         $sql = "SELECT f.fich_id, f.PROGRAMA_prog_id as programa_prog_id, 
                        f.INSTRUCTOR_inst_id_lider as instructor_inst_id_lider, 
@@ -165,9 +165,9 @@ class FichaModel
                        s.sede_nombre
                 FROM FICHA f
                 INNER JOIN PROGRAMA p ON f.PROGRAMA_prog_id = p.prog_codigo
-                INNER JOIN TITULO_PROGRAMA tp ON p.TIT_PROGRAMA_titpro_id = tp.titpro_id
-                INNER JOIN INSTRUCTOR i ON f.INSTRUCTOR_inst_id_lider = i.numero_documento
-                LEFT JOIN COORDINACION c ON f.COORDINACION_coord_id = c.numero_documento
+                LEFT JOIN TITULO_PROGRAMA tp ON p.TIT_PROGRAMA_titpro_id = tp.titpro_id
+                LEFT JOIN INSTRUCTOR i ON f.INSTRUCTOR_inst_id_lider = i.numero_documento
+                LEFT JOIN COORDINACION c ON f.COORDINACION_coord_id = c.coord_id
                 LEFT JOIN (
                     SELECT FICHA_fich_id, MAX(ASIG_ID) as asig_id_max 
                     FROM ASIGNACION 
@@ -177,17 +177,27 @@ class FichaModel
                 LEFT JOIN AMBIENTE amb ON a.AMBIENTE_amb_id = amb.amb_id
                 LEFT JOIN SEDE s ON amb.SEDE_sede_id = s.sede_id";
 
-        if ($cent_id) {
-            $sql .= " WHERE (c.CENTRO_FORMACION_cent_id = :cent_id OR i.CENTRO_FORMACION_cent_id = :cent_id)";
+        $params = [];
+        $where = [];
+
+        if ($coord_id) {
+            // Coordinador: solo ve fichas de SU coordinación actual
+            $where[] = "f.COORDINACION_coord_id = :coord_id";
+            $params[':coord_id'] = $coord_id;
+        } elseif ($cent_id) {
+            // Centro de formación: ve fichas de su centro
+            $where[] = "(c.CENTRO_FORMACION_cent_id = :cent_id OR i.CENTRO_FORMACION_cent_id = :cent_id)";
+            $params[':cent_id'] = $cent_id;
         }
+
+        if ($where) {
+            $sql .= " WHERE " . implode(" AND ", $where);
+        }
+
         $sql .= " ORDER BY f.fich_id DESC";
 
         $stmt = $this->db->prepare($sql);
-        if ($cent_id) {
-            $stmt->execute([':cent_id' => $cent_id]);
-        } else {
-            $stmt->execute();
-        }
+        $stmt->execute($params);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 

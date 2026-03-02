@@ -20,7 +20,11 @@ class TituloProgramaController
      */
     public function index()
     {
-        $titulos = $this->model->readAll();
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $cent_id = $_SESSION['centro_id'] ?? null;
+        $titulos = $this->model->readAll($cent_id);
         $this->sendResponse($titulos);
     }
 
@@ -58,7 +62,13 @@ class TituloProgramaController
                 return;
             }
 
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+            $cent_id = $_SESSION['centro_id'] ?? null;
+
             $this->model->setTitproNombre($nombre);
+            $this->model->setCentroFormacionId($cent_id);
             $newId = $this->model->create();
 
             if ($newId) {
@@ -67,7 +77,8 @@ class TituloProgramaController
                 $this->sendResponse(['error' => 'No se pudo crear el título', 'details' => 'El modelo no devolvió un ID válido'], 500);
             }
         } catch (Exception $e) {
-            $this->sendResponse(['error' => 'Error al crear el título', 'details' => $e->getMessage()], 500);
+            error_log("Error titulo_programa store: " . $e->getMessage());
+            $this->sendResponse(['error' => 'Error BD: ' . $e->getMessage(), 'details' => $e->getMessage()], 500);
         }
     }
 
@@ -85,8 +96,14 @@ class TituloProgramaController
                 return;
             }
 
+            if (session_status() === PHP_SESSION_NONE) {
+                session_start();
+            }
+            $cent_id = $_SESSION['centro_id'] ?? null;
+
             $this->model->setTitproId($id);
             $this->model->setTitproNombre($nombre);
+            $this->model->setCentroFormacionId($cent_id);
 
             if ($this->model->update()) {
                 $this->sendResponse(['message' => 'Título actualizado correctamente']);

@@ -17,15 +17,46 @@ class HabilitacionManager {
         this.bindEvents();
         await Promise.all([
             this.loadInstructores(),
-            this.loadProgramas(),
-            this.loadHabilitaciones()
+            this.loadHabilitaciones(),
+            this.loadCompetenciasForFilter()
         ]);
+    }
+
+    async loadCompetenciasForFilter() {
+        const filter = document.getElementById('competenciaFilter');
+        if (!filter) return;
+
+        try {
+            const res = await fetch('../../routing.php?controller=competencia&action=index', {
+                headers: { 'Accept': 'application/json' }
+            });
+            const competencias = await res.json();
+
+            if (Array.isArray(competencias)) {
+                competencias.forEach(c => {
+                    const opt = document.createElement('option');
+                    opt.value = c.comp_id;
+                    opt.textContent = c.comp_nombre_corto;
+                    filter.appendChild(opt);
+                });
+            }
+        } catch (e) {
+            console.error('Error loading filters:', e);
+        }
     }
 
     bindEvents() {
         const searchInput = document.getElementById('searchInput');
         if (searchInput) {
             searchInput.addEventListener('input', () => {
+                this.currentPage = 1;
+                this.renderTable();
+            });
+        }
+
+        const compFilter = document.getElementById('competenciaFilter');
+        if (compFilter) {
+            compFilter.addEventListener('change', () => {
                 this.currentPage = 1;
                 this.renderTable();
             });
@@ -66,10 +97,8 @@ class HabilitacionManager {
             form.onsubmit = (e) => this.handleFormSubmit(e);
         }
 
-        const programaSelect = document.getElementById('programa_id');
-        if (programaSelect) {
-            programaSelect.addEventListener('change', () => this.loadCompetenciasByPrograma(programaSelect.value));
-        }
+        // El listener de programa_id se elimina ya que el campo no existe
+
 
         // Global delete trigger (if view supports it)
         window.deleteHabilitacion = (id) => this.confirmDelete(id);
@@ -96,41 +125,15 @@ class HabilitacionManager {
         }
     }
 
-    async loadProgramas() {
-        try {
-            const res = await fetch('../../routing.php?controller=programa&action=index', {
-                headers: { 'Accept': 'application/json' }
-            });
-            this.programas = await res.json();
-            const programaSelect = document.getElementById('programa_id');
-            if (programaSelect) {
-                programaSelect.innerHTML = '<option value="">Seleccione programa...</option>';
-                this.programas.forEach(p => {
-                    const opt = document.createElement('option');
-                    opt.value = p.prog_codigo;
-                    opt.textContent = `${p.prog_codigo} - ${p.prog_denominacion}`;
-                    programaSelect.appendChild(opt);
-                });
-            }
-        } catch (e) {
-            console.error('Error:', e);
-        }
-    }
-
-    async loadCompetenciasByPrograma(progId) {
+    async loadAllCompetencias() {
         const competenciaSelect = document.getElementById('competencia_id');
         if (!competenciaSelect) return;
 
         competenciaSelect.innerHTML = '<option value="">Cargando competencias...</option>';
         competenciaSelect.disabled = true;
 
-        if (!progId) {
-            competenciaSelect.innerHTML = '<option value="">Primero seleccione programa...</option>';
-            return;
-        }
-
         try {
-            const res = await fetch(`../../routing.php?controller=competencia_programa&action=getByPrograma&prog_id=${progId}`, {
+            const res = await fetch('../../routing.php?controller=competencia&action=index', {
                 headers: { 'Accept': 'application/json' }
             });
             const competencias = await res.json();
@@ -149,8 +152,12 @@ class HabilitacionManager {
             }
         } catch (e) {
             console.error('Error:', e);
+            competenciaSelect.innerHTML = '<option value="">Error al cargar</option>';
         }
     }
+
+    // loadCompetenciasByPrograma eliminado
+
 
     async loadHabilitaciones() {
         try {
@@ -166,15 +173,44 @@ class HabilitacionManager {
         }
     }
 
+    normalizeText(text) {
+        if (!text) return '';
+        return text.trim().toLowerCase()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "");
+    }
+
     getFilteredData() {
         const searchInput = document.getElementById('searchInput');
-        const term = (searchInput ? searchInput.value : '').toLowerCase();
+        const term = this.normalizeText(searchInput ? searchInput.value : '');
 
-        return this.habilitaciones.filter(h =>
-            `${h.inst_nombres} ${h.inst_apellidos}`.toLowerCase().includes(term) ||
-            (h.prog_denominacion || '').toLowerCase().includes(term) ||
-            (h.comp_nombre_corto || '').toLowerCase().includes(term)
-        );
+        const compFilter = document.getElementById('competenciaFilter');
+        const selectedComp = compFilter ? compFilter.value : '';
+
+        // Filtrado base
+        let filtered = this.habilitaciones.filter(h => {
+            const matchesComp = selectedComp === '' || String(h.competxprograma_competencia_comp_id) === String(selectedComp);
+            const fullName = this.normalizeText(`${h.inst_nombres} ${h.inst_apellidos}`);
+            const id = this.normalizeText(String(h.instructor_inst_id));
+            const compName = this.normalizeText(h.comp_nombre_corto || '');
+
+            const matchesTerm = term === '' ||
+                fullName.includes(term) ||
+                id.includes(term) ||
+                compName.includes(term);
+
+            return matchesComp && matchesTerm;
+        });
+
+        // De-duplicación visual por (Instructor + Competencia)
+        // Esto es para que en la tabla de gestión no salgan filas repetidas si están en varios programas
+        const seen = new Set();
+        return filtered.filter(h => {
+            const key = `${h.instructor_inst_id}_${h.competxprograma_competencia_comp_id}`;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        });
     }
 
     renderTable() {
@@ -200,15 +236,13 @@ class HabilitacionManager {
         tableBody.innerHTML = '';
 
         if (paginated.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-8 text-gray-500">No se encontraron habilitaciones</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="3" class="text-center py-8 text-gray-500">No se encontraron habilitaciones</td></tr>';
         } else {
             paginated.forEach(h => {
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-green-50/50 transition-colors cursor-pointer group';
                 tr.onclick = () => window.location.href = `ver.php?id=${h.inscomp_id}`;
 
-                const vigenciaDate = h.inscomp_vigencia ? new Date(h.inscomp_vigencia).toLocaleDateString('es-CO') : 'N/A';
-                const isVigente = h.inscomp_vigencia ? new Date(h.inscomp_vigencia) >= new Date() : false;
 
                 tr.innerHTML = `
                     <td class="px-6 py-4 font-semibold text-sena-green">${String(h.inscomp_id).padStart(3, '0')}</td>
@@ -220,12 +254,8 @@ class HabilitacionManager {
                             </div>
                         </div>
                     </td>
-                    <td class="px-6 py-4 text-gray-600 text-sm italic">${h.prog_denominacion || 'N/A'}</td>
                     <td class="px-6 py-4">
                         <div class="badge-glass">${h.comp_nombre_corto || 'N/A'}</div>
-                    </td>
-                    <td class="px-6 py-4">
-                        <span class="status-badge ${isVigente ? 'status-active' : 'status-inactive'}">${vigenciaDate}</span>
                     </td>
                 `;
                 tableBody.appendChild(tr);
@@ -272,28 +302,18 @@ class HabilitacionManager {
         const idInput = document.getElementById('inscomp_id');
         const competenciaSelect = document.getElementById('competencia_id');
 
-        if (competenciaSelect) {
-            competenciaSelect.innerHTML = '<option value="">Primero seleccione un programa...</option>';
-            competenciaSelect.disabled = true;
-        }
-
-        if (hab) {
-            if (modalTitle) modalTitle.textContent = 'Editar Habilitación';
-            if (idInput) idInput.value = hab.inscomp_id;
-            const progSelect = document.getElementById('programa_id');
-            if (progSelect) {
-                progSelect.value = hab.competxprograma_programa_prog_id;
-                this.loadCompetenciasByPrograma(hab.competxprograma_programa_prog_id).then(() => {
-                    if (competenciaSelect) competenciaSelect.value = hab.competxprograma_competencia_comp_id;
-                });
+        this.loadAllCompetencias().then(() => {
+            if (hab) {
+                if (modalTitle) modalTitle.textContent = 'Editar Habilitación';
+                if (idInput) idInput.value = hab.inscomp_id;
+                const instSelect = document.getElementById('instructor_id');
+                if (instSelect) instSelect.value = hab.instructor_inst_id;
+                if (competenciaSelect) competenciaSelect.value = hab.competxprograma_competencia_comp_id;
+            } else {
+                if (modalTitle) modalTitle.textContent = 'Nueva Habilitación';
+                if (idInput) idInput.value = '';
             }
-            if (document.getElementById('inscomp_vigencia') && hab.inscomp_vigencia) {
-                document.getElementById('inscomp_vigencia').value = hab.inscomp_vigencia.split('T')[0];
-            }
-        } else {
-            if (modalTitle) modalTitle.textContent = 'Nueva Habilitación';
-            if (idInput) idInput.value = '';
-        }
+        });
         if (modal) modal.classList.add('show');
     }
 
@@ -309,9 +329,7 @@ class HabilitacionManager {
 
         const data = {
             instructor_inst_id: document.getElementById('instructor_id').value,
-            competxprograma_programa_prog_id: document.getElementById('programa_id').value,
-            competxprograma_competencia_comp_id: document.getElementById('competencia_id').value,
-            inscomp_vigencia: document.getElementById('inscomp_vigencia').value
+            competxprograma_competencia_comp_id: document.getElementById('competencia_id').value
         };
         if (id) data.inscomp_id = id;
 

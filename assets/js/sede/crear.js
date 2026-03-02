@@ -42,8 +42,7 @@ class SedeForm {
             sede_nombre: {
                 required: true,
                 minLength: 3,
-                maxLength: 100,
-                pattern: /^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9\s\-\.]+$/
+                maxLength: 100
             }
         };
     }
@@ -122,11 +121,8 @@ class SedeForm {
             return false;
         }
 
-        // Pattern validation
-        if (value && !rules.pattern.test(value)) {
-            this.showError('sede_nombre', 'El nombre contiene caracteres no válidos');
-            return false;
-        }
+        // Pattern validation removed to allow all characters (accents, different dashes, etc)
+
 
         this.clearError('sede_nombre');
         return true;

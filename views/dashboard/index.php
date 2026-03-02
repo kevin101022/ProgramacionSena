@@ -1,6 +1,45 @@
 <?php
-$pageTitle = 'Dashboard - Programaciones';
+// ── Iniciar sesión y preparar datos ANTES de cualquier require_once ──────────
+if (session_status() === PHP_SESSION_NONE) session_start();
+
+$pageTitle     = 'Dashboard - Programaciones';
 $activeNavItem = 'dashboard';
+
+$nombreUsuario = $_SESSION['nombre'] ?? 'Usuario SENA';
+$rolUsuario    = $_SESSION['rol']    ?? '';
+$rolLabel = match ($rolUsuario) {
+    'centro'      => 'Centro de Formación',
+    'coordinador' => 'Coordinador Académico',
+    'instructor'  => 'Instructor',
+    default       => 'Administrador'
+};
+
+// Obtener coordinación activa del coordinador en tiempo real desde la DB
+$nombreCoordinacion = null;
+$centNombre         = null;
+if ($rolUsuario === 'coordinador' && !empty($_SESSION['id'])) {
+    $conexionPath = __DIR__ . '/../../Conexion.php';
+    if (file_exists($conexionPath)) {
+        require_once $conexionPath;
+        try {
+            $db   = Conexion::getConnect();
+            $stmt = $db->prepare(
+                "SELECT c.coord_descripcion, cf.cent_nombre
+                 FROM COORDINACION c
+                 LEFT JOIN CENTRO_FORMACION cf ON c.centro_formacion_cent_id = cf.cent_id
+                 WHERE c.coordinador_actual = :num_doc AND c.estado = 1
+                 LIMIT 1"
+            );
+            $stmt->execute([':num_doc' => $_SESSION['id']]);
+            $coord              = $stmt->fetch(PDO::FETCH_ASSOC);
+            $nombreCoordinacion = $coord['coord_descripcion'] ?? null;
+            $centNombre         = $coord['cent_nombre']        ?? null;
+        } catch (Exception $e) {
+            error_log("Dashboard coord query error: " . $e->getMessage());
+        }
+    }
+}
+
 require_once '../layouts/head.php';
 require_once '../layouts/sidebar.php';
 ?>
@@ -13,8 +52,8 @@ require_once '../layouts/sidebar.php';
         </div>
         <div class="user-profile-header">
             <div class="user-info">
-                <span class="user-role">Administrador</span>
-                <span class="user-name">Usuario SENA</span>
+                <span class="user-role"><?php echo htmlspecialchars($rolLabel); ?></span>
+                <span class="user-name"><?php echo htmlspecialchars($nombreUsuario); ?></span>
             </div>
             <div class="user-avatar">
                 <ion-icon src="../../assets/ionicons/person-circle-outline.svg"></ion-icon>
@@ -26,8 +65,33 @@ require_once '../layouts/sidebar.php';
         <!-- Welcome Section -->
         <section class="welcome-section glass-container">
             <div class="welcome-content">
-                <h2>¡Bienvenido de nuevo!</h2>
-                <p>Aquí tienes un resumen de lo que está sucediendo hoy en <strong>Programaciones</strong>.</p>
+                <?php if ($rolUsuario === 'coordinador' && $nombreCoordinacion): ?>
+                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+                        <span style="background:var(--sena-green,#39a900); color:#fff; font-size:10px; font-weight:900; letter-spacing:0.15em; text-transform:uppercase; padding:3px 12px; border-radius:999px;">
+                            Coordinación
+                        </span>
+                    </div>
+                    <h2 style="color:var(--sena-green,#39a900); margin-bottom:4px;"><?php echo htmlspecialchars($nombreCoordinacion); ?></h2>
+                    <?php if ($centNombre): ?>
+                        <p style="font-size:12px; color:#666; font-weight:600; margin-bottom:8px;">
+                            <ion-icon src="../../assets/ionicons/business-outline.svg" style="vertical-align:middle; margin-right:4px;"></ion-icon>
+                            <?php echo htmlspecialchars($centNombre); ?>
+                        </p>
+                    <?php endif; ?>
+                    <p>Aquí tienes el resumen de tu área en <strong>Programaciones SENA</strong>.</p>
+                <?php elseif ($rolUsuario === 'coordinador'): ?>
+                    <h2>¡Bienvenido, <?php echo htmlspecialchars($nombreUsuario); ?>!</h2>
+                    <p style="color:#e67e22; font-size:13px; font-weight:600;">
+                        <ion-icon src="../../assets/ionicons/warning-outline.svg" style="vertical-align:middle; margin-right:4px;"></ion-icon>
+                        No tienes una coordinación asignada actualmente. Pide al Centro de Formación que te asigne una.
+                    </p>
+                    <?php if (!empty($_SESSION['id'])): ?>
+                        <!-- DEBUG: Documento: <?php echo htmlspecialchars($_SESSION['id']); ?> -->
+                    <?php endif; ?>
+                <?php else: ?>
+                    <h2>¡Bienvenido de nuevo!</h2>
+                    <p>Aquí tienes un resumen de lo que está sucediendo hoy en <strong>Programaciones</strong>.</p>
+                <?php endif; ?>
             </div>
             <div class="welcome-actions">
                 <a href="../asignacion/index.php" class="btn btn-primary">

@@ -16,21 +16,12 @@
                         <option value="">Seleccione instructor...</option>
                     </select>
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Programa <span class="text-red-500">*</span></label>
-                    <select id="programa_id" name="competxprograma_programa_prog_id" required class="search-input" style="padding-left: 12px !important;">
-                        <option value="">Seleccione programa...</option>
-                    </select>
-                </div>
+
                 <div class="form-group">
                     <label class="form-label">Competencia <span class="text-red-500">*</span></label>
                     <select id="competencia_id" name="competxprograma_competencia_comp_id" required class="search-input" style="padding-left: 12px !important;" disabled>
                         <option value="">Primero seleccione un programa...</option>
                     </select>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Vigencia <span class="text-red-500">*</span></label>
-                    <input type="date" id="inscomp_vigencia" name="inscomp_vigencia" required class="search-input" style="padding-left: 12px !important;">
                 </div>
             </div>
             <div class="modal-footer">

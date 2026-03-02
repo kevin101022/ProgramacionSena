@@ -10,15 +10,34 @@ class MisCompetencias {
             this.showError('No se pudo identificar el usuario. Inicie sesión nuevamente.');
             return;
         }
+        this.setupModal();
         await this.loadCompetencias();
         this.setupSearch();
+    }
+
+    setupModal() {
+        this.modal = document.getElementById('compModal');
+        this.closeButtons = [
+            document.getElementById('closeModal'),
+            document.getElementById('closeModalBtn')
+        ];
+
+        this.closeButtons.forEach(btn => {
+            if (btn) btn.onclick = () => this.modal.classList.remove('show');
+        });
+
+        window.onclick = (event) => {
+            if (event.target == this.modal) {
+                this.modal.classList.remove('show');
+            }
+        };
     }
 
     async loadCompetencias() {
         try {
             const tableBody = document.getElementById('competenciasTableBody');
             if (tableBody) {
-                tableBody.innerHTML = '<tr><td colspan="5" class="text-center py-8">Cargando competencias...</td></tr>';
+                tableBody.innerHTML = '<tr><td colspan="4" class="text-center py-8">Cargando competencias...</td></tr>';
             }
 
             const response = await fetch(`../../routing.php?controller=instructor&action=getCompetencias&id=${this.userId}`);
@@ -27,12 +46,33 @@ class MisCompetencias {
                 throw new Error('Error al cargar competencias');
             }
 
-            this.competenciasInfo = await response.json();
+            const rawData = await response.json();
 
-            if (this.competenciasInfo.error) {
-                throw new Error(this.competenciasInfo.error);
+            if (rawData.error) {
+                throw new Error(rawData.error);
             }
 
+            // Agrupar por competencia
+            const grouped = {};
+            rawData.forEach(item => {
+                const id = item.comp_id;
+                if (!grouped[id]) {
+                    grouped[id] = {
+                        comp_id: item.comp_id,
+                        comp_nombre: item.comp_nombre,
+                        comp_descripcion: item.comp_descripcion,
+                        programas: []
+                    };
+                }
+                if (item.prog_denominacion) {
+                    grouped[id].programas.push({
+                        codigo: item.prog_codigo,
+                        nombre: item.prog_denominacion
+                    });
+                }
+            });
+
+            this.competenciasInfo = Object.values(grouped);
             this.renderTable(this.competenciasInfo);
         } catch (error) {
             console.error('Error:', error);
@@ -47,47 +87,58 @@ class MisCompetencias {
         if (!data || data.length === 0) {
             tbody.innerHTML = `
                 <tr>
-                    <td colspan="5" class="text-center py-8">
+                    <td colspan="4" class="text-center py-8">
                         <div class="empty-state">
-                            <ion-icon src="../../assets/ionicons/bookmarks-outline.svg" class="empty-icon"></ion-icon>
-                            <p>No se encontraron competencias asociadas a tu perfil.</p>
+                            <ion-icon name="bookmarks-outline" class="text-4xl text-slate-200 mb-2"></ion-icon>
+                            <p class="text-slate-400">No se encontraron competencias asociadas.</p>
                         </div>
                     </td>
                 </tr>`;
             return;
         }
 
-        tbody.innerHTML = data.map((comp, index) => `
-            <tr class="hover:bg-slate-50 transition-colors">
-                <td class="text-center font-medium text-slate-500">${index + 1}</td>
-                <td>
-                    <div class="font-medium text-slate-800">${comp.comp_nombre || 'Sin nombre'}</div>
-                    <div class="text-xs text-slate-400">ID: ${comp.comp_id || 'N/A'}</div>
-                </td>
-                <td>
-                    <div class="text-sm text-slate-600 line-clamp-2 max-w-md" title="${comp.comp_descripcion || ''}">
-                        ${comp.comp_descripcion || 'Sin descripción'}
-                    </div>
-                </td>
-                <td>
-                    <div class="text-sm font-medium text-[#39A900]">${comp.prog_denominacion || 'General'}</div>
-                    <div class="text-xs text-slate-400">Cod: ${comp.prog_codigo || 'N/A'}</div>
-                </td>
-                <td class="text-center">
-                    <span class="status-badge ${this.getVigenciaClass(comp.hab_vigencia)}">
-                        ${comp.hab_vigencia || 'N/A'}
-                    </span>
-                </td>
-            </tr>
-        `).join('');
+        tbody.innerHTML = data.map((comp, index) => {
+            const numProgs = comp.programas.length;
+            return `
+                <tr class="hover:bg-green-50/50 transition-all cursor-pointer group" onclick="misComp.showCompDetails('${comp.comp_id}')">
+                    <td class="text-center font-medium text-slate-400">${index + 1}</td>
+                    <td class="py-4">
+                        <div class="font-bold text-slate-800 group-hover:text-sena-green transition-colors">${comp.comp_nombre || 'Sin nombre'}</div>
+                        <div class="text-[10px] text-slate-400 font-mono mt-1">ID: ${comp.comp_id || 'N/A'}</div>
+                    </td>
+                    <td class="py-4">
+                        <div class="text-xs text-slate-500 line-clamp-2 max-w-sm">
+                            ${comp.comp_descripcion || 'Sin descripción'}
+                        </div>
+                    </td>
+                    <td class="py-4">
+                        <div class="inline-flex items-center gap-2 px-3 py-1 bg-slate-100 rounded-full text-[10px] font-bold text-slate-600 group-hover:bg-sena-green group-hover:text-white transition-all">
+                            <ion-icon name="school-outline"></ion-icon>
+                            ${numProgs} Programa${numProgs !== 1 ? 's' : ''} habilitado${numProgs !== 1 ? 's' : ''}
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }).join('');
     }
 
-    getVigenciaClass(fechaStr) {
-        if (!fechaStr) return 'bg-slate-100 text-slate-600';
-        const vigencia = new Date(fechaStr);
-        const hoy = new Date();
-        const msgVigencia = vigencia >= hoy ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700';
-        return msgVigencia;
+    showCompDetails(compId) {
+        const comp = this.competenciasInfo.find(c => c.comp_id == compId);
+        if (!comp) return;
+
+        document.getElementById('modalCompNombre').textContent = comp.comp_nombre;
+        document.getElementById('modalCompId').textContent = `ID: ${comp.comp_id}`;
+        document.getElementById('modalCompDesc').textContent = comp.comp_descripcion || 'Sin descripción detallada disponible.';
+
+        const progsList = document.getElementById('modalProgsList');
+        progsList.innerHTML = comp.programas.map(p => `
+            <div class="p-3 bg-white border border-slate-100 rounded-xl shadow-sm hover:border-sena-green/30 transition-all group">
+                <div class="text-xs font-bold text-slate-800 group-hover:text-sena-green transition-colors">${p.nombre}</div>
+                <div class="text-[10px] text-slate-400 font-mono mt-1">CÓDIGO: ${p.codigo}</div>
+            </div>
+        `).join('') || '<p class="col-span-2 text-center text-slate-400 italic py-4">No hay programas registrados.</p>';
+
+        this.modal.classList.add('show');
     }
 
     setupSearch() {
@@ -98,7 +149,7 @@ class MisCompetencias {
                 const filtered = this.competenciasInfo.filter(c =>
                     (c.comp_nombre && c.comp_nombre.toLowerCase().includes(term)) ||
                     (c.comp_descripcion && c.comp_descripcion.toLowerCase().includes(term)) ||
-                    (c.prog_denominacion && c.prog_denominacion.toLowerCase().includes(term))
+                    (c.programas && c.programas.some(p => p.nombre.toLowerCase().includes(term) || String(p.codigo).includes(term)))
                 );
                 this.renderTable(filtered);
             });
@@ -108,14 +159,12 @@ class MisCompetencias {
     showError(msg) {
         const tbody = document.getElementById('competenciasTableBody');
         if (tbody) {
-            tbody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-red-500">${msg}</td></tr>`;
-        }
-        if (typeof NotificationSystem !== 'undefined') {
-            NotificationSystem.show('error', msg);
+            tbody.innerHTML = `<tr><td colspan="4" class="text-center py-8 text-red-500 font-medium">${msg}</td></tr>`;
         }
     }
 }
 
+let misComp;
 document.addEventListener('DOMContentLoaded', () => {
-    new MisCompetencias();
+    misComp = new MisCompetencias();
 });

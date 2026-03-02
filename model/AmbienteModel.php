@@ -97,6 +97,8 @@ class AmbienteModel
             $params[':cent_id'] = $cent_id;
         }
 
+        $sql .= " ORDER BY a.amb_nombre ASC";
+
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -110,9 +112,11 @@ class AmbienteModel
 
         if ($cent_id) {
             $sql .= " WHERE s.CENTRO_FORMACION_cent_id = :cent_id";
+            $sql .= " ORDER BY a.amb_nombre ASC";
             $stmt = $this->db->prepare($sql);
             $stmt->execute([':cent_id' => $cent_id]);
         } else {
+            $sql .= " ORDER BY a.amb_nombre ASC";
             $stmt = $this->db->prepare($sql);
             $stmt->execute();
         }
@@ -166,7 +170,7 @@ class AmbienteModel
                        p.prog_denominacion,
                        c.comp_nombre_corto
                 FROM ASIGNACION a
-                LEFT JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.inst_id
+                LEFT JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.numero_documento
                 LEFT JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
                 LEFT JOIN PROGRAMA p ON f.PROGRAMA_prog_id = p.prog_codigo
                 LEFT JOIN COMPETENCIA c ON a.COMPETENCIA_comp_id = c.comp_id

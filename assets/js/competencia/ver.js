@@ -31,6 +31,9 @@ class DetalleCompetencia {
 
         this.programasList = document.getElementById('associatedProgramasList');
         this.programCount = document.getElementById('programCount');
+
+        this.instructoresList = document.getElementById('instructoresList');
+        this.instructorCount = document.getElementById('instructorCount');
     }
 
     bindEvents() {
@@ -105,6 +108,7 @@ class DetalleCompetencia {
             this.competenciaData = data;
             this.renderCompetencia(data);
             this.renderProgramas(data.programas || []);
+            this.renderInstructores(data.instructores || []);
 
             this.showDetails();
         } catch (error) {
@@ -180,6 +184,63 @@ class DetalleCompetencia {
                 <ion-icon src="../../assets/ionicons/chevron-forward-outline.svg" class="text-slate-300 dark:text-slate-500"></ion-icon>
             `;
             this.programasList.appendChild(item);
+        });
+    }
+
+    renderInstructores(instructores) {
+        if (!this.instructoresList) return;
+
+        this.instructoresList.innerHTML = '';
+
+        // Agrupar por instructor (un instructor puede estar en múltiples programas)
+        const grouped = {};
+        instructores.forEach(inst => {
+            const key = inst.inst_id;
+            if (!grouped[key]) {
+                grouped[key] = {
+                    inst_id: inst.inst_id,
+                    inst_nombres: inst.inst_nombres,
+                    inst_apellidos: inst.inst_apellidos,
+                    inst_correo: inst.inst_correo,
+                    programas: []
+                };
+            }
+            grouped[key].programas.push(inst.prog_denominacion);
+        });
+
+        const uniqueInstructores = Object.values(grouped);
+        if (this.instructorCount) this.instructorCount.textContent = `${uniqueInstructores.length} instructor${uniqueInstructores.length !== 1 ? 'es' : ''}`;
+
+        if (uniqueInstructores.length === 0) {
+            this.instructoresList.innerHTML = `
+                <div class="p-12 text-center">
+                    <div class="w-16 h-16 bg-gray-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300 dark:text-slate-600">
+                        <ion-icon src="../../assets/ionicons/person-outline.svg" class="text-3xl"></ion-icon>
+                    </div>
+                    <p class="text-slate-500 dark:text-slate-400 font-medium">No hay instructores habilitados para esta competencia.</p>
+                </div>
+            `;
+            return;
+        }
+
+        uniqueInstructores.forEach(inst => {
+            const item = document.createElement('div');
+            item.className = 'p-4 px-6 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors flex items-center justify-between';
+
+            const initials = `${(inst.inst_nombres || '')[0] || ''}${(inst.inst_apellidos || '')[0] || ''}`.toUpperCase();
+
+            item.innerHTML = `
+                <div class="flex items-center gap-4">
+                    <div class="w-10 h-10 rounded-full bg-sena-green/10 flex items-center justify-center text-sena-green font-bold text-sm">
+                        ${initials}
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-slate-900 dark:text-white text-sm">${inst.inst_nombres} ${inst.inst_apellidos}</h4>
+                        <p class="text-xs text-slate-500 dark:text-slate-400">${inst.inst_correo || 'Sin correo'}</p>
+                    </div>
+                </div>
+            `;
+            this.instructoresList.appendChild(item);
         });
     }
 

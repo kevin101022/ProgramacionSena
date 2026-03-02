@@ -28,9 +28,17 @@
                 </div>
                 <div class="form-group">
                     <label class="form-label">Coordinación <span class="text-red-500">*</span></label>
-                    <select id="coordinacion_id" name="coordinacion_id" required class="search-input" style="padding-left: 12px !important;">
-                        <option value="">Seleccione coordinación...</option>
-                    </select>
+                    <?php if (($_SESSION['rol'] ?? '') === 'coordinador'): ?>
+                        <input type="hidden" id="coordinacion_id" name="coordinacion_id" value="">
+                        <div class="p-3 bg-green-50 border border-green-100 rounded-lg text-sm text-sena-green font-medium flex items-center gap-2">
+                            <ion-icon src="../../assets/ionicons/checkmark-circle-outline.svg"></ion-icon>
+                            Asignada automáticamente desde tu cuenta
+                        </div>
+                    <?php else: ?>
+                        <select id="coordinacion_id" name="coordinacion_id" required class="search-input" style="padding-left: 12px !important;">
+                            <option value="">Seleccione coordinación...</option>
+                        </select>
+                    <?php endif; ?>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Jornada <span class="text-red-500">*</span></label>

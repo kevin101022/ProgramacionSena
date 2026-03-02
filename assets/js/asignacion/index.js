@@ -95,7 +95,8 @@ class AsignacionManager {
                 this.ambientes.forEach(a => {
                     const opt = document.createElement('option');
                     opt.value = a.amb_id;
-                    opt.textContent = `${a.amb_id} - ${a.amb_nombre || 'Sin nombre'}`;
+                    opt.textContent = `${a.amb_id} - ${a.amb_nombre || 'Sin nombre'} (${a.sede_nombre || 'Sin Sede'})`;
+                    opt.setAttribute('data-sede', a.sede_nombre || '');
                     ambienteSelect.appendChild(opt);
                 });
             }
@@ -231,7 +232,7 @@ class AsignacionManager {
 
         const events = this.allAsignaciones.map((a, i) => ({
             id: a.asig_id,
-            title: `${a.comp_nombre_corto || 'Comp.'} — ${a.inst_nombres || ''} ${a.inst_apellidos || ''}`,
+            title: `Amb. ${a.ambiente_amb_id || 'N/A'} (${a.sede_nombre || ''}) — ${a.comp_nombre_corto || 'Comp.'} — ${a.inst_nombres || ''} ${a.inst_apellidos || ''}`,
             start: a.asig_fecha_ini,
             end: a.asig_fecha_fin,
             backgroundColor: this.COLORS[i % this.COLORS.length],
