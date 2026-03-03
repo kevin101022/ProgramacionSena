@@ -137,10 +137,19 @@ require_once '../layouts/sidebar.php';
                         </div>
                         <div class="flex items-center gap-4">
                             <div class="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400">
+                                <ion-icon src="../../assets/ionicons/business-outline.svg" class="text-xl"></ion-icon>
+                            </div>
+                            <div>
+                                <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Coordinación / Área</p>
+                                <p class="text-sm font-bold text-gray-800" id="detAreaName">--</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-4">
+                            <div class="w-10 h-10 bg-gray-50 rounded-xl flex items-center justify-center text-gray-400">
                                 <ion-icon src="../../assets/ionicons/key-outline.svg" class="text-xl"></ion-icon>
                             </div>
                             <div>
-                                <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">Referencia Asignación</p>
+                                <p class="text-[10px] font-extrabold text-gray-400 uppercase tracking-widest">ID Interno (Asignación)</p>
                                 <p class="text-sm font-bold text-gray-800" id="detAsigId">--</p>
                             </div>
                         </div>

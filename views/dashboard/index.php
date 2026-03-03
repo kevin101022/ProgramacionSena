@@ -80,198 +80,208 @@ require_once '../layouts/sidebar.php';
                     <?php endif; ?>
                     <p>Aquí tienes el resumen de tu área en <strong>Programaciones SENA</strong>.</p>
                 <?php elseif ($rolUsuario === 'coordinador'): ?>
-                    <h2>¡Bienvenido, <?php echo htmlspecialchars($nombreUsuario); ?>!</h2>
-                    <p style="color:#e67e22; font-size:13px; font-weight:600;">
-                        <ion-icon src="../../assets/ionicons/warning-outline.svg" style="vertical-align:middle; margin-right:4px;"></ion-icon>
-                        No tienes una coordinación asignada actualmente. Pide al Centro de Formación que te asigne una.
+                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:6px;">
+                        <span style="background:#e67e22; color:#fff; font-size:10px; font-weight:900; letter-spacing:0.15em; text-transform:uppercase; padding:3px 12px; border-radius:999px;">
+                            Atención
+                        </span>
+                    </div>
+                    <h2 style="color:#e67e22; margin-bottom:4px;">Perfil sin Asignación</h2>
+                    <p style="color:#666; font-size:13px; font-weight:500; margin-top:10px;">
+                        <ion-icon src="../../assets/ionicons/warning-outline.svg" style="vertical-align:middle; margin-right:4px; font-size:18px; color:#e67e22;"></ion-icon>
+                        Actualmente no tienes un <strong>Área de Coordinación</strong> vinculada a tu cuenta.
                     </p>
-                    <?php if (!empty($_SESSION['id'])): ?>
-                        <!-- DEBUG: Documento: <?php echo htmlspecialchars($_SESSION['id']); ?> -->
-                    <?php endif; ?>
+                    <p style="font-size:13px; color:#777; margin-top:8px;">
+                        Para poder gestionar fichas, instructores y programaciones, es necesario que el administrador del <strong>Centro de Formación</strong> te asigne a una coordinación desde el panel administrativo.
+                    </p>
                 <?php else: ?>
                     <h2>¡Bienvenido de nuevo!</h2>
                     <p>Aquí tienes un resumen de lo que está sucediendo hoy en <strong>Programaciones</strong>.</p>
                 <?php endif; ?>
             </div>
-            <div class="welcome-actions">
-                <a href="../asignacion/index.php" class="btn btn-primary">
-                    <ion-icon src="../../assets/ionicons/calendar-outline.svg"></ion-icon>
-                    Ver Programación
-                </a>
-            </div>
-        </section>
-        <!-- Stats grid -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-card-bg-icon">
-                    <ion-icon src="../../assets/ionicons/business-outline.svg"></ion-icon>
+            <?php if ($rolUsuario !== 'coordinador' || (isset($hasCoordinacion) && $hasCoordinacion)): ?>
+                <div class="welcome-actions">
+                    <a href="../asignacion/index.php" class="btn btn-primary">
+                        <ion-icon src="../../assets/ionicons/calendar-outline.svg"></ion-icon>
+                        Ver Programación
+                    </a>
                 </div>
-                <div class="stat-card-header">
-                    <span class="stat-card-label">SEDES</span>
-                    <div class="stat-card-icon green">
+            <?php endif; ?>
+        </section>
+
+        <?php if ($rolUsuario !== 'coordinador' || (isset($hasCoordinacion) && $hasCoordinacion)): ?>
+            <!-- Stats grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-card-bg-icon">
                         <ion-icon src="../../assets/ionicons/business-outline.svg"></ion-icon>
                     </div>
-                </div>
-                <div class="stat-card-body">
-                    <span class="stat-card-number" id="statSedes">—</span>
-                    <span class="stat-card-desc">registradas</span>
-                    <p class="stat-card-context">Infraestructura física distribuida para cobertura nacional.</p>
-                </div>
-                <div class="stat-card-pill-container">
-                    <div class="stat-pill">
-                        <ion-icon src="../../assets/ionicons/location-outline.svg"></ion-icon>
-                        Cobertura
+                    <div class="stat-card-header">
+                        <span class="stat-card-label">SEDES</span>
+                        <div class="stat-card-icon green">
+                            <ion-icon src="../../assets/ionicons/business-outline.svg"></ion-icon>
+                        </div>
+                    </div>
+                    <div class="stat-card-body">
+                        <span class="stat-card-number" id="statSedes">—</span>
+                        <span class="stat-card-desc">registradas</span>
+                        <p class="stat-card-context">Infraestructura física distribuida para cobertura nacional.</p>
+                    </div>
+                    <div class="stat-card-pill-container">
+                        <div class="stat-pill">
+                            <ion-icon src="../../assets/ionicons/location-outline.svg"></ion-icon>
+                            Cobertura
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-card-bg-icon">
-                    <ion-icon src="../../assets/ionicons/school-outline.svg"></ion-icon>
-                </div>
-                <div class="stat-card-header">
-                    <span class="stat-card-label">PROGRAMAS</span>
-                    <div class="stat-card-icon blue">
+                <div class="stat-card">
+                    <div class="stat-card-bg-icon">
                         <ion-icon src="../../assets/ionicons/school-outline.svg"></ion-icon>
                     </div>
-                </div>
-                <div class="stat-card-body">
-                    <span class="stat-card-number" id="statProgramas">—</span>
-                    <span class="stat-card-desc">activos</span>
-                    <p class="stat-card-context">Oferta académica vigente para formación titulada.</p>
-                </div>
-                <div class="stat-card-pill-container">
-                    <div class="stat-pill">
-                        <ion-icon src="../../assets/ionicons/star-outline.svg"></ion-icon>
-                        Calidad
+                    <div class="stat-card-header">
+                        <span class="stat-card-label">PROGRAMAS</span>
+                        <div class="stat-card-icon blue">
+                            <ion-icon src="../../assets/ionicons/school-outline.svg"></ion-icon>
+                        </div>
+                    </div>
+                    <div class="stat-card-body">
+                        <span class="stat-card-number" id="statProgramas">—</span>
+                        <span class="stat-card-desc">activos</span>
+                        <p class="stat-card-context">Oferta académica vigente para formación titulada.</p>
+                    </div>
+                    <div class="stat-card-pill-container">
+                        <div class="stat-pill">
+                            <ion-icon src="../../assets/ionicons/star-outline.svg"></ion-icon>
+                            Calidad
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-card-bg-icon">
-                    <ion-icon src="../../assets/ionicons/layers-outline.svg"></ion-icon>
-                </div>
-                <div class="stat-card-header">
-                    <span class="stat-card-label">FICHAS</span>
-                    <div class="stat-card-icon purple">
+                <div class="stat-card">
+                    <div class="stat-card-bg-icon">
                         <ion-icon src="../../assets/ionicons/layers-outline.svg"></ion-icon>
                     </div>
+                    <div class="stat-card-header">
+                        <span class="stat-card-label">FICHAS</span>
+                        <div class="stat-card-icon purple">
+                            <ion-icon src="../../assets/ionicons/layers-outline.svg"></ion-icon>
+                        </div>
+                    </div>
+                    <div class="stat-card-body">
+                        <span class="stat-card-number" id="statFichas">—</span>
+                        <span class="stat-card-desc">en formación</span>
+                        <p class="stat-card-context">Grupos vinculados a procesos de aprendizaje.</p>
+                    </div>
+                    <div class="stat-card-pill-container">
+                        <div class="stat-pill">
+                            <ion-icon src="../../assets/ionicons/people-outline.svg"></ion-icon>
+                            Aprendices
+                        </div>
+                    </div>
                 </div>
-                <div class="stat-card-body">
-                    <span class="stat-card-number" id="statFichas">—</span>
-                    <span class="stat-card-desc">en formación</span>
-                    <p class="stat-card-context">Grupos vinculados a procesos de aprendizaje.</p>
-                </div>
-                <div class="stat-card-pill-container">
-                    <div class="stat-pill">
+                <div class="stat-card">
+                    <div class="stat-card-bg-icon">
                         <ion-icon src="../../assets/ionicons/people-outline.svg"></ion-icon>
-                        Aprendices
+                    </div>
+                    <div class="stat-card-header">
+                        <span class="stat-card-label">INSTRUCTORES</span>
+                        <div class="stat-card-icon amber">
+                            <ion-icon src="../../assets/ionicons/people-outline.svg"></ion-icon>
+                        </div>
+                    </div>
+                    <div class="stat-card-body">
+                        <span class="stat-card-number" id="statInstructores">—</span>
+                        <span class="stat-card-desc">vinculados</span>
+                        <p class="stat-card-context">Personal docente y técnico de la institución.</p>
+                    </div>
+                    <div class="stat-card-pill-container">
+                        <div class="stat-pill">
+                            <ion-icon src="../../assets/ionicons/checkmark-done-outline.svg"></ion-icon>
+                            Activos
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-card-bg-icon">
-                    <ion-icon src="../../assets/ionicons/people-outline.svg"></ion-icon>
-                </div>
-                <div class="stat-card-header">
-                    <span class="stat-card-label">INSTRUCTORES</span>
-                    <div class="stat-card-icon amber">
-                        <ion-icon src="../../assets/ionicons/people-outline.svg"></ion-icon>
-                    </div>
-                </div>
-                <div class="stat-card-body">
-                    <span class="stat-card-number" id="statInstructores">—</span>
-                    <span class="stat-card-desc">vinculados</span>
-                    <p class="stat-card-context">Personal docente y técnico de la institución.</p>
-                </div>
-                <div class="stat-card-pill-container">
-                    <div class="stat-pill">
-                        <ion-icon src="../../assets/ionicons/checkmark-done-outline.svg"></ion-icon>
-                        Activos
-                    </div>
-                </div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-card-bg-icon">
-                    <ion-icon src="../../assets/ionicons/calendar-outline.svg"></ion-icon>
-                </div>
-                <div class="stat-card-header">
-                    <span class="stat-card-label">ASIGNACIONES</span>
-                    <div class="stat-card-icon emerald">
+                <div class="stat-card">
+                    <div class="stat-card-bg-icon">
                         <ion-icon src="../../assets/ionicons/calendar-outline.svg"></ion-icon>
                     </div>
-                </div>
-                <div class="stat-card-body">
-                    <span class="stat-card-number" id="statAsignaciones">—</span>
-                    <span class="stat-card-desc">programadas</span>
-                    <p class="stat-card-context">Actividades y horarios académicos establecidos.</p>
-                </div>
-                <div class="stat-card-pill-container">
-                    <div class="stat-pill">
-                        <ion-icon src="../../assets/ionicons/time-outline.svg"></ion-icon>
-                        Control
+                    <div class="stat-card-header">
+                        <span class="stat-card-label">ASIGNACIONES</span>
+                        <div class="stat-card-icon emerald">
+                            <ion-icon src="../../assets/ionicons/calendar-outline.svg"></ion-icon>
+                        </div>
+                    </div>
+                    <div class="stat-card-body">
+                        <span class="stat-card-number" id="statAsignaciones">—</span>
+                        <span class="stat-card-desc">programadas</span>
+                        <p class="stat-card-context">Actividades y horarios académicos establecidos.</p>
+                    </div>
+                    <div class="stat-card-pill-container">
+                        <div class="stat-pill">
+                            <ion-icon src="../../assets/ionicons/time-outline.svg"></ion-icon>
+                            Control
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Quick access cards -->
-        <h3 class="section-title">Accesos Rápidos</h3>
-        <div class="quick-access-grid">
-            <a href="../sede/index.php" class="quick-access-card accent-green">
-                <div class="quick-access-icon green">
-                    <ion-icon src="../../assets/ionicons/business-outline.svg"></ion-icon>
-                </div>
-                <div class="quick-access-info">
-                    <h4>Gestionar Sedes</h4>
-                    <p>Administrar sedes y ambientes</p>
-                </div>
-            </a>
-            <a href="../programa/index.php" class="quick-access-card accent-blue">
-                <div class="quick-access-icon blue">
-                    <ion-icon src="../../assets/ionicons/school-outline.svg"></ion-icon>
-                </div>
-                <div class="quick-access-info">
-                    <h4>Programas</h4>
-                    <p>Gestionar programas de formación</p>
-                </div>
-            </a>
-            <a href="../ficha/index.php" class="quick-access-card accent-purple">
-                <div class="quick-access-icon purple">
-                    <ion-icon src="../../assets/ionicons/layers-outline.svg"></ion-icon>
-                </div>
-                <div class="quick-access-info">
-                    <h4>Fichas</h4>
-                    <p>Administrar fichas de formación</p>
-                </div>
-            </a>
-            <a href="../instructor/index.php" class="quick-access-card accent-amber">
-                <div class="quick-access-icon amber">
-                    <ion-icon src="../../assets/ionicons/people-outline.svg"></ion-icon>
-                </div>
-                <div class="quick-access-info">
-                    <h4>Instructores</h4>
-                    <p>Gestionar instructores</p>
-                </div>
-            </a>
-            <a href="../asignacion/index.php" class="quick-access-card accent-emerald">
-                <div class="quick-access-icon emerald">
-                    <ion-icon src="../../assets/ionicons/calendar-outline.svg"></ion-icon>
-                </div>
-                <div class="quick-access-info">
-                    <h4>Asignaciones</h4>
-                    <p>Calendario de asignaciones</p>
-                </div>
-            </a>
-            <a href="../reportes/index.php" class="quick-access-card accent-rose">
-                <div class="quick-access-icon rose">
-                    <ion-icon src="../../assets/ionicons/bar-chart-outline.svg"></ion-icon>
-                </div>
-                <div class="quick-access-info">
-                    <h4>Reportes</h4>
-                    <p>Informes del sistema</p>
-                </div>
-            </a>
-        </div>
+            <!-- Quick access cards -->
+            <h3 class="section-title">Accesos Rápidos</h3>
+            <div class="quick-access-grid">
+                <a href="../sede/index.php" class="quick-access-card accent-green">
+                    <div class="quick-access-icon green">
+                        <ion-icon src="../../assets/ionicons/business-outline.svg"></ion-icon>
+                    </div>
+                    <div class="quick-access-info">
+                        <h4>Gestionar Sedes</h4>
+                        <p>Administrar sedes y ambientes</p>
+                    </div>
+                </a>
+                <a href="../programa/index.php" class="quick-access-card accent-blue">
+                    <div class="quick-access-icon blue">
+                        <ion-icon src="../../assets/ionicons/school-outline.svg"></ion-icon>
+                    </div>
+                    <div class="quick-access-info">
+                        <h4>Programas</h4>
+                        <p>Gestionar programas de formación</p>
+                    </div>
+                </a>
+                <a href="../ficha/index.php" class="quick-access-card accent-purple">
+                    <div class="quick-access-icon purple">
+                        <ion-icon src="../../assets/ionicons/layers-outline.svg"></ion-icon>
+                    </div>
+                    <div class="quick-access-info">
+                        <h4>Fichas</h4>
+                        <p>Administrar fichas de formación</p>
+                    </div>
+                </a>
+                <a href="../instructor/index.php" class="quick-access-card accent-amber">
+                    <div class="quick-access-icon amber">
+                        <ion-icon src="../../assets/ionicons/people-outline.svg"></ion-icon>
+                    </div>
+                    <div class="quick-access-info">
+                        <h4>Instructores</h4>
+                        <p>Gestionar instructores</p>
+                    </div>
+                </a>
+                <a href="../asignacion/index.php" class="quick-access-card accent-emerald">
+                    <div class="quick-access-icon emerald">
+                        <ion-icon src="../../assets/ionicons/calendar-outline.svg"></ion-icon>
+                    </div>
+                    <div class="quick-access-info">
+                        <h4>Asignaciones</h4>
+                        <p>Calendario de asignaciones</p>
+                    </div>
+                </a>
+                <a href="../reportes/index.php" class="quick-access-card accent-rose">
+                    <div class="quick-access-icon rose">
+                        <ion-icon src="../../assets/ionicons/bar-chart-outline.svg"></ion-icon>
+                    </div>
+                    <div class="quick-access-info">
+                        <h4>Reportes</h4>
+                        <p>Informes del sistema</p>
+                    </div>
+                </a>
+            </div>
+        <?php endif; ?>
 
         <!-- Activity Feed -->
     </div>

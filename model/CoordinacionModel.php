@@ -150,4 +150,13 @@ class CoordinacionModel
         $stmt->execute([':coord_id' => $this->coord_id]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
+
+    public function getCoordIdByDocumento($documento)
+    {
+        $sql = "SELECT coord_id FROM COORDINACION WHERE coordinador_actual = :doc AND estado = 1 LIMIT 1";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':doc' => $documento]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        return $row ? $row['coord_id'] : null;
+    }
 }

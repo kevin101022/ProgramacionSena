@@ -11,6 +11,20 @@ if (!isset($_SESSION['rol'])) {
 $rol = $_SESSION['rol'];
 $navItem = isset($activeNavItem) ? $activeNavItem : '';
 
+// --- Verificación de Coordinación para Coordinadores ---
+$hasCoordinacion = true;
+if ($rol === 'coordinador' && !empty($_SESSION['id'])) {
+    require_once __DIR__ . '/../../Conexion.php';
+    try {
+        $db_head   = Conexion::getConnect();
+        $stmt_head = $db_head->prepare("SELECT COUNT(*) FROM COORDINACION WHERE coordinador_actual = :id AND estado = 1");
+        $stmt_head->execute([':id' => $_SESSION['id']]);
+        $hasCoordinacion = ($stmt_head->fetchColumn() > 0);
+    } catch (Exception $e) {
+        error_log("Head coord query error: " . $e->getMessage());
+    }
+}
+
 // RBAC based on activeNavItem
 $allowed = true;
 if ($navItem) {
@@ -30,6 +44,12 @@ if ($navItem) {
         } else {
             header("Location: ../asignacion/instructor_index.php");
         }
+        exit;
+    }
+
+    // Redirigir al dashboard si es coordinador sin asignación y está fuera del dashboard
+    if ($rol === 'coordinador' && !$hasCoordinacion && $navItem !== 'dashboard') {
+        header("Location: ../dashboard/index.php");
         exit;
     }
 }

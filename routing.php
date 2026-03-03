@@ -73,6 +73,12 @@ try {
         session_start();
     }
 
+    // Inyectar variables de auditoría si hay sesión activa
+    if (isset($_SESSION['id']) && isset($_SESSION['correo']) && isset($_SESSION['nombre'])) {
+        require_once __DIR__ . '/Conexion.php';
+        Conexion::setAuditVars($_SESSION['id'], $_SESSION['correo'], $_SESSION['nombre']);
+    }
+
     // Si no es el controlador de login, verificamos permisos
     if ($controller !== 'login') {
         if (!isset($_SESSION['rol'])) {
@@ -89,6 +95,16 @@ try {
             'instructor' => ['asignacion', 'instructor']
         ];
 
+        // --- Verificación de Coordinación Activa ---
+        $hasCoordinacion = true;
+        if ($rol === 'coordinador') {
+            require_once 'Conexion.php';
+            $db_check = Conexion::getConnect();
+            $stmt_check = $db_check->prepare("SELECT COUNT(*) FROM COORDINACION WHERE coordinador_actual = :id AND estado = 1");
+            $stmt_check->execute([':id' => $_SESSION['id']]);
+            $hasCoordinacion = ($stmt_check->fetchColumn() > 0);
+        }
+
         // Reglas de lectura adicionales para roles cruzados (Usado por Dashboard y Dropdowns)
         if ($rol === 'coordinador' && in_array($controller, ['programa', 'instructor', 'ambiente', 'competencia', 'centro_formacion', 'sede']) && in_array($action, ['index', 'show'])) {
             // Permitido para cargar selects, stats en dashboard y consultas de solo lectura
@@ -102,6 +118,15 @@ try {
         } else if (!in_array($controller, $allowedControllersByRole[$rol] ?? [])) {
             http_response_code(403);
             throw new Exception("Acceso denegado: El rol '$rol' no tiene permisos para el módulo '$controller'.");
+        }
+
+        // Restricción final para coordinadores sin asignación
+        if ($rol === 'coordinador' && !$hasCoordinacion && !in_array($controller, ['login', 'reporte'])) {
+            // El reporte 'asignacionesPorInstructor' es usado por el dashboard a veces, pero mejor bloqueamos casi todo
+            if (!($controller === 'reporte' && $action === 'asignacionesPorInstructor')) {
+                http_response_code(403);
+                throw new Exception("Acceso restringido: No tienes una coordinación asignada. Contacta al Centro de Formación.");
+            }
         }
     }
     // --- END RBAC ---

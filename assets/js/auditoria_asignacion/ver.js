@@ -13,21 +13,36 @@ document.addEventListener("DOMContentLoaded", () => {
         return;
     }
 
-    async function loadAuditDetail() {
-        try {
-            const response = await fetch(`../../routing.php?controller=auditoria_asignacion&action=show&id=${auditId}`, {
-                headers: { 'Accept': 'application/json' }
-            });
+    function formatDate(dateString) {
+        if (!dateString) return '--';
+        const date = new Date(dateString);
+        const months = ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'];
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = months[date.getMonth()];
+        const year = date.getFullYear();
+        let hours = date.getHours();
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12;
+        hours = hours ? hours : 12;
+        return `${day} de ${month}, ${year} - ${hours}:${minutes} ${ampm}`;
+    }
 
-            if (!response.ok) throw new Error("No se pudo conectar con el servidor.");
+    function getActionPhrase(action) {
+        switch (action) {
+            case 'INSERT': return 'Creación de Asignación';
+            case 'UPDATE': return 'Modificación de Asignación';
+            case 'DELETE': return 'Eliminación de Asignación';
+            default: return action;
+        }
+    }
 
-            const data = await response.json();
-            if (data.error) throw new Error(data.error);
-
-            renderDetails(data);
-        } catch (error) {
-            console.error("Error:", error);
-            showError(error.message);
+    function getActionBadgeLabel(action) {
+        switch (action) {
+            case 'INSERT': return 'NUEVO';
+            case 'UPDATE': return 'MODIFICADO';
+            case 'DELETE': return 'ELIMINADO';
+            default: return action;
         }
     }
 
@@ -46,19 +61,19 @@ document.addEventListener("DOMContentLoaded", () => {
                 bgColor = 'bg-sena-green';
                 textColor = 'text-white';
                 iconPath = '../../assets/ionicons/add-circle-outline.svg';
-                actionTypeEl.className = "text-2xl font-black mb-1 flex items-center justify-center gap-2 text-sena-green";
+                actionTypeEl.className = "text-xl font-black mb-1 flex items-center justify-center gap-2 text-sena-green";
                 break;
             case 'UPDATE':
                 bgColor = 'bg-blue-600';
                 textColor = 'text-white';
                 iconPath = '../../assets/ionicons/create-outline.svg';
-                actionTypeEl.className = "text-2xl font-black mb-1 flex items-center justify-center gap-2 text-blue-600";
+                actionTypeEl.className = "text-xl font-black mb-1 flex items-center justify-center gap-2 text-blue-600";
                 break;
             case 'DELETE':
                 bgColor = 'bg-red-500';
                 textColor = 'text-white';
                 iconPath = '../../assets/ionicons/trash-outline.svg';
-                actionTypeEl.className = "text-2xl font-black mb-1 flex items-center justify-center gap-2 text-red-500";
+                actionTypeEl.className = "text-xl font-black mb-1 flex items-center justify-center gap-2 text-red-500";
                 break;
         }
 
@@ -71,13 +86,19 @@ document.addEventListener("DOMContentLoaded", () => {
         }
 
         // Action info
-        document.getElementById('detActionType').textContent = item.tipo_accion;
-        document.getElementById('detActionDate').innerHTML = `<ion-icon src="../../assets/ionicons/time-outline.svg"></ion-icon> <span>${item.fecha_hora}</span>`;
+        const actionPhrase = getActionPhrase(item.tipo_accion);
+        const actionBadge = getActionBadgeLabel(item.tipo_accion);
+        document.getElementById('detActionType').innerHTML = `
+            <span class="text-[10px] bg-gray-100 px-2 py-0.5 rounded mr-2 uppercase">${actionBadge}</span>
+            ${actionPhrase}
+        `;
+        document.getElementById('detActionDate').innerHTML = `<ion-icon src="../../assets/ionicons/time-outline.svg"></ion-icon> <span>${formatDate(item.fecha_hora)}</span>`;
         document.getElementById('detAuditId').textContent = `#${item.id_auditoria}`;
 
         // Responsible User
-        document.getElementById('detUserEmail').textContent = item.correo_usuario || 'Usuario Desconocido';
-        document.getElementById('detUserDoc').textContent = item.documento_usuario_accion || 'Sin Documento';
+        const name = item.nombre_responsable && item.nombre_responsable !== 'Sistema' ? item.nombre_responsable : 'Usuario';
+        document.getElementById('detUserEmail').innerHTML = `${name}<br><span class="text-xs font-normal text-slate-500">${item.correo_usuario || ''}</span>`;
+        document.getElementById('detUserDoc').textContent = item.documento_usuario_accion && item.documento_usuario_accion != 0 ? item.documento_usuario_accion : 'Desconocido';
 
         // Operation Details
         document.getElementById('detInstructorName').textContent = `${item.inst_nombres || 'Instructor'} ${item.inst_apellidos || ''}`;
@@ -88,7 +109,8 @@ document.addEventListener("DOMContentLoaded", () => {
         document.getElementById('detDateStart').textContent = item.asig_fecha_ini || '--';
         document.getElementById('detDateEnd').textContent = item.asig_fecha_fin || '--';
 
-        document.getElementById('detAmbiente').textContent = `Ambiente: ${item.ambiente_amb_id || 'ID'} - ${item.amb_nombre || 'N/A'} | Sede: ${item.sede_nombre || 'N/A'}`;
+        document.getElementById('detAmbiente').textContent = `${item.ambiente_amb_id || 'ID'} - ${item.amb_nombre || 'Desconocido'}`;
+        document.getElementById('detAreaName').textContent = item.area_nombre || 'Sin Coordinación Asignada';
         document.getElementById('detAsigId').textContent = item.asig_id || 'N/A';
 
         loadingState.style.display = 'none';
@@ -99,6 +121,25 @@ document.addEventListener("DOMContentLoaded", () => {
         loadingState.style.display = "none";
         errorState.style.display = "block";
         errorMessage.textContent = msg;
+    }
+
+    async function loadAuditDetail() {
+        try {
+            const response = await fetch(`../../routing.php?controller=auditoria_asignacion&action=show&id=${auditId}`, {
+                headers: { 'Accept': 'application/json' }
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `Error del servidor: ${response.status}`);
+            }
+
+            const data = await response.json();
+            renderDetails(data);
+        } catch (error) {
+            console.error("Error cargando detalle de auditoría:", error);
+            showError(error.message || "Error al conectar con el servidor.");
+        }
     }
 
     loadAuditDetail();

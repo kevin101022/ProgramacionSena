@@ -22,4 +22,34 @@ class Conexion
     {
         return self::$driver;
     }
+
+    /**
+     * Inyecta variables de sesión en la conexión de la BD para que los triggers
+     * puedan capturar quién está realizando la acción.
+     */
+    public static function setAuditVars($documento, $correo, $nombre = 'Sistema')
+    {
+        $db = self::getConnect();
+        $driver = self::getDriver();
+
+        try {
+            if ($driver === 'pgsql') {
+                // Para PostgreSQL
+                $stmt = $db->prepare("SELECT set_config('myapp.documento_usuario', :doc, false), 
+                                             set_config('myapp.correo_usuario', :correo, false),
+                                             set_config('myapp.nombre_usuario', :nombre, false)");
+                $stmt->execute([
+                    ':doc' => (string)$documento,
+                    ':correo' => (string)$correo,
+                    ':nombre' => (string)$nombre
+                ]);
+            } else {
+                // Para MySQL (si se llega a usar)
+                $stmt = $db->prepare("SET @myapp_documento_usuario = :doc, @myapp_correo_usuario = :correo, @myapp_nombre_usuario = :nombre");
+                $stmt->execute([':doc' => $documento, ':correo' => $correo, ':nombre' => $nombre]);
+            }
+        } catch (Exception $e) {
+            error_log("Error al configurar variables de auditoría: " . $e->getMessage());
+        }
+    }
 }

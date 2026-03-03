@@ -66,30 +66,38 @@ $nombre_usuario = isset($_SESSION['nombre']) ? $_SESSION['nombre'] : 'Usuario';
         <?php elseif ($rol_usuario === 'coordinador'): ?>
             <!-- Menú Coordinador -->
             <p class="nav-section">Gestión Académica</p>
-            <a href="../competencia/index.php" class="nav-item <?php echo ($activeNavItem === 'competencias') ? 'active' : ''; ?>">
-                <ion-icon src="../../assets/ionicons/bookmarks-outline.svg"></ion-icon>
-                Competencias (Consulta)
-            </a>
-            <a href="../ficha/index.php" class="nav-item <?php echo ($activeNavItem === 'fichas') ? 'active' : ''; ?>">
-                <ion-icon src="../../assets/ionicons/layers-outline.svg"></ion-icon>
-                Fichas
-            </a>
-            <a href="../instru_competencia/index.php" class="nav-item <?php echo ($activeNavItem === 'instruc_comp') ? 'active' : ''; ?>">
-                <ion-icon src="../../assets/ionicons/git-merge-outline.svg"></ion-icon>
-                Instructor x Competencia
-            </a>
-            <a href="../asignacion/index.php" class="nav-item <?php echo ($activeNavItem === 'asignaciones') ? 'active' : ''; ?>">
-                <ion-icon src="../../assets/ionicons/calendar-outline.svg"></ion-icon>
-                Asignaciones
-            </a>
-            <a href="../auditoria_asignacion/index.php" class="nav-item <?php echo ($activeNavItem === 'auditoria_asignacion') ? 'active' : ''; ?>">
-                <ion-icon src="../../assets/ionicons/receipt-outline.svg"></ion-icon>
-                Auditoría
-            </a>
-            <a href="../setdata/index.php" class="nav-item <?php echo ($activeNavItem === 'setdata') ? 'active' : ''; ?>">
-                <ion-icon src="../../assets/ionicons/analytics-outline.svg"></ion-icon>
-                Sincronizar Datos (CSV)
-            </a>
+
+            <?php if (isset($hasCoordinacion) && $hasCoordinacion): ?>
+                <a href="../competencia/index.php" class="nav-item <?php echo ($activeNavItem === 'competencias') ? 'active' : ''; ?>">
+                    <ion-icon src="../../assets/ionicons/bookmarks-outline.svg"></ion-icon>
+                    Competencias (Consulta)
+                </a>
+                <a href="../ficha/index.php" class="nav-item <?php echo ($activeNavItem === 'fichas') ? 'active' : ''; ?>">
+                    <ion-icon src="../../assets/ionicons/layers-outline.svg"></ion-icon>
+                    Fichas
+                </a>
+                <a href="../instru_competencia/index.php" class="nav-item <?php echo ($activeNavItem === 'instruc_comp') ? 'active' : ''; ?>">
+                    <ion-icon src="../../assets/ionicons/git-merge-outline.svg"></ion-icon>
+                    Instructor x Competencia
+                </a>
+                <a href="../asignacion/index.php" class="nav-item <?php echo ($activeNavItem === 'asignaciones') ? 'active' : ''; ?>">
+                    <ion-icon src="../../assets/ionicons/calendar-outline.svg"></ion-icon>
+                    Asignaciones
+                </a>
+                <a href="../auditoria_asignacion/index.php" class="nav-item <?php echo ($activeNavItem === 'auditoria_asignacion') ? 'active' : ''; ?>">
+                    <ion-icon src="../../assets/ionicons/receipt-outline.svg"></ion-icon>
+                    Auditoría
+                </a>
+                <a href="../setdata/index.php" class="nav-item <?php echo ($activeNavItem === 'setdata') ? 'active' : ''; ?>">
+                    <ion-icon src="../../assets/ionicons/analytics-outline.svg"></ion-icon>
+                    Sincronizar Datos (CSV)
+                </a>
+            <?php else: ?>
+                <div class="px-4 py-2 text-xs text-amber-600 font-medium bg-amber-50 rounded-lg mx-2 my-1 border border-amber-100 flex items-center gap-2">
+                    <ion-icon src="../../assets/ionicons/warning-outline.svg" class="text-lg"></ion-icon>
+                    Sin coordinación asignada
+                </div>
+            <?php endif; ?>
 
         <?php elseif ($rol_usuario === 'instructor'): ?>
             <!-- Menú Instructor -->
