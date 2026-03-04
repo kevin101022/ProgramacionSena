@@ -186,6 +186,61 @@ if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'instructor') {
 <!-- Create/Edit Modal -->
 <?php require_once 'modal_edit.php'; ?>
 
+<!-- Quick Day Edit Modal -->
+<div id="dayEditModal" class="modal">
+    <div class="modal-content" style="max-width: 420px;">
+        <div class="modal-header" style="padding: 16px 20px;">
+            <h3 id="dayEditTitle" style="font-size: 15px;">Editar Horario</h3>
+            <button class="modal-close" id="closeDayEdit">
+                <ion-icon src="../../assets/ionicons/close-outline.svg"></ion-icon>
+            </button>
+        </div>
+        <form id="dayEditForm">
+            <input type="hidden" id="dayEdit_detasig_id">
+            <input type="hidden" id="dayEdit_asig_id">
+            <div class="modal-body p-5">
+                <div class="flex items-center gap-3 mb-5 p-3 bg-gray-50 rounded-xl border border-gray-100">
+                    <div class="w-10 h-10 rounded-lg bg-sena-green/10 flex items-center justify-center">
+                        <ion-icon src="../../assets/ionicons/calendar-outline.svg" class="text-sena-green text-lg"></ion-icon>
+                    </div>
+                    <div>
+                        <p id="dayEditDateLabel" class="text-sm font-bold text-gray-800 capitalize">--</p>
+                        <p id="dayEditAsigInfo" class="text-[11px] text-gray-500">--</p>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-group">
+                        <label class="form-label text-xs">Hora Inicio <span class="text-red-500">*</span></label>
+                        <input type="time" id="dayEdit_hora_ini" required class="search-input" style="padding-left: 12px !important;" min="06:00" max="22:00">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label text-xs">Hora Fin <span class="text-red-500">*</span></label>
+                        <input type="time" id="dayEdit_hora_fin" required class="search-input" style="padding-left: 12px !important;" min="06:00" max="22:00">
+                    </div>
+                </div>
+                <div id="dayEditError" class="mt-3 hidden">
+                    <div class="p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg">
+                        <p class="text-xs text-red-600" id="dayEditErrorMsg"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer" style="padding: 12px 20px; justify-content: space-between;">
+                <button type="button" class="text-sm flex items-center gap-1 px-3 py-2 rounded-lg text-red-500 hover:bg-red-50 transition-colors" id="deleteDayAsig" title="Eliminar asignación completa">
+                    <ion-icon src="../../assets/ionicons/trash-outline.svg"></ion-icon>
+                    Eliminar
+                </button>
+                <div class="flex gap-2">
+                    <button type="button" class="btn-secondary text-sm" id="cancelDayEdit">Cancelar</button>
+                    <button type="submit" class="btn-primary text-sm" id="saveDayEdit">
+                        <ion-icon src="../../assets/ionicons/save-outline.svg"></ion-icon>
+                        Guardar
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script src="../../assets/js/asignacion/index.js?v=<?php echo time(); ?>"></script>
 </body>
 

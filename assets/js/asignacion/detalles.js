@@ -67,6 +67,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const row = document.createElement('tr');
             row.className = 'hover:bg-green-50/50 transition-colors';
             row.innerHTML = `
+                <td class="px-6 py-4 font-bold text-gray-900">${formatDate(d.detasig_fecha)}</td>
                 <td class="px-6 py-4 font-bold text-gray-900">${formatTime(d.detasig_hora_ini)}</td>
                 <td class="px-6 py-4 font-bold text-gray-900">${formatTime(d.detasig_hora_fin)}</td>
                 <td class="px-6 py-4 text-right flex justify-end gap-2">
@@ -97,6 +98,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (detail) {
             document.getElementById('modalTitle').textContent = 'Editar Franja Horaria';
             document.getElementById('detasig_id').value = detail.detasig_id;
+            document.getElementById('detasig_fecha').value = detail.detasig_fecha.split(' ')[0];
             document.getElementById('detasig_hora_ini').value = detail.detasig_hora_ini;
             document.getElementById('detasig_hora_fin').value = detail.detasig_hora_fin;
         } else {

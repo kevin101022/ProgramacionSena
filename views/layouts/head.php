@@ -70,6 +70,102 @@ if ($navItem) {
     <!-- Ionicons -->
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+    <style>
+        /* Mobile Overlay */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 90;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-overlay.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* Mobile Header */
+        .mobile-header {
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            z-index: 80;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .mobile-toggle {
+            background: none;
+            border: none;
+            color: var(--gray-800);
+            font-size: 28px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                display: block;
+                /* Disable row flex on mobile */
+                overflow-y: auto;
+            }
+
+            .mobile-header {
+                display: flex;
+            }
+
+            .main-header {
+                display: none !important;
+            }
+
+            .sidebar {
+                transform: translateX(-100%);
+                padding-top: 20px;
+                box-shadow: 10px 0 30px rgba(0, 0, 0, 0.1);
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                height: auto;
+                overflow: visible;
+                padding-top: 60px;
+                /* Space for the fixed mobile header */
+            }
+        }
+    </style>
 </head>
 
-<body class="bg-gray-50">
+<body class="bg-gray-50 flex">
+
+    <!-- Mobile Header (Visible only on mobile) -->
+    <div class="mobile-header">
+        <div class="logo">
+            <img src="../../assets/imagenes/LOGOsena.png" alt="SENA Logo" class="logo-img" style="height: 32px;">
+            <div class="logo-divider"></div>
+            <span class="logo-text" style="font-size: 16px;">Programaciones</span>
+        </div>
+        <button class="mobile-toggle" id="mobileMenuBtn">
+            <ion-icon src="../../assets/ionicons/menu-outline.svg"></ion-icon>
+        </button>
+    </div>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>

@@ -1,5 +1,4 @@
 <?php
-// ── Iniciar sesión y preparar datos ANTES de cualquier require_once ──────────
 if (session_status() === PHP_SESSION_NONE) session_start();
 
 $pageTitle     = 'Dashboard - Programaciones';
@@ -14,7 +13,7 @@ $rolLabel = match ($rolUsuario) {
     default       => 'Administrador'
 };
 
-// Obtener coordinación activa del coordinador en tiempo real desde la DB
+// Obtener coordinación activa del coordinador
 $nombreCoordinacion = null;
 $centNombre         = null;
 if ($rolUsuario === 'coordinador' && !empty($_SESSION['id'])) {
@@ -32,8 +31,10 @@ if ($rolUsuario === 'coordinador' && !empty($_SESSION['id'])) {
             );
             $stmt->execute([':num_doc' => $_SESSION['id']]);
             $coord              = $stmt->fetch(PDO::FETCH_ASSOC);
-            $nombreCoordinacion = $coord['coord_descripcion'] ?? null;
-            $centNombre         = $coord['cent_nombre']        ?? null;
+            if ($coord) {
+                $nombreCoordinacion = $coord['coord_descripcion'] ?? null;
+                $centNombre         = $coord['cent_nombre']        ?? null;
+            }
         } catch (Exception $e) {
             error_log("Dashboard coord query error: " . $e->getMessage());
         }
@@ -98,7 +99,7 @@ require_once '../layouts/sidebar.php';
                     <p>Aquí tienes un resumen de lo que está sucediendo hoy en <strong>Programaciones</strong>.</p>
                 <?php endif; ?>
             </div>
-            <?php if ($rolUsuario !== 'coordinador' || (isset($hasCoordinacion) && $hasCoordinacion)): ?>
+            <?php if ($rolUsuario !== 'coordinador' || $nombreCoordinacion): ?>
                 <div class="welcome-actions">
                     <a href="../asignacion/index.php" class="btn btn-primary">
                         <ion-icon src="../../assets/ionicons/calendar-outline.svg"></ion-icon>
@@ -108,53 +109,53 @@ require_once '../layouts/sidebar.php';
             <?php endif; ?>
         </section>
 
-        <?php if ($rolUsuario !== 'coordinador' || (isset($hasCoordinacion) && $hasCoordinacion)): ?>
+        <?php if ($rolUsuario !== 'coordinador' || $nombreCoordinacion): ?>
             <!-- Stats grid -->
             <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-card-bg-icon">
-                        <ion-icon src="../../assets/ionicons/business-outline.svg"></ion-icon>
-                    </div>
-                    <div class="stat-card-header">
-                        <span class="stat-card-label">SEDES</span>
-                        <div class="stat-card-icon green">
+                <?php if ($rolUsuario === 'centro'): ?>
+                    <div class="stat-card">
+                        <div class="stat-card-bg-icon">
                             <ion-icon src="../../assets/ionicons/business-outline.svg"></ion-icon>
                         </div>
-                    </div>
-                    <div class="stat-card-body">
-                        <span class="stat-card-number" id="statSedes">—</span>
-                        <span class="stat-card-desc">registradas</span>
-                        <p class="stat-card-context">Infraestructura física distribuida para cobertura nacional.</p>
-                    </div>
-                    <div class="stat-card-pill-container">
-                        <div class="stat-pill">
-                            <ion-icon src="../../assets/ionicons/location-outline.svg"></ion-icon>
-                            Cobertura
+                        <div class="stat-card-header">
+                            <span class="stat-card-label">SEDES</span>
+                            <div class="stat-card-icon green">
+                                <ion-icon src="../../assets/ionicons/business-outline.svg"></ion-icon>
+                            </div>
+                        </div>
+                        <div class="stat-card-body">
+                            <span class="stat-card-number" id="statSedes">—</span>
+                            <span class="stat-card-desc">registradas</span>
+                        </div>
+                        <div class="stat-card-pill-container">
+                            <div class="stat-pill">
+                                <ion-icon src="../../assets/ionicons/location-outline.svg"></ion-icon>
+                                Cobertura
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-card-bg-icon">
-                        <ion-icon src="../../assets/ionicons/school-outline.svg"></ion-icon>
-                    </div>
-                    <div class="stat-card-header">
-                        <span class="stat-card-label">PROGRAMAS</span>
-                        <div class="stat-card-icon blue">
+                    <div class="stat-card">
+                        <div class="stat-card-bg-icon">
                             <ion-icon src="../../assets/ionicons/school-outline.svg"></ion-icon>
                         </div>
-                    </div>
-                    <div class="stat-card-body">
-                        <span class="stat-card-number" id="statProgramas">—</span>
-                        <span class="stat-card-desc">activos</span>
-                        <p class="stat-card-context">Oferta académica vigente para formación titulada.</p>
-                    </div>
-                    <div class="stat-card-pill-container">
-                        <div class="stat-pill">
-                            <ion-icon src="../../assets/ionicons/star-outline.svg"></ion-icon>
-                            Calidad
+                        <div class="stat-card-header">
+                            <span class="stat-card-label">PROGRAMAS</span>
+                            <div class="stat-card-icon blue">
+                                <ion-icon src="../../assets/ionicons/school-outline.svg"></ion-icon>
+                            </div>
+                        </div>
+                        <div class="stat-card-body">
+                            <span class="stat-card-number" id="statProgramas">—</span>
+                            <span class="stat-card-desc">activos</span>
+                        </div>
+                        <div class="stat-card-pill-container">
+                            <div class="stat-pill">
+                                <ion-icon src="../../assets/ionicons/star-outline.svg"></ion-icon>
+                                Calidad
+                            </div>
                         </div>
                     </div>
-                </div>
+                <?php endif; ?>
                 <div class="stat-card">
                     <div class="stat-card-bg-icon">
                         <ion-icon src="../../assets/ionicons/layers-outline.svg"></ion-icon>
@@ -226,24 +227,26 @@ require_once '../layouts/sidebar.php';
             <!-- Quick access cards -->
             <h3 class="section-title">Accesos Rápidos</h3>
             <div class="quick-access-grid">
-                <a href="../sede/index.php" class="quick-access-card accent-green">
-                    <div class="quick-access-icon green">
-                        <ion-icon src="../../assets/ionicons/business-outline.svg"></ion-icon>
-                    </div>
-                    <div class="quick-access-info">
-                        <h4>Gestionar Sedes</h4>
-                        <p>Administrar sedes y ambientes</p>
-                    </div>
-                </a>
-                <a href="../programa/index.php" class="quick-access-card accent-blue">
-                    <div class="quick-access-icon blue">
-                        <ion-icon src="../../assets/ionicons/school-outline.svg"></ion-icon>
-                    </div>
-                    <div class="quick-access-info">
-                        <h4>Programas</h4>
-                        <p>Gestionar programas de formación</p>
-                    </div>
-                </a>
+                <?php if ($rolUsuario === 'centro'): ?>
+                    <a href="../sede/index.php" class="quick-access-card accent-green">
+                        <div class="quick-access-icon green">
+                            <ion-icon src="../../assets/ionicons/business-outline.svg"></ion-icon>
+                        </div>
+                        <div class="quick-access-info">
+                            <h4>Gestionar Sedes</h4>
+                            <p>Administrar sedes y ambientes</p>
+                        </div>
+                    </a>
+                    <a href="../programa/index.php" class="quick-access-card accent-blue">
+                        <div class="quick-access-icon blue">
+                            <ion-icon src="../../assets/ionicons/school-outline.svg"></ion-icon>
+                        </div>
+                        <div class="quick-access-info">
+                            <h4>Programas</h4>
+                            <p>Gestionar programas de formación</p>
+                        </div>
+                    </a>
+                <?php endif; ?>
                 <a href="../ficha/index.php" class="quick-access-card accent-purple">
                     <div class="quick-access-icon purple">
                         <ion-icon src="../../assets/ionicons/layers-outline.svg"></ion-icon>
@@ -253,15 +256,27 @@ require_once '../layouts/sidebar.php';
                         <p>Administrar fichas de formación</p>
                     </div>
                 </a>
-                <a href="../instructor/index.php" class="quick-access-card accent-amber">
-                    <div class="quick-access-icon amber">
-                        <ion-icon src="../../assets/ionicons/people-outline.svg"></ion-icon>
-                    </div>
-                    <div class="quick-access-info">
-                        <h4>Instructores</h4>
-                        <p>Gestionar instructores</p>
-                    </div>
-                </a>
+                <?php if ($rolUsuario === 'coordinador'): ?>
+                    <a href="../instru_competencia/index.php" class="quick-access-card accent-cyan">
+                        <div class="quick-access-icon" style="background: #06b6d420; color: #06b6d4;">
+                            <ion-icon src="../../assets/ionicons/git-merge-outline.svg"></ion-icon>
+                        </div>
+                        <div class="quick-access-info">
+                            <h4>Habilitaciones</h4>
+                            <p>Instructor x Competencia</p>
+                        </div>
+                    </a>
+                <?php else: ?>
+                    <a href="../instructor/index.php" class="quick-access-card accent-amber">
+                        <div class="quick-access-icon amber">
+                            <ion-icon src="../../assets/ionicons/people-outline.svg"></ion-icon>
+                        </div>
+                        <div class="quick-access-info">
+                            <h4>Instructores</h4>
+                            <p>Gestionar instructores</p>
+                        </div>
+                    </a>
+                <?php endif; ?>
                 <a href="../asignacion/index.php" class="quick-access-card accent-emerald">
                     <div class="quick-access-icon emerald">
                         <ion-icon src="../../assets/ionicons/calendar-outline.svg"></ion-icon>
@@ -282,8 +297,6 @@ require_once '../layouts/sidebar.php';
                 </a>
             </div>
         <?php endif; ?>
-
-        <!-- Activity Feed -->
     </div>
 </main>
 
@@ -293,12 +306,14 @@ require_once '../layouts/sidebar.php';
             'Accept': 'application/json'
         };
         const endpoints = {
-            statSedes: 'sede',
-            statProgramas: 'programa',
             statFichas: 'ficha',
             statInstructores: 'instructor',
             statAsignaciones: 'asignacion'
         };
+        <?php if ($rolUsuario === 'centro'): ?>
+            endpoints.statSedes = 'sede';
+            endpoints.statProgramas = 'programa';
+        <?php endif; ?>
 
         for (const [elId, ctrl] of Object.entries(endpoints)) {
             try {

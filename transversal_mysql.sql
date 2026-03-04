@@ -72,7 +72,7 @@ CREATE TABLE `competencia` (
 --
 CREATE TABLE `sede` (
   `sede_id` int(11) NOT NULL,
-  `sede_nombre` varchar(45) NOT NULL,
+  `sede_nombre` varchar(100) NOT NULL,
   `centro_formacion_cent_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`sede_id`),
   KEY `fk_sede_centro_formacion` (`centro_formacion_cent_id`),
@@ -179,10 +179,10 @@ CREATE TABLE `ficha` (
   PRIMARY KEY (`fich_id`),
   KEY `fk_ficha_programa1` (`programa_prog_id`),
   KEY `fk_ficha_instructor1` (`instructor_inst_id_lider`),
-  KEY `fk_ficha_coordinacion1` (`coordinacion_coord_id`),
+  KEY `fk_ficha_coordinacion` (`coordinacion_coord_id`),
   CONSTRAINT `fk_ficha_programa1` FOREIGN KEY (`programa_prog_id`) REFERENCES `programa` (`prog_codigo`),
   CONSTRAINT `fk_ficha_instructor1` FOREIGN KEY (`instructor_inst_id_lider`) REFERENCES `instructor` (`numero_documento`),
-  CONSTRAINT `fk_ficha_coordinacion1` FOREIGN KEY (`coordinacion_coord_id`) REFERENCES `coordinacion` (`coord_id`) ON DELETE RESTRICT ON UPDATE CASCADE
+  CONSTRAINT `fk_ficha_coordinacion` FOREIGN KEY (`coordinacion_coord_id`) REFERENCES `coordinacion` (`coord_id`) ON DELETE RESTRICT ON UPDATE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- --------------------------------------------------------
@@ -219,6 +219,7 @@ CREATE TABLE `detallexasignacion` (
   `asignacion_asig_id` int(11) NOT NULL,
   `detasig_hora_ini` time NOT NULL,
   `detasig_hora_fin` time NOT NULL,
+  `detasig_fecha` date NOT NULL DEFAULT (CURRENT_DATE),
   PRIMARY KEY (`detasig_id`),
   KEY `fk_detallexasignacion_asignacion1` (`asignacion_asig_id`),
   CONSTRAINT `fk_detallexasignacion_asignacion1` FOREIGN KEY (`asignacion_asig_id`) REFERENCES `asignacion` (`asig_id`)
@@ -259,8 +260,8 @@ CREATE TABLE `auditoria_asignacion` (
   `fecha_hora` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `documento_usuario_accion` bigint(20) NOT NULL,
   `correo_usuario` varchar(45) NOT NULL,
-  `nombre_usuario_accion` varchar(100) DEFAULT NULL,
   `tipo_accion` varchar(10) NOT NULL,
+  `nombre_usuario_accion` varchar(100) DEFAULT NULL,
   PRIMARY KEY (`id_auditoria`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
@@ -278,11 +279,11 @@ BEGIN
     INSERT INTO `auditoria_asignacion` (
         `instructor_inst_id`, `asig_fecha_ini`, `asig_fecha_fin`, `ficha_fich_id`, 
         `ambiente_amb_id`, `competencia_comp_id`, `asig_id`,
-        `documento_usuario_accion`, `correo_usuario`, `nombre_usuario_accion`, `tipo_accion`
+        `documento_usuario_accion`, `correo_usuario`, `tipo_accion`, `nombre_usuario_accion`
     ) VALUES (
         NEW.`instructor_inst_id`, NEW.`asig_fecha_ini`, NEW.`asig_fecha_fin`, NEW.`ficha_fich_id`, 
         NEW.`ambiente_amb_id`, NEW.`competencia_comp_id`, NEW.`asig_id`,
-        IFNULL(@myapp_documento_usuario, 0), IFNULL(@myapp_correo_usuario, 'Sistema'), IFNULL(@myapp_nombre_usuario, 'Sistema'), 'INSERT'
+        IFNULL(@myapp_documento_usuario, 0), IFNULL(@myapp_correo_usuario, 'Sistema'), 'INSERT', IFNULL(@myapp_nombre_usuario, 'Sistema')
     );
 END//
 
@@ -292,11 +293,11 @@ BEGIN
     INSERT INTO `auditoria_asignacion` (
         `instructor_inst_id`, `asig_fecha_ini`, `asig_fecha_fin`, `ficha_fich_id`, 
         `ambiente_amb_id`, `competencia_comp_id`, `asig_id`,
-        `documento_usuario_accion`, `correo_usuario`, `nombre_usuario_accion`, `tipo_accion`
+        `documento_usuario_accion`, `correo_usuario`, `tipo_accion`, `nombre_usuario_accion`
     ) VALUES (
         NEW.`instructor_inst_id`, NEW.`asig_fecha_ini`, NEW.`asig_fecha_fin`, NEW.`ficha_fich_id`, 
         NEW.`ambiente_amb_id`, NEW.`competencia_comp_id`, NEW.`asig_id`,
-        IFNULL(@myapp_documento_usuario, 0), IFNULL(@myapp_correo_usuario, 'Sistema'), IFNULL(@myapp_nombre_usuario, 'Sistema'), 'UPDATE'
+        IFNULL(@myapp_documento_usuario, 0), IFNULL(@myapp_correo_usuario, 'Sistema'), 'UPDATE', IFNULL(@myapp_nombre_usuario, 'Sistema')
     );
 END//
 
@@ -306,11 +307,11 @@ BEGIN
     INSERT INTO `auditoria_asignacion` (
         `instructor_inst_id`, `asig_fecha_ini`, `asig_fecha_fin`, `ficha_fich_id`, 
         `ambiente_amb_id`, `competencia_comp_id`, `asig_id`,
-        `documento_usuario_accion`, `correo_usuario`, `nombre_usuario_accion`, `tipo_accion`
+        `documento_usuario_accion`, `correo_usuario`, `tipo_accion`, `nombre_usuario_accion`
     ) VALUES (
         OLD.`instructor_inst_id`, OLD.`asig_fecha_ini`, OLD.`asig_fecha_fin`, OLD.`ficha_fich_id`, 
         OLD.`ambiente_amb_id`, OLD.`competencia_comp_id`, OLD.`asig_id`,
-        IFNULL(@myapp_documento_usuario, 0), IFNULL(@myapp_correo_usuario, 'Sistema'), IFNULL(@myapp_nombre_usuario, 'Sistema'), 'DELETE'
+        IFNULL(@myapp_documento_usuario, 0), IFNULL(@myapp_correo_usuario, 'Sistema'), 'DELETE', IFNULL(@myapp_nombre_usuario, 'Sistema')
     );
 END//
 

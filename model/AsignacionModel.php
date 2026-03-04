@@ -27,7 +27,8 @@ class AsignacionModel
     {
         try {
             $query = "INSERT INTO ASIGNACION (INSTRUCTOR_inst_id, asig_fecha_ini, asig_fecha_fin, FICHA_fich_id, AMBIENTE_amb_id, COMPETENCIA_comp_id) 
-                      VALUES (:inst_id, :fecha_ini, :fecha_fin, :ficha_id, :amb_id, :comp_id)";
+                      VALUES (:inst_id, :fecha_ini, :fecha_fin, :ficha_id, :amb_id, :comp_id)
+                      RETURNING ASIG_ID";
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':inst_id', $this->instructor_inst_id);
             $stmt->bindParam(':fecha_ini', $this->asig_fecha_ini);
@@ -36,7 +37,8 @@ class AsignacionModel
             $stmt->bindParam(':amb_id', $this->ambiente_amb_id);
             $stmt->bindParam(':comp_id', $this->competencia_comp_id);
             $stmt->execute();
-            return $this->db->lastInsertId();
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $row['asig_id'] ?? $this->db->lastInsertId();
         } catch (PDOException $e) {
             error_log("Error en AsignacionModel::create: " . $e->getMessage());
             throw $e;
@@ -129,7 +131,10 @@ class AsignacionModel
     public function checkConflicts($inst_id, $amb_id, $fich_id, $fecha_ini, $fecha_fin, $asig_id = null)
     {
         // Detect overlaps for: Same Instructor OR Same Environment OR Same Ficha
-        $sql = "SELECT a.*, i.inst_nombres, i.inst_apellidos, am.amb_nombre, f.fich_id as ficha_num
+        $sql = "SELECT a.ASIG_ID as asig_id, a.INSTRUCTOR_inst_id as instructor_inst_id, 
+                       a.AMBIENTE_amb_id as ambiente_amb_id, a.FICHA_fich_id as ficha_fich_id,
+                       a.asig_fecha_ini, a.asig_fecha_fin,
+                       i.inst_nombres, i.inst_apellidos, am.amb_nombre, f.fich_id as ficha_num
                 FROM ASIGNACION a
                 INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.numero_documento
                 INNER JOIN AMBIENTE am ON a.AMBIENTE_amb_id = am.amb_id
@@ -156,9 +161,9 @@ class AsignacionModel
 
         return array_map(function ($row) use ($inst_id, $amb_id, $fich_id) {
             $row['conflict_type'] = [];
-            if ($row['INSTRUCTOR_inst_id'] == $inst_id) $row['conflict_type'][] = 'instructor';
-            if ($row['AMBIENTE_amb_id'] == $amb_id) $row['conflict_type'][] = 'ambiente';
-            if ($row['FICHA_fich_id'] == $fich_id) $row['conflict_type'][] = 'ficha';
+            if ($row['instructor_inst_id'] == $inst_id) $row['conflict_type'][] = 'instructor';
+            if ($row['ambiente_amb_id'] == $amb_id) $row['conflict_type'][] = 'ambiente';
+            if ($row['ficha_fich_id'] == $fich_id) $row['conflict_type'][] = 'ficha';
             return $row;
         }, $results);
     }

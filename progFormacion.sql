@@ -2,12 +2,12 @@
 -- PostgreSQL database dump
 --
 
-\restrict WtI9cxfCp0HCk35tURew9XkSdGHcChf3NAQJAQdD9DsKpQyKaVfcnxOIa3UTJ5g
+\restrict hNibkJIxqdINqv2EyyZAE2EZ6u63DWNozFOQWiQxeg9f7iVAXebkof3jxXKht9z
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.1
 
--- Started on 2026-03-02 22:26:53
+-- Started on 2026-03-04 07:48:11
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -30,7 +30,7 @@ CREATE EXTENSION IF NOT EXISTS pgcrypto WITH SCHEMA public;
 
 
 --
--- TOC entry 5190 (class 0 OID 0)
+-- TOC entry 5191 (class 0 OID 0)
 -- Dependencies: 2
 -- Name: EXTENSION pgcrypto; Type: COMMENT; Schema: -; Owner: 
 --
@@ -162,7 +162,7 @@ CREATE SEQUENCE public.asignacion_asig_id_seq
 ALTER SEQUENCE public.asignacion_asig_id_seq OWNER TO postgres;
 
 --
--- TOC entry 5191 (class 0 OID 0)
+-- TOC entry 5192 (class 0 OID 0)
 -- Dependencies: 230
 -- Name: asignacion_asig_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -211,7 +211,7 @@ CREATE SEQUENCE public.auditoria_asignacion_id_auditoria_seq
 ALTER SEQUENCE public.auditoria_asignacion_id_auditoria_seq OWNER TO postgres;
 
 --
--- TOC entry 5192 (class 0 OID 0)
+-- TOC entry 5193 (class 0 OID 0)
 -- Dependencies: 236
 -- Name: auditoria_asignacion_id_auditoria_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -296,7 +296,7 @@ CREATE SEQUENCE public.coordinacion_coord_id_seq
 ALTER SEQUENCE public.coordinacion_coord_id_seq OWNER TO postgres;
 
 --
--- TOC entry 5193 (class 0 OID 0)
+-- TOC entry 5194 (class 0 OID 0)
 -- Dependencies: 239
 -- Name: coordinacion_coord_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -313,7 +313,8 @@ CREATE TABLE public.detallexasignacion (
     detasig_id integer NOT NULL,
     asignacion_asig_id integer NOT NULL,
     detasig_hora_ini time without time zone NOT NULL,
-    detasig_hora_fin time without time zone NOT NULL
+    detasig_hora_fin time without time zone NOT NULL,
+    detasig_fecha date DEFAULT CURRENT_DATE NOT NULL
 );
 
 
@@ -336,7 +337,7 @@ CREATE SEQUENCE public.detallexasignacion_detasig_id_seq
 ALTER SEQUENCE public.detallexasignacion_detasig_id_seq OWNER TO postgres;
 
 --
--- TOC entry 5194 (class 0 OID 0)
+-- TOC entry 5195 (class 0 OID 0)
 -- Dependencies: 232
 -- Name: detallexasignacion_detasig_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -395,7 +396,7 @@ CREATE SEQUENCE public.instru_competencia_inscomp_id_seq
 ALTER SEQUENCE public.instru_competencia_inscomp_id_seq OWNER TO postgres;
 
 --
--- TOC entry 5195 (class 0 OID 0)
+-- TOC entry 5196 (class 0 OID 0)
 -- Dependencies: 234
 -- Name: instru_competencia_inscomp_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
@@ -492,7 +493,7 @@ ALTER TABLE ONLY public.asignacion ALTER COLUMN asig_id SET DEFAULT nextval('pub
 
 
 --
--- TOC entry 4963 (class 2604 OID 22220)
+-- TOC entry 4964 (class 2604 OID 22220)
 -- Name: auditoria_asignacion id_auditoria; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -516,7 +517,7 @@ ALTER TABLE ONLY public.detallexasignacion ALTER COLUMN detasig_id SET DEFAULT n
 
 
 --
--- TOC entry 4962 (class 2604 OID 22135)
+-- TOC entry 4963 (class 2604 OID 22135)
 -- Name: instru_competencia inscomp_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -524,7 +525,7 @@ ALTER TABLE ONLY public.instru_competencia ALTER COLUMN inscomp_id SET DEFAULT n
 
 
 --
--- TOC entry 5167 (class 0 OID 21959)
+-- TOC entry 5168 (class 0 OID 21959)
 -- Dependencies: 222
 -- Data for Name: ambiente; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -535,29 +536,33 @@ COPY public.ambiente (amb_id, amb_nombre, tipo_ambiente, sede_sede_id) FROM stdi
 
 
 --
--- TOC entry 5176 (class 0 OID 22082)
+-- TOC entry 5177 (class 0 OID 22082)
 -- Dependencies: 231
 -- Data for Name: asignacion; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.asignacion (asig_id, instructor_inst_id, asig_fecha_ini, asig_fecha_fin, ficha_fich_id, ambiente_amb_id, competencia_comp_id) FROM stdin;
-16	76758463	2026-03-02	2026-04-02	3115418	201	2
+20	5678657856856	2026-03-04	2026-03-10	3115418	201	1
 \.
 
 
 --
--- TOC entry 5182 (class 0 OID 22217)
+-- TOC entry 5183 (class 0 OID 22217)
 -- Dependencies: 237
 -- Data for Name: auditoria_asignacion; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.auditoria_asignacion (id_auditoria, instructor_inst_id, asig_fecha_ini, asig_fecha_fin, ficha_fich_id, ambiente_amb_id, competencia_comp_id, asig_id, fecha_hora, documento_usuario_accion, correo_usuario, tipo_accion, nombre_usuario_accion) FROM stdin;
 1	76758463	2026-03-02	2026-04-02	3115418	201	2	16	2026-03-01 22:55:12.529625	0	Sistema	INSERT	\N
+2	76758463	2026-03-02	2026-04-02	3115418	201	2	16	2026-03-03 22:30:41.557175	0	Sistema	DELETE	Sistema
+5	76758463	2026-03-04	2026-03-13	3115418	201	2	19	2026-03-03 23:54:53.040976	234567	petrosky@gmail.com	INSERT	Gustavo Petro
+6	5678657856856	2026-03-04	2026-03-10	3115418	201	1	20	2026-03-04 00:14:20.071888	234567	petrosky@gmail.com	INSERT	Gustavo Petro
+7	76758463	2026-03-04	2026-03-13	3115418	201	2	19	2026-03-04 00:24:13.848942	234567	petrosky@gmail.com	DELETE	Gustavo Petro
 \.
 
 
 --
--- TOC entry 5165 (class 0 OID 21944)
+-- TOC entry 5166 (class 0 OID 21944)
 -- Dependencies: 220
 -- Data for Name: centro_formacion; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -569,7 +574,7 @@ COPY public.centro_formacion (cent_id, cent_nombre, cent_correo, cent_password) 
 
 
 --
--- TOC entry 5170 (class 0 OID 21995)
+-- TOC entry 5171 (class 0 OID 21995)
 -- Dependencies: 225
 -- Data for Name: competencia; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -581,7 +586,7 @@ COPY public.competencia (comp_id, comp_nombre_corto, comp_horas, comp_nombre_uni
 
 
 --
--- TOC entry 5171 (class 0 OID 22004)
+-- TOC entry 5172 (class 0 OID 22004)
 -- Dependencies: 226
 -- Data for Name: competxprograma; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -595,30 +600,34 @@ COPY public.competxprograma (programa_prog_id, competencia_comp_id) FROM stdin;
 
 
 --
--- TOC entry 5173 (class 0 OID 22038)
+-- TOC entry 5174 (class 0 OID 22038)
 -- Dependencies: 228
 -- Data for Name: coordinacion; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
 COPY public.coordinacion (coord_descripcion, centro_formacion_cent_id, coord_id, estado, coordinador_actual) FROM stdin;
 Industria y Comercio	1	3	1	2345678643
-TIC	1	2	1	\N
+TIC	1	2	1	234567
 \.
 
 
 --
--- TOC entry 5178 (class 0 OID 22116)
+-- TOC entry 5179 (class 0 OID 22116)
 -- Dependencies: 233
 -- Data for Name: detallexasignacion; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.detallexasignacion (detasig_id, asignacion_asig_id, detasig_hora_ini, detasig_hora_fin) FROM stdin;
-2	16	06:00:00	09:00:00
+COPY public.detallexasignacion (detasig_id, asignacion_asig_id, detasig_hora_ini, detasig_hora_fin, detasig_fecha) FROM stdin;
+12	20	08:00:00	12:00:00	2026-03-04
+13	20	08:00:00	12:00:00	2026-03-05
+14	20	08:00:00	12:00:00	2026-03-06
+15	20	08:00:00	12:00:00	2026-03-09
+16	20	08:00:00	12:00:00	2026-03-10
 \.
 
 
 --
--- TOC entry 5174 (class 0 OID 22054)
+-- TOC entry 5175 (class 0 OID 22054)
 -- Dependencies: 229
 -- Data for Name: ficha; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -629,7 +638,7 @@ COPY public.ficha (fich_id, programa_prog_id, instructor_inst_id_lider, fich_jor
 
 
 --
--- TOC entry 5180 (class 0 OID 22132)
+-- TOC entry 5181 (class 0 OID 22132)
 -- Dependencies: 235
 -- Data for Name: instru_competencia; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -646,7 +655,7 @@ COPY public.instru_competencia (inscomp_id, instructor_inst_id, competxprograma_
 
 
 --
--- TOC entry 5172 (class 0 OID 22021)
+-- TOC entry 5173 (class 0 OID 22021)
 -- Dependencies: 227
 -- Data for Name: instructor; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -659,7 +668,7 @@ Carlos	Pietro	pietro@gmail.com	3239284393	1	$2y$10$Di2c2fd1w.zzFBiuSzmi7.s/WPmvW
 
 
 --
--- TOC entry 5169 (class 0 OID 21981)
+-- TOC entry 5170 (class 0 OID 21981)
 -- Dependencies: 224
 -- Data for Name: programa; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -671,7 +680,7 @@ COPY public.programa (prog_codigo, prog_denominacion, tit_programa_titpro_id, pr
 
 
 --
--- TOC entry 5166 (class 0 OID 21951)
+-- TOC entry 5167 (class 0 OID 21951)
 -- Dependencies: 221
 -- Data for Name: sede; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -689,7 +698,7 @@ COPY public.sede (sede_id, sede_nombre, centro_formacion_cent_id) FROM stdin;
 
 
 --
--- TOC entry 5168 (class 0 OID 21974)
+-- TOC entry 5169 (class 0 OID 21974)
 -- Dependencies: 223
 -- Data for Name: titulo_programa; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -701,7 +710,7 @@ COPY public.titulo_programa (titpro_id, titpro_nombre, centro_formacion_cent_id)
 
 
 --
--- TOC entry 5183 (class 0 OID 22384)
+-- TOC entry 5184 (class 0 OID 22384)
 -- Dependencies: 238
 -- Data for Name: usuario_coordinador; Type: TABLE DATA; Schema: public; Owner: postgres
 --
@@ -713,25 +722,25 @@ COPY public.usuario_coordinador (numero_documento, coord_nombre_coordinador, coo
 
 
 --
--- TOC entry 5196 (class 0 OID 0)
+-- TOC entry 5197 (class 0 OID 0)
 -- Dependencies: 230
 -- Name: asignacion_asig_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.asignacion_asig_id_seq', 16, true);
-
-
---
--- TOC entry 5197 (class 0 OID 0)
--- Dependencies: 236
--- Name: auditoria_asignacion_id_auditoria_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
---
-
-SELECT pg_catalog.setval('public.auditoria_asignacion_id_auditoria_seq', 1, true);
+SELECT pg_catalog.setval('public.asignacion_asig_id_seq', 21, true);
 
 
 --
 -- TOC entry 5198 (class 0 OID 0)
+-- Dependencies: 236
+-- Name: auditoria_asignacion_id_auditoria_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
+--
+
+SELECT pg_catalog.setval('public.auditoria_asignacion_id_auditoria_seq', 8, true);
+
+
+--
+-- TOC entry 5199 (class 0 OID 0)
 -- Dependencies: 239
 -- Name: coordinacion_coord_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
@@ -740,16 +749,16 @@ SELECT pg_catalog.setval('public.coordinacion_coord_id_seq', 3, true);
 
 
 --
--- TOC entry 5199 (class 0 OID 0)
+-- TOC entry 5200 (class 0 OID 0)
 -- Dependencies: 232
 -- Name: detallexasignacion_detasig_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.detallexasignacion_detasig_id_seq', 2, true);
+SELECT pg_catalog.setval('public.detallexasignacion_detasig_id_seq', 16, true);
 
 
 --
--- TOC entry 5200 (class 0 OID 0)
+-- TOC entry 5201 (class 0 OID 0)
 -- Dependencies: 234
 -- Name: instru_competencia_inscomp_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
@@ -758,7 +767,7 @@ SELECT pg_catalog.setval('public.instru_competencia_inscomp_id_seq', 17, true);
 
 
 --
--- TOC entry 4971 (class 2606 OID 21968)
+-- TOC entry 4972 (class 2606 OID 21968)
 -- Name: ambiente ambiente_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -767,7 +776,7 @@ ALTER TABLE ONLY public.ambiente
 
 
 --
--- TOC entry 4987 (class 2606 OID 22094)
+-- TOC entry 4988 (class 2606 OID 22094)
 -- Name: asignacion asignacion_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -776,7 +785,7 @@ ALTER TABLE ONLY public.asignacion
 
 
 --
--- TOC entry 4993 (class 2606 OID 22234)
+-- TOC entry 4994 (class 2606 OID 22234)
 -- Name: auditoria_asignacion auditoria_asignacion_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -785,7 +794,7 @@ ALTER TABLE ONLY public.auditoria_asignacion
 
 
 --
--- TOC entry 4967 (class 2606 OID 21950)
+-- TOC entry 4968 (class 2606 OID 21950)
 -- Name: centro_formacion centro_formacion_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -794,7 +803,7 @@ ALTER TABLE ONLY public.centro_formacion
 
 
 --
--- TOC entry 4977 (class 2606 OID 22003)
+-- TOC entry 4978 (class 2606 OID 22003)
 -- Name: competencia competencia_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -803,7 +812,7 @@ ALTER TABLE ONLY public.competencia
 
 
 --
--- TOC entry 4979 (class 2606 OID 22010)
+-- TOC entry 4980 (class 2606 OID 22010)
 -- Name: competxprograma competxprograma_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -812,7 +821,7 @@ ALTER TABLE ONLY public.competxprograma
 
 
 --
--- TOC entry 4983 (class 2606 OID 22404)
+-- TOC entry 4984 (class 2606 OID 22404)
 -- Name: coordinacion coordinacion_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -821,7 +830,7 @@ ALTER TABLE ONLY public.coordinacion
 
 
 --
--- TOC entry 4989 (class 2606 OID 22125)
+-- TOC entry 4990 (class 2606 OID 22125)
 -- Name: detallexasignacion detallexasignacion_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -830,7 +839,7 @@ ALTER TABLE ONLY public.detallexasignacion
 
 
 --
--- TOC entry 4985 (class 2606 OID 22065)
+-- TOC entry 4986 (class 2606 OID 22065)
 -- Name: ficha ficha_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -839,7 +848,7 @@ ALTER TABLE ONLY public.ficha
 
 
 --
--- TOC entry 4991 (class 2606 OID 22142)
+-- TOC entry 4992 (class 2606 OID 22142)
 -- Name: instru_competencia instru_competencia_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -848,7 +857,7 @@ ALTER TABLE ONLY public.instru_competencia
 
 
 --
--- TOC entry 4981 (class 2606 OID 22174)
+-- TOC entry 4982 (class 2606 OID 22174)
 -- Name: instructor instructor_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -857,7 +866,7 @@ ALTER TABLE ONLY public.instructor
 
 
 --
--- TOC entry 4975 (class 2606 OID 21989)
+-- TOC entry 4976 (class 2606 OID 21989)
 -- Name: programa programa_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -866,7 +875,7 @@ ALTER TABLE ONLY public.programa
 
 
 --
--- TOC entry 4969 (class 2606 OID 21958)
+-- TOC entry 4970 (class 2606 OID 21958)
 -- Name: sede sede_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -875,7 +884,7 @@ ALTER TABLE ONLY public.sede
 
 
 --
--- TOC entry 4973 (class 2606 OID 21980)
+-- TOC entry 4974 (class 2606 OID 21980)
 -- Name: titulo_programa titulo_programa_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -884,7 +893,7 @@ ALTER TABLE ONLY public.titulo_programa
 
 
 --
--- TOC entry 4995 (class 2606 OID 22394)
+-- TOC entry 4996 (class 2606 OID 22394)
 -- Name: usuario_coordinador usuario_coordinador_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -893,7 +902,7 @@ ALTER TABLE ONLY public.usuario_coordinador
 
 
 --
--- TOC entry 5017 (class 2620 OID 22236)
+-- TOC entry 5018 (class 2620 OID 22236)
 -- Name: asignacion trg_asignacion_audit; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -901,7 +910,7 @@ CREATE TRIGGER trg_asignacion_audit AFTER INSERT OR DELETE OR UPDATE ON public.a
 
 
 --
--- TOC entry 4996 (class 2606 OID 21969)
+-- TOC entry 4997 (class 2606 OID 21969)
 -- Name: ambiente fk_ambiente_sede1; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -910,7 +919,7 @@ ALTER TABLE ONLY public.ambiente
 
 
 --
--- TOC entry 5009 (class 2606 OID 22095)
+-- TOC entry 5010 (class 2606 OID 22095)
 -- Name: asignacion fk_asignacion_ambiente1; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -919,7 +928,7 @@ ALTER TABLE ONLY public.asignacion
 
 
 --
--- TOC entry 5010 (class 2606 OID 22100)
+-- TOC entry 5011 (class 2606 OID 22100)
 -- Name: asignacion fk_asignacion_competencia1; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -928,7 +937,7 @@ ALTER TABLE ONLY public.asignacion
 
 
 --
--- TOC entry 5011 (class 2606 OID 22105)
+-- TOC entry 5012 (class 2606 OID 22105)
 -- Name: asignacion fk_asignacion_ficha1; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -937,7 +946,7 @@ ALTER TABLE ONLY public.asignacion
 
 
 --
--- TOC entry 5012 (class 2606 OID 22176)
+-- TOC entry 5013 (class 2606 OID 22176)
 -- Name: asignacion fk_asignacion_instructor1; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -946,7 +955,7 @@ ALTER TABLE ONLY public.asignacion
 
 
 --
--- TOC entry 5000 (class 2606 OID 22366)
+-- TOC entry 5001 (class 2606 OID 22366)
 -- Name: competencia fk_competencia_centro; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -955,7 +964,7 @@ ALTER TABLE ONLY public.competencia
 
 
 --
--- TOC entry 5001 (class 2606 OID 22011)
+-- TOC entry 5002 (class 2606 OID 22011)
 -- Name: competxprograma fk_competxprograma_competencia1; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -964,7 +973,7 @@ ALTER TABLE ONLY public.competxprograma
 
 
 --
--- TOC entry 5002 (class 2606 OID 22016)
+-- TOC entry 5003 (class 2606 OID 22016)
 -- Name: competxprograma fk_competxprograma_programa1; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -973,7 +982,7 @@ ALTER TABLE ONLY public.competxprograma
 
 
 --
--- TOC entry 5004 (class 2606 OID 22049)
+-- TOC entry 5005 (class 2606 OID 22049)
 -- Name: coordinacion fk_coordinacion_centro_formacion1; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -982,7 +991,7 @@ ALTER TABLE ONLY public.coordinacion
 
 
 --
--- TOC entry 5005 (class 2606 OID 22411)
+-- TOC entry 5006 (class 2606 OID 22411)
 -- Name: coordinacion fk_coordinador_actual; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -991,7 +1000,7 @@ ALTER TABLE ONLY public.coordinacion
 
 
 --
--- TOC entry 5013 (class 2606 OID 22211)
+-- TOC entry 5014 (class 2606 OID 22211)
 -- Name: detallexasignacion fk_detallexasignacion_asignacion1; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1000,7 +1009,7 @@ ALTER TABLE ONLY public.detallexasignacion
 
 
 --
--- TOC entry 5006 (class 2606 OID 22421)
+-- TOC entry 5007 (class 2606 OID 22421)
 -- Name: ficha fk_ficha_coordinacion; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1009,7 +1018,7 @@ ALTER TABLE ONLY public.ficha
 
 
 --
--- TOC entry 5007 (class 2606 OID 22187)
+-- TOC entry 5008 (class 2606 OID 22187)
 -- Name: ficha fk_ficha_instructor1; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1018,7 +1027,7 @@ ALTER TABLE ONLY public.ficha
 
 
 --
--- TOC entry 5008 (class 2606 OID 22076)
+-- TOC entry 5009 (class 2606 OID 22076)
 -- Name: ficha fk_ficha_programa1; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1027,7 +1036,7 @@ ALTER TABLE ONLY public.ficha
 
 
 --
--- TOC entry 5014 (class 2606 OID 22143)
+-- TOC entry 5015 (class 2606 OID 22143)
 -- Name: instru_competencia fk_instru_competencia_competxprograma1; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1036,7 +1045,7 @@ ALTER TABLE ONLY public.instru_competencia
 
 
 --
--- TOC entry 5015 (class 2606 OID 22202)
+-- TOC entry 5016 (class 2606 OID 22202)
 -- Name: instru_competencia fk_instru_competencia_instructor1; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1045,7 +1054,7 @@ ALTER TABLE ONLY public.instru_competencia
 
 
 --
--- TOC entry 5003 (class 2606 OID 22033)
+-- TOC entry 5004 (class 2606 OID 22033)
 -- Name: instructor fk_instructor_centro_formacion1; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1054,7 +1063,7 @@ ALTER TABLE ONLY public.instructor
 
 
 --
--- TOC entry 4998 (class 2606 OID 22361)
+-- TOC entry 4999 (class 2606 OID 22361)
 -- Name: programa fk_programa_centro; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1063,7 +1072,7 @@ ALTER TABLE ONLY public.programa
 
 
 --
--- TOC entry 4999 (class 2606 OID 21990)
+-- TOC entry 5000 (class 2606 OID 21990)
 -- Name: programa fk_programa_tipo_programa; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1072,7 +1081,7 @@ ALTER TABLE ONLY public.programa
 
 
 --
--- TOC entry 4997 (class 2606 OID 22371)
+-- TOC entry 4998 (class 2606 OID 22371)
 -- Name: titulo_programa fk_titulo_programa_centro; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1081,7 +1090,7 @@ ALTER TABLE ONLY public.titulo_programa
 
 
 --
--- TOC entry 5016 (class 2606 OID 22395)
+-- TOC entry 5017 (class 2606 OID 22395)
 -- Name: usuario_coordinador fk_user_centro; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1089,11 +1098,11 @@ ALTER TABLE ONLY public.usuario_coordinador
     ADD CONSTRAINT fk_user_centro FOREIGN KEY (centro_formacion_id) REFERENCES public.centro_formacion(cent_id) ON UPDATE CASCADE ON DELETE SET NULL;
 
 
--- Completed on 2026-03-02 22:26:53
+-- Completed on 2026-03-04 07:48:11
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict WtI9cxfCp0HCk35tURew9XkSdGHcChf3NAQJAQdD9DsKpQyKaVfcnxOIa3UTJ5g
+\unrestrict hNibkJIxqdINqv2EyyZAE2EZ6u63DWNozFOQWiQxeg9f7iVAXebkof3jxXKht9z
 

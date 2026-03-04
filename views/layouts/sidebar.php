@@ -88,6 +88,10 @@ $nombre_usuario = isset($_SESSION['nombre']) ? $_SESSION['nombre'] : 'Usuario';
                     <ion-icon src="../../assets/ionicons/receipt-outline.svg"></ion-icon>
                     Auditoría
                 </a>
+                <a href="../reportes/index.php" class="nav-item <?php echo ($activeNavItem === 'reportes') ? 'active' : ''; ?>">
+                    <ion-icon src="../../assets/ionicons/bar-chart-outline.svg"></ion-icon>
+                    Reportes
+                </a>
                 <a href="../setdata/index.php" class="nav-item <?php echo ($activeNavItem === 'setdata') ? 'active' : ''; ?>">
                     <ion-icon src="../../assets/ionicons/analytics-outline.svg"></ion-icon>
                     Sincronizar Datos (CSV)
@@ -136,3 +140,20 @@ $nombre_usuario = isset($_SESSION['nombre']) ? $_SESSION['nombre'] : 'Usuario';
 <!-- Custom Notifications -->
 <?php require_once dirname(__DIR__) . '/layouts/notifications.php'; ?>
 <script src="../../assets/js/utils/notifications.js?v=<?php echo time(); ?>"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const btn = document.getElementById('mobileMenuBtn');
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+
+        if (btn && sidebar && overlay) {
+            function toggleMenu() {
+                sidebar.classList.toggle('open');
+                overlay.classList.toggle('show');
+                document.body.style.overflow = sidebar.classList.contains('open') ? 'hidden' : '';
+            }
+            btn.addEventListener('click', toggleMenu);
+            overlay.addEventListener('click', toggleMenu);
+        }
+    });
+</script>

@@ -22,6 +22,7 @@ class DetalleAsignacionController
 
         $labels = [
             'asignacion_asig_id' => 'Asignación',
+            'detasig_fecha' => 'Fecha Específica',
             'detasig_hora_ini' => 'Hora de Inicio',
             'detasig_hora_fin' => 'Hora de Finalización'
         ];
@@ -47,13 +48,13 @@ class DetalleAsignacionController
 
         try {
             $model = new DetalleAsignacionModel();
-            $conflicts = $model->checkGlobalConflicts($data['asignacion_asig_id'], $data['detasig_hora_ini'], $data['detasig_hora_fin']);
+            $conflicts = $model->checkGlobalConflicts($data['asignacion_asig_id'], $data['detasig_fecha'], $data['detasig_hora_ini'], $data['detasig_hora_fin']);
             if (!empty($conflicts)) {
                 $this->sendResponse(['error' => 'Cruce de horario detectado', 'details' => $conflicts], 409);
                 return;
             }
 
-            $model = new DetalleAsignacionModel($data['asignacion_asig_id'], $data['detasig_hora_ini'], $data['detasig_hora_fin'], null);
+            $model = new DetalleAsignacionModel($data['asignacion_asig_id'], $data['detasig_fecha'], $data['detasig_hora_ini'], $data['detasig_hora_fin'], null);
             $id = $model->create();
             if ($id) {
                 $this->sendResponse(['message' => 'Detalle de asignación creado', 'id' => $id]);
@@ -86,17 +87,10 @@ class DetalleAsignacionController
             return;
         }
 
-        $labels = [
-            'asignacion_asig_id' => 'Asignación',
-            'detasig_hora_ini' => 'Hora de Inicio',
-            'detasig_hora_fin' => 'Hora de Finalización'
-        ];
-
-        foreach ($labels as $field => $label) {
-            if (!isset($data[$field]) || empty($data[$field])) {
-                $this->sendResponse(['error' => "El campo '$label' es obligatorio"], 400);
-                return;
-            }
+        // Hours are always required
+        if (empty($data['detasig_hora_ini']) || empty($data['detasig_hora_fin'])) {
+            $this->sendResponse(['error' => 'La hora de inicio y fin son obligatorias'], 400);
+            return;
         }
 
         // 1. Coherencia cronológica
@@ -112,14 +106,28 @@ class DetalleAsignacionController
         }
 
         try {
+            // If no date or asig_id provided, fetch from existing record
+            if (empty($data['detasig_fecha']) || empty($data['asignacion_asig_id'])) {
+                $db = Conexion::getConnect();
+                $stmt = $db->prepare("SELECT asignacion_asig_id, detasig_fecha FROM DETALLExASIGNACION WHERE detasig_id = :id");
+                $stmt->execute([':id' => $data['detasig_id']]);
+                $existing = $stmt->fetch(PDO::FETCH_ASSOC);
+                if (!$existing) {
+                    $this->sendResponse(['error' => 'Detalle no encontrado'], 404);
+                    return;
+                }
+                if (empty($data['detasig_fecha'])) $data['detasig_fecha'] = $existing['detasig_fecha'];
+                if (empty($data['asignacion_asig_id'])) $data['asignacion_asig_id'] = $existing['asignacion_asig_id'];
+            }
+
             $model = new DetalleAsignacionModel();
-            $conflicts = $model->checkGlobalConflicts($data['asignacion_asig_id'], $data['detasig_hora_ini'], $data['detasig_hora_fin'], $data['detasig_id']);
+            $conflicts = $model->checkGlobalConflicts($data['asignacion_asig_id'], $data['detasig_fecha'], $data['detasig_hora_ini'], $data['detasig_hora_fin'], $data['detasig_id']);
             if (!empty($conflicts)) {
                 $this->sendResponse(['error' => 'Cruce de horario detectado', 'details' => $conflicts], 409);
                 return;
             }
 
-            $model = new DetalleAsignacionModel($data['asignacion_asig_id'], $data['detasig_hora_ini'], $data['detasig_hora_fin'], $data['detasig_id']);
+            $model = new DetalleAsignacionModel($data['asignacion_asig_id'], $data['detasig_fecha'], $data['detasig_hora_ini'], $data['detasig_hora_fin'], $data['detasig_id']);
             if ($model->update()) {
                 $this->sendResponse(['message' => 'Detalle actualizado']);
             } else {

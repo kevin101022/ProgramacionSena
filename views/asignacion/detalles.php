@@ -57,6 +57,7 @@ if (!$asig_id) {
             <table class="data-table">
                 <thead>
                     <tr>
+                        <th>Fecha</th>
                         <th>Hora Inicio</th>
                         <th>Hora Fin</th>
                         <th class="text-right">Acciones</th>
@@ -85,6 +86,10 @@ if (!$asig_id) {
             <input type="hidden" id="detasig_id" name="detasig_id">
             <input type="hidden" id="asig_id_input" name="asignacion_asig_id" value="<?php echo $asig_id; ?>">
             <div class="modal-body p-6 space-y-4">
+                <div class="form-group">
+                    <label class="form-label">Fecha Específica <span class="text-red-500">*</span></label>
+                    <input type="date" id="detasig_fecha" name="detasig_fecha" required class="search-input" style="padding-left: 12px !important;">
+                </div>
                 <div class="form-group">
                     <label class="form-label">Hora Inicio <span class="text-red-500">*</span></label>
                     <input type="time" id="detasig_hora_ini" name="detasig_hora_ini" required class="search-input" style="padding-left: 12px !important;">

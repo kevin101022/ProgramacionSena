@@ -18,6 +18,12 @@ require_once '../layouts/sidebar.php';
             </nav>
             <h1 class="page-title">Editar Instructor</h1>
         </div>
+        <div class="header-actions">
+            <a href="index.php" class="btn-secondary">
+                <ion-icon src="../../assets/ionicons/arrow-back-outline.svg"></ion-icon>
+                Volver
+            </a>
+        </div>
     </header>
 
     <div class="content-wrapper">

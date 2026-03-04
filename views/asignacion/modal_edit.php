@@ -35,12 +35,22 @@
                         <select id="ambiente_id" name="ambiente_amb_id" required class="search-input" style="padding-left: 12px !important;"></select>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Fecha Inicio <span class="text-red-500">*</span></label>
+                        <label class="form-label">Fecha Inicio (Rango) <span class="text-red-500">*</span></label>
                         <input type="date" id="asig_fecha_ini" name="asig_fecha_ini" required class="search-input" style="padding-left: 12px !important;">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Fecha Final <span class="text-red-500">*</span></label>
+                        <label class="form-label">Fecha Final (Rango) <span class="text-red-500">*</span></label>
                         <input type="date" id="asig_fecha_fin" name="asig_fecha_fin" required class="search-input" style="padding-left: 12px !important;">
+                    </div>
+
+                </div>
+
+                <!-- Detalle por Días -->
+                <div class="mt-6">
+                    <h4 class="text-sm font-bold text-gray-800 mb-3 border-b border-gray-100 pb-2">Asignación de Horas por Día</h4>
+                    <p class="text-xs text-gray-500 mb-4">Seleccione los días específicos y asigne el horario correspondiente para el centro de formación. Tenga en cuenta que no todos los días deben tener horas asignadas o las mismas franjas horarias.</p>
+                    <div id="diasListContainer" class="space-y-3 max-h-80 overflow-y-auto pr-2 custom-scrollbar">
+                        <p class="text-sm text-center text-gray-400 italic py-4">Seleccione fechas en el calendario para configurar los días</p>
                     </div>
                 </div>
 

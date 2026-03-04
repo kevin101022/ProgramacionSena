@@ -78,16 +78,16 @@ class ReporteController
                 FROM FICHA f
                 INNER JOIN PROGRAMA p ON f.PROGRAMA_prog_id = p.prog_codigo
                 LEFT JOIN INSTRUCTOR i ON f.INSTRUCTOR_inst_id_lider = i.numero_documento
-                LEFT JOIN COORDINACION co ON f.COORDINACION_coord_id = co.numero_documento";
+                LEFT JOIN COORDINACION co ON f.COORDINACION_coord_id = co.coord_id";
 
         if ($cent_id) {
-            $sql .= " WHERE co.CENTRO_FORMACION_cent_id = :cent_id OR i.CENTRO_FORMACION_cent_id = :cent_id";
+            $sql .= " WHERE co.CENTRO_FORMACION_cent_id = :cent_id1 OR i.CENTRO_FORMACION_cent_id = :cent_id2";
         }
         $sql .= " ORDER BY p.prog_denominacion, f.fich_id";
 
         $stmt = $this->db->prepare($sql);
         if ($cent_id) {
-            $stmt->execute([':cent_id' => $cent_id]);
+            $stmt->execute([':cent_id1' => $cent_id, ':cent_id2' => $cent_id]);
         } else {
             $stmt->execute();
         }
