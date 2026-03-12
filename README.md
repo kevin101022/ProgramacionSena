@@ -274,3 +274,88 @@ A diferencia de una simple exportación a texto, el sistema permite generar un *
 - **Fidelidad Total:** El PDF captura exactamente los gráficos y tarjetas que se ven en pantalla a través de renderizado por canvas.
 - **Identidad Institucional:** Incluye encabezados del SENA y marcas de tiempo, convirtiendo los datos crudos en documentos profesionales listos para ser presentados.
 - **Acceso:** Exclusivo para el rol **Coordinador Académico** desde el menú "Sincronizar Datos (CSV)".
+
+---
+
+## 9. 📅 Reportes de Calendarios con Generación de PDF
+
+El sistema incluye un módulo completo de reportes visuales para consultar y exportar las programaciones académicas en formato calendario.
+
+### 📊 Tipos de Reportes Disponibles
+El módulo de reportes ofrece tres vistas especializadas de calendario:
+
+1. **📅 Calendario de Ficha**
+   - Visualiza todas las asignaciones programadas para una ficha específica
+   - Muestra: Horarios, Competencias, Instructores y Ambientes asignados
+   - Permite filtrar por número de ficha o programa
+
+2. **👨‍🏫 Calendario de Instructor**
+   - Consulta la agenda completa de un instructor
+   - Muestra: Fichas asignadas, Competencias a dictar y Ambientes designados
+   - Permite búsqueda por nombre o documento del instructor
+
+3. **🏢 Calendario de Ambiente**
+   - Visualiza la ocupación de un ambiente/aula específica
+   - Muestra: Fichas programadas, Instructores asignados y Competencias
+   - Permite búsqueda por ID o nombre del ambiente
+
+### 🎨 Características de Visualización
+- **Interfaz FullCalendar:** Calendario interactivo con vistas de mes, semana y lista
+- **Código de Colores:** Cada asignación tiene un color distintivo para fácil identificación
+- **Modal de Detalles:** Al hacer clic en un evento, se muestra un modal con información completa:
+  - Fecha y horario exacto
+  - Ficha, Competencia, Instructor y Ambiente
+  - Diseño coherente con la identidad visual SENA
+
+### 📄 Generación de PDF Profesional
+Cada calendario incluye un botón de **"Descargar PDF"** que genera un reporte imprimible con las siguientes características:
+
+#### Estructura del Documento
+- **Encabezado Verde SENA:** Incluye título del reporte, información del elemento seleccionado y fecha de generación
+- **Barra de Estadísticas:** Muestra el total de asignaciones programadas
+- **Tabla de Agenda:** Formato de tabla profesional (no captura de pantalla del calendario)
+- **Footer Informativo:** Texto institucional sobre el documento
+
+#### Características Técnicas
+- **Orientación Horizontal (Landscape):** Optimizada para visualizar todas las columnas sin cortes
+- **Zebra Striping:** Filas alternadas en gris claro para mejor legibilidad
+- **Agrupamiento Inteligente:** Las asignaciones consecutivas con el mismo horario se agrupan en un solo bloque (ej: "01/03/2026 - 05/03/2026")
+- **Columnas Dinámicas:** Se ajustan según el tipo de reporte:
+  - **Ficha:** Fecha/Rango, Hora Inicio, Hora Fin, Competencia, Ambiente, Instructor
+  - **Instructor:** Fecha/Rango, Hora Inicio, Hora Fin, Ficha, Competencia, Ambiente
+  - **Ambiente:** Fecha/Rango, Hora Inicio, Hora Fin, Ficha, Competencia, Instructor
+
+#### Modos de Generación
+El sistema soporta dos modos de generación de PDF:
+
+1. **Modo Navegador (Predeterminado):**
+   - Genera HTML optimizado con CSS `@page`
+   - Se abre en nueva ventana con diálogo de impresión automático
+   - El usuario guarda como PDF usando la función del navegador
+   - ✅ No requiere instalación adicional
+   - ✅ Compatible con todos los navegadores modernos
+
+2. **Modo FPDF (Opcional):**
+   - Si se instala la librería FPDF en `lib/fpdf/`, el sistema la detecta automáticamente
+   - Genera PDF nativo con descarga directa
+   - Mayor control sobre el formato y diseño
+   - Instalación: Descargar de http://www.fpdf.org y extraer en `lib/fpdf/`
+
+### 🔐 Control de Acceso
+- **Coordinador Académico:** Acceso completo a todos los reportes de su centro
+- **Centro de Formación:** Acceso completo a todos los reportes
+- **Instructor:** Sin acceso (solo consulta sus propias asignaciones en "Mi Espacio")
+
+### 📍 Ubicación en el Sistema
+Los reportes están disponibles desde el menú lateral en la sección **"Reportes"**:
+- Calendario de Ficha
+- Calendario de Instructor
+- Calendario de Ambiente
+
+Cada reporte incluye:
+- Buscador inteligente con autocompletado
+- Visualización de calendario interactivo
+- Estadísticas en tiempo real
+- Botón de descarga de PDF
+
+---

@@ -37,6 +37,7 @@ $controllers = array(
     'instructor' => ['index', 'show', 'showByCentro', 'store', 'update', 'destroy', 'getCentros', 'getAsignaciones', 'getCompetencias'],
     'instru_competencia' => ['index', 'show', 'store', 'update', 'destroy'],
     'reporte' => ['instructoresPorCentro', 'fichasActivasPorPrograma', 'asignacionesPorInstructor', 'competenciasPorPrograma'],
+    'reporte_pdf' => ['calendarioFicha', 'calendarioInstructor', 'calendarioAmbiente'],
     'login' => ['showLogin', 'login', 'logout', 'registroCoordinador', 'guardarCoordinador', 'getCoordinacionesByCentro'],
     'auditoria_asignacion' => ['index', 'show'],
     'usuario_coordinador' => ['index', 'show', 'store', 'update', 'toggle'],
@@ -59,6 +60,8 @@ try {
         $controllerFile = 'controller/usuarioCoordinadorController.php';
     } elseif ($controller === 'auditoria_asignacion') {
         $controllerFile = 'controller/auditoria_asignacionController.php';
+    } elseif ($controller === 'reporte_pdf') {
+        $controllerFile = 'controller/reportePdfController.php';
     } else {
         $controllerFile = 'controller/' . $controller . 'Controller.php';
     }
@@ -90,8 +93,8 @@ try {
         $isAjax = true; // routing.php maneja backend calls principalmente
 
         $allowedControllersByRole = [
-            'centro' => ['sede', 'ambiente', 'programa', 'titulo_programa', 'instructor', 'competencia', 'competencia_programa', 'coordinacion', 'usuario_coordinador', 'reporte', 'centro_formacion', 'auditoria_asignacion'],
-            'coordinador' => ['competencia_programa', 'ficha', 'instru_competencia', 'asignacion', 'detalle_asignacion', 'reporte', 'auditoria_asignacion', 'coordinacion', 'setdata'],
+            'centro' => ['sede', 'ambiente', 'programa', 'titulo_programa', 'instructor', 'competencia', 'competencia_programa', 'coordinacion', 'usuario_coordinador', 'reporte', 'reporte_pdf', 'centro_formacion', 'auditoria_asignacion'],
+            'coordinador' => ['competencia_programa', 'ficha', 'instru_competencia', 'asignacion', 'detalle_asignacion', 'reporte', 'reporte_pdf', 'auditoria_asignacion', 'coordinacion', 'setdata'],
             'instructor' => ['asignacion', 'instructor']
         ];
 
@@ -196,6 +199,9 @@ try {
             break;
         case 'reporte':
             $controllerObj = new ReporteController();
+            break;
+        case 'reporte_pdf':
+            $controllerObj = new ReportePdfController();
             break;
         case 'login':
             require_once('model/LoginModel.php');

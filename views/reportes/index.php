@@ -53,6 +53,34 @@ require_once '../layouts/sidebar.php';
             </button>
         </div>
 
+        <!-- Calendarios de Reportes -->
+        <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wide mb-3 mt-8">Calendarios de Asignaciones</h3>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <a href="calendario_ficha.php" class="report-card" style="text-decoration: none;">
+                <div class="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center mb-3">
+                    <ion-icon src="../../assets/ionicons/layers-outline.svg" class="text-purple-500 text-2xl"></ion-icon>
+                </div>
+                <h3 class="font-bold text-gray-900 text-sm mb-1">Calendario de Ficha</h3>
+                <p class="text-xs text-gray-400">Ver todas las asignaciones de una ficha</p>
+            </a>
+
+            <a href="calendario_instructor.php" class="report-card" style="text-decoration: none;">
+                <div class="w-12 h-12 rounded-xl bg-amber-50 flex items-center justify-center mb-3">
+                    <ion-icon src="../../assets/ionicons/person-outline.svg" class="text-amber-500 text-2xl"></ion-icon>
+                </div>
+                <h3 class="font-bold text-gray-900 text-sm mb-1">Calendario de Instructor</h3>
+                <p class="text-xs text-gray-400">Ver carga académica de un instructor</p>
+            </a>
+
+            <a href="calendario_ambiente.php" class="report-card" style="text-decoration: none;">
+                <div class="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center mb-3">
+                    <ion-icon src="../../assets/ionicons/cube-outline.svg" class="text-blue-500 text-2xl"></ion-icon>
+                </div>
+                <h3 class="font-bold text-gray-900 text-sm mb-1">Calendario de Ambiente</h3>
+                <p class="text-xs text-gray-400">Ver ocupación de un ambiente</p>
+            </a>
+        </div>
+
         <!-- Report output area -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <div id="reportPlaceholder" class="text-center py-12">
