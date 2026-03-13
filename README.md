@@ -358,4 +358,20 @@ Cada reporte incluye:
 - Estadísticas en tiempo real
 - Botón de descarga de PDF
 
----
+---🌍 1. Nivel Global (Todo el mundo en el sistema ve lo mismo)
+Estas son bases de datos "catálogo" que nutren al sistema general sin importar de qué Centro de Formación se trate. Si un Centro crea o edita uno de estos, se reflejará para todos los demás Centros del país:
+
+Sedes y Ambientes de Formación: Si un Centro registra la Sede ("Sede Principal") y un Ambiente ("Aula 201"), ese ambiente quedará disponible globalmente.
+Competencias y Títulos de Programas (TITULOS_PROGRAMAS): El catálogo de competencias técnicas (ej. Inglés, Promover la Interacción) y los programas de formación general (ej. Tecnólogo en ADSO) son únicos del SENA nacional, por lo que todos los Centros ven el mismo listado a la hora de armar una ficha.
+🔒 2. Nivel Centro de Formación (Datos Aislados)
+Aquí es donde funciona la magia de tu sistema. Lo que crea un Centro solo lo puede ver y gestionar ese Centro de Formación y sus respectivos coordinadores:
+
+Instructores: Los instructores que registra un Centro le pertenecen exclusivamente a ese Centro. Si otro Centro (ej. CASD) inicia sesión, jamás verá la lista de instructores, teléfonos o correos de tu Centro de Formación (CIES, por ejemplo).
+Coordinaciones Académicas: Las coordinaciones que creas, así como a qué personas les diste el rol de "Coordinador", están amarradas a tu Centro.
+Fichas de Formación (Las cohortes): Los números de Fichas (ej. Ficha 3115418) y sus fechas de inicio/fin son de total dominio y exclusividad del Centro que las crea.
+Asignaciones (Clases y Horarios): Toda la programación y cruce de horarios que realizan los coordinadores entre instructores, fichas y ambientes es 100% invisible para cualquier otro Centro de Formación. Todo ocurre en su propio universo.
+👤 3. Nivel Instructor (El punto más privado)
+El Instructor es el último eslabón y tiene la vista más restringida y "limpia" de todo el sistema:
+
+Su Calendario e Información: Un Instructor solo puede ver sus propias clases. No puede ver en qué está trabajando otro compañero instructor, ni qué otros instructores existen en el Centro, ni explorar fichas ajenas.
+Restricción de Edición: Como hemos repasado hoy, el Instructor está configurado en un modo de "Solo Lectura". Puede ver toda su programación detallada, los ambientes y las fechas, pero no puede alterar horarios, ni crear, editar o eliminar asignaciones.
