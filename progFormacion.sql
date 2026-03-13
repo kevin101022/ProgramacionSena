@@ -2,12 +2,12 @@
 -- PostgreSQL database dump
 --
 
-\restrict hNibkJIxqdINqv2EyyZAE2EZ6u63DWNozFOQWiQxeg9f7iVAXebkof3jxXKht9z
+
 
 -- Dumped from database version 18.1
 -- Dumped by pg_dump version 18.1
 
--- Started on 2026-03-04 07:48:11
+-- Started on 2026-03-13 11:56:10
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -21,8 +21,72 @@ SET xmloption = content;
 SET client_min_messages = warning;
 SET row_security = off;
 
+ALTER TABLE IF EXISTS ONLY public.usuario_coordinador DROP CONSTRAINT IF EXISTS fk_user_centro;
+ALTER TABLE IF EXISTS ONLY public.titulo_programa DROP CONSTRAINT IF EXISTS fk_titulo_programa_centro;
+ALTER TABLE IF EXISTS ONLY public.programa DROP CONSTRAINT IF EXISTS fk_programa_tipo_programa;
+ALTER TABLE IF EXISTS ONLY public.programa DROP CONSTRAINT IF EXISTS fk_programa_centro;
+ALTER TABLE IF EXISTS ONLY public.instructor DROP CONSTRAINT IF EXISTS fk_instructor_centro_formacion1;
+ALTER TABLE IF EXISTS ONLY public.instru_competencia DROP CONSTRAINT IF EXISTS fk_instru_competencia_instructor1;
+ALTER TABLE IF EXISTS ONLY public.instru_competencia DROP CONSTRAINT IF EXISTS fk_instru_competencia_competxprograma1;
+ALTER TABLE IF EXISTS ONLY public.ficha DROP CONSTRAINT IF EXISTS fk_ficha_programa1;
+ALTER TABLE IF EXISTS ONLY public.ficha DROP CONSTRAINT IF EXISTS fk_ficha_instructor1;
+ALTER TABLE IF EXISTS ONLY public.ficha DROP CONSTRAINT IF EXISTS fk_ficha_coordinacion;
+ALTER TABLE IF EXISTS ONLY public.detallexasignacion DROP CONSTRAINT IF EXISTS fk_detallexasignacion_asignacion1;
+ALTER TABLE IF EXISTS ONLY public.coordinacion DROP CONSTRAINT IF EXISTS fk_coordinador_actual;
+ALTER TABLE IF EXISTS ONLY public.coordinacion DROP CONSTRAINT IF EXISTS fk_coordinacion_centro_formacion1;
+ALTER TABLE IF EXISTS ONLY public.competxprograma DROP CONSTRAINT IF EXISTS fk_competxprograma_programa1;
+ALTER TABLE IF EXISTS ONLY public.competxprograma DROP CONSTRAINT IF EXISTS fk_competxprograma_competencia1;
+ALTER TABLE IF EXISTS ONLY public.competencia DROP CONSTRAINT IF EXISTS fk_competencia_centro;
+ALTER TABLE IF EXISTS ONLY public.asignacion DROP CONSTRAINT IF EXISTS fk_asignacion_instructor1;
+ALTER TABLE IF EXISTS ONLY public.asignacion DROP CONSTRAINT IF EXISTS fk_asignacion_ficha1;
+ALTER TABLE IF EXISTS ONLY public.asignacion DROP CONSTRAINT IF EXISTS fk_asignacion_competencia1;
+ALTER TABLE IF EXISTS ONLY public.asignacion DROP CONSTRAINT IF EXISTS fk_asignacion_ambiente1;
+ALTER TABLE IF EXISTS ONLY public.ambiente DROP CONSTRAINT IF EXISTS fk_ambiente_sede1;
+DROP TRIGGER IF EXISTS trg_asignacion_audit ON public.asignacion;
+ALTER TABLE IF EXISTS ONLY public.usuario_coordinador DROP CONSTRAINT IF EXISTS usuario_coordinador_pkey;
+ALTER TABLE IF EXISTS ONLY public.titulo_programa DROP CONSTRAINT IF EXISTS titulo_programa_pkey;
+ALTER TABLE IF EXISTS ONLY public.sede DROP CONSTRAINT IF EXISTS sede_pkey;
+ALTER TABLE IF EXISTS ONLY public.programa DROP CONSTRAINT IF EXISTS programa_pkey;
+ALTER TABLE IF EXISTS ONLY public.instructor DROP CONSTRAINT IF EXISTS instructor_pkey;
+ALTER TABLE IF EXISTS ONLY public.instru_competencia DROP CONSTRAINT IF EXISTS instru_competencia_pkey;
+ALTER TABLE IF EXISTS ONLY public.ficha DROP CONSTRAINT IF EXISTS ficha_pkey;
+ALTER TABLE IF EXISTS ONLY public.detallexasignacion DROP CONSTRAINT IF EXISTS detallexasignacion_pkey;
+ALTER TABLE IF EXISTS ONLY public.coordinacion DROP CONSTRAINT IF EXISTS coordinacion_pkey;
+ALTER TABLE IF EXISTS ONLY public.competxprograma DROP CONSTRAINT IF EXISTS competxprograma_pkey;
+ALTER TABLE IF EXISTS ONLY public.competencia DROP CONSTRAINT IF EXISTS competencia_pkey;
+ALTER TABLE IF EXISTS ONLY public.centro_formacion DROP CONSTRAINT IF EXISTS centro_formacion_pkey;
+ALTER TABLE IF EXISTS ONLY public.auditoria_asignacion DROP CONSTRAINT IF EXISTS auditoria_asignacion_pkey;
+ALTER TABLE IF EXISTS ONLY public.asignacion DROP CONSTRAINT IF EXISTS asignacion_pkey;
+ALTER TABLE IF EXISTS ONLY public.ambiente DROP CONSTRAINT IF EXISTS ambiente_pkey;
+ALTER TABLE IF EXISTS public.instru_competencia ALTER COLUMN inscomp_id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.detallexasignacion ALTER COLUMN detasig_id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.coordinacion ALTER COLUMN coord_id DROP DEFAULT;
+ALTER TABLE IF EXISTS public.auditoria_asignacion ALTER COLUMN id_auditoria DROP DEFAULT;
+ALTER TABLE IF EXISTS public.asignacion ALTER COLUMN asig_id DROP DEFAULT;
+DROP TABLE IF EXISTS public.usuario_coordinador;
+DROP TABLE IF EXISTS public.titulo_programa;
+DROP TABLE IF EXISTS public.sede;
+DROP TABLE IF EXISTS public.programa;
+DROP TABLE IF EXISTS public.instructor;
+DROP SEQUENCE IF EXISTS public.instru_competencia_inscomp_id_seq;
+DROP TABLE IF EXISTS public.instru_competencia;
+DROP TABLE IF EXISTS public.ficha;
+DROP SEQUENCE IF EXISTS public.detallexasignacion_detasig_id_seq;
+DROP TABLE IF EXISTS public.detallexasignacion;
+DROP SEQUENCE IF EXISTS public.coordinacion_coord_id_seq;
+DROP TABLE IF EXISTS public.coordinacion;
+DROP TABLE IF EXISTS public.competxprograma;
+DROP TABLE IF EXISTS public.competencia;
+DROP TABLE IF EXISTS public.centro_formacion;
+DROP SEQUENCE IF EXISTS public.auditoria_asignacion_id_auditoria_seq;
+DROP TABLE IF EXISTS public.auditoria_asignacion;
+DROP SEQUENCE IF EXISTS public.asignacion_asig_id_seq;
+DROP TABLE IF EXISTS public.asignacion;
+DROP TABLE IF EXISTS public.ambiente;
+DROP FUNCTION IF EXISTS public.func_auditoria_asignacion();
+DROP EXTENSION IF EXISTS pgcrypto;
 --
--- TOC entry 2 (class 3079 OID 22313)
+-- TOC entry 2 (class 3079 OID 17904)
 -- Name: pgcrypto; Type: EXTENSION; Schema: -; Owner: -
 --
 
@@ -39,7 +103,7 @@ COMMENT ON EXTENSION pgcrypto IS 'cryptographic functions';
 
 
 --
--- TOC entry 288 (class 1255 OID 22235)
+-- TOC entry 277 (class 1255 OID 17942)
 -- Name: func_auditoria_asignacion(); Type: FUNCTION; Schema: public; Owner: postgres
 --
 
@@ -113,7 +177,7 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
--- TOC entry 222 (class 1259 OID 21959)
+-- TOC entry 220 (class 1259 OID 17943)
 -- Name: ambiente; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -128,7 +192,7 @@ CREATE TABLE public.ambiente (
 ALTER TABLE public.ambiente OWNER TO postgres;
 
 --
--- TOC entry 231 (class 1259 OID 22082)
+-- TOC entry 221 (class 1259 OID 17951)
 -- Name: asignacion; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -146,7 +210,7 @@ CREATE TABLE public.asignacion (
 ALTER TABLE public.asignacion OWNER TO postgres;
 
 --
--- TOC entry 230 (class 1259 OID 22081)
+-- TOC entry 222 (class 1259 OID 17961)
 -- Name: asignacion_asig_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -163,7 +227,7 @@ ALTER SEQUENCE public.asignacion_asig_id_seq OWNER TO postgres;
 
 --
 -- TOC entry 5192 (class 0 OID 0)
--- Dependencies: 230
+-- Dependencies: 222
 -- Name: asignacion_asig_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
@@ -171,7 +235,7 @@ ALTER SEQUENCE public.asignacion_asig_id_seq OWNED BY public.asignacion.asig_id;
 
 
 --
--- TOC entry 237 (class 1259 OID 22217)
+-- TOC entry 223 (class 1259 OID 17962)
 -- Name: auditoria_asignacion; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -195,7 +259,7 @@ CREATE TABLE public.auditoria_asignacion (
 ALTER TABLE public.auditoria_asignacion OWNER TO postgres;
 
 --
--- TOC entry 236 (class 1259 OID 22216)
+-- TOC entry 224 (class 1259 OID 17977)
 -- Name: auditoria_asignacion_id_auditoria_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -212,7 +276,7 @@ ALTER SEQUENCE public.auditoria_asignacion_id_auditoria_seq OWNER TO postgres;
 
 --
 -- TOC entry 5193 (class 0 OID 0)
--- Dependencies: 236
+-- Dependencies: 224
 -- Name: auditoria_asignacion_id_auditoria_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
@@ -220,7 +284,7 @@ ALTER SEQUENCE public.auditoria_asignacion_id_auditoria_seq OWNED BY public.audi
 
 
 --
--- TOC entry 220 (class 1259 OID 21944)
+-- TOC entry 225 (class 1259 OID 17978)
 -- Name: centro_formacion; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -235,7 +299,7 @@ CREATE TABLE public.centro_formacion (
 ALTER TABLE public.centro_formacion OWNER TO postgres;
 
 --
--- TOC entry 225 (class 1259 OID 21995)
+-- TOC entry 226 (class 1259 OID 17983)
 -- Name: competencia; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -251,7 +315,7 @@ CREATE TABLE public.competencia (
 ALTER TABLE public.competencia OWNER TO postgres;
 
 --
--- TOC entry 226 (class 1259 OID 22004)
+-- TOC entry 227 (class 1259 OID 17990)
 -- Name: competxprograma; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -264,7 +328,7 @@ CREATE TABLE public.competxprograma (
 ALTER TABLE public.competxprograma OWNER TO postgres;
 
 --
--- TOC entry 228 (class 1259 OID 22038)
+-- TOC entry 228 (class 1259 OID 17995)
 -- Name: coordinacion; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -280,7 +344,7 @@ CREATE TABLE public.coordinacion (
 ALTER TABLE public.coordinacion OWNER TO postgres;
 
 --
--- TOC entry 239 (class 1259 OID 22400)
+-- TOC entry 229 (class 1259 OID 18003)
 -- Name: coordinacion_coord_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -297,7 +361,7 @@ ALTER SEQUENCE public.coordinacion_coord_id_seq OWNER TO postgres;
 
 --
 -- TOC entry 5194 (class 0 OID 0)
--- Dependencies: 239
+-- Dependencies: 229
 -- Name: coordinacion_coord_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
@@ -305,7 +369,7 @@ ALTER SEQUENCE public.coordinacion_coord_id_seq OWNED BY public.coordinacion.coo
 
 
 --
--- TOC entry 233 (class 1259 OID 22116)
+-- TOC entry 230 (class 1259 OID 18004)
 -- Name: detallexasignacion; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -321,7 +385,7 @@ CREATE TABLE public.detallexasignacion (
 ALTER TABLE public.detallexasignacion OWNER TO postgres;
 
 --
--- TOC entry 232 (class 1259 OID 22115)
+-- TOC entry 231 (class 1259 OID 18013)
 -- Name: detallexasignacion_detasig_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -338,7 +402,7 @@ ALTER SEQUENCE public.detallexasignacion_detasig_id_seq OWNER TO postgres;
 
 --
 -- TOC entry 5195 (class 0 OID 0)
--- Dependencies: 232
+-- Dependencies: 231
 -- Name: detallexasignacion_detasig_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: postgres
 --
 
@@ -346,7 +410,7 @@ ALTER SEQUENCE public.detallexasignacion_detasig_id_seq OWNED BY public.detallex
 
 
 --
--- TOC entry 229 (class 1259 OID 22054)
+-- TOC entry 232 (class 1259 OID 18014)
 -- Name: ficha; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -364,7 +428,7 @@ CREATE TABLE public.ficha (
 ALTER TABLE public.ficha OWNER TO postgres;
 
 --
--- TOC entry 235 (class 1259 OID 22132)
+-- TOC entry 233 (class 1259 OID 18024)
 -- Name: instru_competencia; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -380,7 +444,7 @@ CREATE TABLE public.instru_competencia (
 ALTER TABLE public.instru_competencia OWNER TO postgres;
 
 --
--- TOC entry 234 (class 1259 OID 22131)
+-- TOC entry 234 (class 1259 OID 18032)
 -- Name: instru_competencia_inscomp_id_seq; Type: SEQUENCE; Schema: public; Owner: postgres
 --
 
@@ -405,7 +469,7 @@ ALTER SEQUENCE public.instru_competencia_inscomp_id_seq OWNED BY public.instru_c
 
 
 --
--- TOC entry 227 (class 1259 OID 22021)
+-- TOC entry 235 (class 1259 OID 18033)
 -- Name: instructor; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -424,7 +488,7 @@ CREATE TABLE public.instructor (
 ALTER TABLE public.instructor OWNER TO postgres;
 
 --
--- TOC entry 224 (class 1259 OID 21981)
+-- TOC entry 236 (class 1259 OID 18045)
 -- Name: programa; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -440,7 +504,7 @@ CREATE TABLE public.programa (
 ALTER TABLE public.programa OWNER TO postgres;
 
 --
--- TOC entry 221 (class 1259 OID 21951)
+-- TOC entry 237 (class 1259 OID 18052)
 -- Name: sede; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -454,7 +518,7 @@ CREATE TABLE public.sede (
 ALTER TABLE public.sede OWNER TO postgres;
 
 --
--- TOC entry 223 (class 1259 OID 21974)
+-- TOC entry 238 (class 1259 OID 18057)
 -- Name: titulo_programa; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -468,7 +532,7 @@ CREATE TABLE public.titulo_programa (
 ALTER TABLE public.titulo_programa OWNER TO postgres;
 
 --
--- TOC entry 238 (class 1259 OID 22384)
+-- TOC entry 239 (class 1259 OID 18062)
 -- Name: usuario_coordinador; Type: TABLE; Schema: public; Owner: postgres
 --
 
@@ -485,7 +549,7 @@ CREATE TABLE public.usuario_coordinador (
 ALTER TABLE public.usuario_coordinador OWNER TO postgres;
 
 --
--- TOC entry 4960 (class 2604 OID 22085)
+-- TOC entry 4957 (class 2604 OID 18071)
 -- Name: asignacion asig_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -493,7 +557,7 @@ ALTER TABLE ONLY public.asignacion ALTER COLUMN asig_id SET DEFAULT nextval('pub
 
 
 --
--- TOC entry 4964 (class 2604 OID 22220)
+-- TOC entry 4958 (class 2604 OID 18072)
 -- Name: auditoria_asignacion id_auditoria; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -501,7 +565,7 @@ ALTER TABLE ONLY public.auditoria_asignacion ALTER COLUMN id_auditoria SET DEFAU
 
 
 --
--- TOC entry 4958 (class 2604 OID 22401)
+-- TOC entry 4960 (class 2604 OID 18073)
 -- Name: coordinacion coord_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -509,7 +573,7 @@ ALTER TABLE ONLY public.coordinacion ALTER COLUMN coord_id SET DEFAULT nextval('
 
 
 --
--- TOC entry 4961 (class 2604 OID 22119)
+-- TOC entry 4962 (class 2604 OID 18074)
 -- Name: detallexasignacion detasig_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -517,7 +581,7 @@ ALTER TABLE ONLY public.detallexasignacion ALTER COLUMN detasig_id SET DEFAULT n
 
 
 --
--- TOC entry 4963 (class 2604 OID 22135)
+-- TOC entry 4964 (class 2604 OID 18075)
 -- Name: instru_competencia inscomp_id; Type: DEFAULT; Schema: public; Owner: postgres
 --
 
@@ -525,223 +589,352 @@ ALTER TABLE ONLY public.instru_competencia ALTER COLUMN inscomp_id SET DEFAULT n
 
 
 --
--- TOC entry 5168 (class 0 OID 21959)
--- Dependencies: 222
+-- TOC entry 5166 (class 0 OID 17943)
+-- Dependencies: 220
 -- Data for Name: ambiente; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.ambiente (amb_id, amb_nombre, tipo_ambiente, sede_sede_id) FROM stdin;
-201	ADSO	Especializado	7
-\.
+INSERT INTO public.ambiente VALUES ('201', 'ADSO', 'Especializado', 7);
+INSERT INTO public.ambiente VALUES ('AMB01', 'Ambiente Prueba', 'Convencional', 1);
 
 
 --
--- TOC entry 5177 (class 0 OID 22082)
--- Dependencies: 231
+-- TOC entry 5167 (class 0 OID 17951)
+-- Dependencies: 221
 -- Data for Name: asignacion; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.asignacion (asig_id, instructor_inst_id, asig_fecha_ini, asig_fecha_fin, ficha_fich_id, ambiente_amb_id, competencia_comp_id) FROM stdin;
-20	5678657856856	2026-03-04	2026-03-10	3115418	201	1
-\.
+INSERT INTO public.asignacion VALUES (20, 5678657856856, '2026-03-04', '2026-03-10', 3115418, '201', 1);
+INSERT INTO public.asignacion VALUES (26, 76758463, '2026-03-16', '2026-04-10', 3225818, '201', 2);
+INSERT INTO public.asignacion VALUES (28, 76758463, '2026-04-13', '2026-05-08', 3115418, '201', 2);
+INSERT INTO public.asignacion VALUES (30, 76758463, '2026-05-11', '2026-06-05', 3218713, '201', 2);
+INSERT INTO public.asignacion VALUES (31, 76758463, '2026-06-08', '2026-07-03', 3218713, '201', 1);
+INSERT INTO public.asignacion VALUES (33, 76758463, '2026-07-20', '2026-08-10', 3225818, '201', 1);
+INSERT INTO public.asignacion VALUES (34, 1093189418, '2026-04-27', '2026-05-08', 3115418, '201', 3);
+INSERT INTO public.asignacion VALUES (35, 1093189418, '2026-04-27', '2026-05-08', 3115418, '201', 4);
 
 
 --
--- TOC entry 5183 (class 0 OID 22217)
--- Dependencies: 237
+-- TOC entry 5169 (class 0 OID 17962)
+-- Dependencies: 223
 -- Data for Name: auditoria_asignacion; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.auditoria_asignacion (id_auditoria, instructor_inst_id, asig_fecha_ini, asig_fecha_fin, ficha_fich_id, ambiente_amb_id, competencia_comp_id, asig_id, fecha_hora, documento_usuario_accion, correo_usuario, tipo_accion, nombre_usuario_accion) FROM stdin;
-1	76758463	2026-03-02	2026-04-02	3115418	201	2	16	2026-03-01 22:55:12.529625	0	Sistema	INSERT	\N
-2	76758463	2026-03-02	2026-04-02	3115418	201	2	16	2026-03-03 22:30:41.557175	0	Sistema	DELETE	Sistema
-5	76758463	2026-03-04	2026-03-13	3115418	201	2	19	2026-03-03 23:54:53.040976	234567	petrosky@gmail.com	INSERT	Gustavo Petro
-6	5678657856856	2026-03-04	2026-03-10	3115418	201	1	20	2026-03-04 00:14:20.071888	234567	petrosky@gmail.com	INSERT	Gustavo Petro
-7	76758463	2026-03-04	2026-03-13	3115418	201	2	19	2026-03-04 00:24:13.848942	234567	petrosky@gmail.com	DELETE	Gustavo Petro
-\.
+INSERT INTO public.auditoria_asignacion VALUES (1, 76758463, '2026-03-02', '2026-04-02', 3115418, '201', 2, 16, '2026-03-01 22:55:12.529625', 0, 'Sistema', 'INSERT', NULL);
+INSERT INTO public.auditoria_asignacion VALUES (2, 76758463, '2026-03-02', '2026-04-02', 3115418, '201', 2, 16, '2026-03-03 22:30:41.557175', 0, 'Sistema', 'DELETE', 'Sistema');
+INSERT INTO public.auditoria_asignacion VALUES (5, 76758463, '2026-03-04', '2026-03-13', 3115418, '201', 2, 19, '2026-03-03 23:54:53.040976', 234567, 'petrosky@gmail.com', 'INSERT', 'Gustavo Petro');
+INSERT INTO public.auditoria_asignacion VALUES (6, 5678657856856, '2026-03-04', '2026-03-10', 3115418, '201', 1, 20, '2026-03-04 00:14:20.071888', 234567, 'petrosky@gmail.com', 'INSERT', 'Gustavo Petro');
+INSERT INTO public.auditoria_asignacion VALUES (7, 76758463, '2026-03-04', '2026-03-13', 3115418, '201', 2, 19, '2026-03-04 00:24:13.848942', 234567, 'petrosky@gmail.com', 'DELETE', 'Gustavo Petro');
+INSERT INTO public.auditoria_asignacion VALUES (11, 76758463, '2026-03-16', '2026-04-10', 3225818, '201', 1, 24, '2026-03-12 08:43:15.014667', 234567, 'petrosky@gmail.com', 'INSERT', 'Gustavo Petro');
+INSERT INTO public.auditoria_asignacion VALUES (12, 76758463, '2026-03-16', '2026-04-10', 3225818, '201', 1, 24, '2026-03-12 08:43:48.511236', 234567, 'petrosky@gmail.com', 'DELETE', 'Gustavo Petro');
+INSERT INTO public.auditoria_asignacion VALUES (13, 76758463, '2026-03-16', '2026-04-10', 3225818, '201', 2, 25, '2026-03-12 08:45:02.363978', 234567, 'petrosky@gmail.com', 'INSERT', 'Gustavo Petro');
+INSERT INTO public.auditoria_asignacion VALUES (14, 76758463, '2026-03-16', '2026-04-10', 3225818, '201', 2, 25, '2026-03-12 08:45:20.024223', 234567, 'petrosky@gmail.com', 'DELETE', 'Gustavo Petro');
+INSERT INTO public.auditoria_asignacion VALUES (15, 76758463, '2026-03-16', '2026-04-10', 3225818, '201', 2, 26, '2026-03-12 08:46:10.46371', 234567, 'petrosky@gmail.com', 'INSERT', 'Gustavo Petro');
+INSERT INTO public.auditoria_asignacion VALUES (17, 76758463, '2026-04-13', '2026-05-08', 3115418, '201', 2, 28, '2026-03-12 08:48:42.498985', 234567, 'petrosky@gmail.com', 'INSERT', 'Gustavo Petro');
+INSERT INTO public.auditoria_asignacion VALUES (19, 76758463, '2026-05-11', '2026-06-05', 3218713, '201', 2, 30, '2026-03-12 10:49:00.518262', 234567, 'petrosky@gmail.com', 'INSERT', 'Gustavo Petro');
+INSERT INTO public.auditoria_asignacion VALUES (20, 76758463, '2026-06-08', '2026-07-03', 3218713, '201', 1, 31, '2026-03-12 10:52:12.959872', 234567, 'petrosky@gmail.com', 'INSERT', 'Gustavo Petro');
+INSERT INTO public.auditoria_asignacion VALUES (22, 76758463, '2026-07-20', '2026-08-10', 3225818, '201', 1, 33, '2026-03-13 07:51:36.205707', 234567, 'petrosky@gmail.com', 'INSERT', 'Gustavo Petro');
+INSERT INTO public.auditoria_asignacion VALUES (23, 1093189418, '2026-04-27', '2026-05-08', 3115418, '201', 3, 34, '2026-03-13 11:21:12.582621', 234567, 'petrosky@gmail.com', 'INSERT', 'Gustavo Petro');
+INSERT INTO public.auditoria_asignacion VALUES (24, 1093189418, '2026-04-27', '2026-05-08', 3115418, '201', 4, 35, '2026-03-13 11:28:52.376295', 234567, 'petrosky@gmail.com', 'INSERT', 'Gustavo Petro');
 
 
 --
--- TOC entry 5166 (class 0 OID 21944)
--- Dependencies: 220
+-- TOC entry 5171 (class 0 OID 17978)
+-- Dependencies: 225
 -- Data for Name: centro_formacion; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.centro_formacion (cent_id, cent_nombre, cent_correo, cent_password) FROM stdin;
-1	CIES	ciessena@gmail.com	$2a$06$WEPuDhY/sBsC/xJL29.a8uUtO5wAUkaeMY5laLeXDmtqwAUvs7JuW
-2	CEDRUM	cedrumsena@gmail.com	$2a$06$8yNElBr8t38XH049YZ91WeMHmmXTBt6Wc6yYMnoutN44foyfFoOza
-\.
+INSERT INTO public.centro_formacion VALUES (1, 'CIES', 'ciessena@gmail.com', '$2a$06$WEPuDhY/sBsC/xJL29.a8uUtO5wAUkaeMY5laLeXDmtqwAUvs7JuW');
+INSERT INTO public.centro_formacion VALUES (2, 'CEDRUM', 'cedrumsena@gmail.com', '$2a$06$8yNElBr8t38XH049YZ91WeMHmmXTBt6Wc6yYMnoutN44foyfFoOza');
 
 
 --
--- TOC entry 5171 (class 0 OID 21995)
--- Dependencies: 225
+-- TOC entry 5172 (class 0 OID 17983)
+-- Dependencies: 226
 -- Data for Name: competencia; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.competencia (comp_id, comp_nombre_corto, comp_horas, comp_nombre_unidad_competencia, centro_formacion_cent_id) FROM stdin;
-1	Inglés	48	Interactuar con otros en idioma extranjero según estipulaciones del Marco Común Europeo de Referencia para Idiomas	1
-2	Matemáticas	48	Razonar cuantitativamente frente a situaciones susceptibles de ser abordadas de manera matemática en contextos laborales y sociales.	1
-\.
+INSERT INTO public.competencia VALUES (1, 'Inglés', 48, 'Interactuar con otros en idioma extranjero según estipulaciones del Marco Común Europeo de Referencia para Idiomas', 1);
+INSERT INTO public.competencia VALUES (2, 'Matemáticas', 48, 'Razonar cuantitativamente frente a situaciones susceptibles de ser abordadas de manera matemática en contextos laborales y sociales.', 1);
+INSERT INTO public.competencia VALUES (3, 'Etica', 48, 'Ejercer derechos fundamentales del trabajo y comportamientos éticos.', 1);
+INSERT INTO public.competencia VALUES (4, 'investigación', 48, 'metodologia para la investigación', 1);
 
 
 --
--- TOC entry 5172 (class 0 OID 22004)
--- Dependencies: 226
+-- TOC entry 5173 (class 0 OID 17990)
+-- Dependencies: 227
 -- Data for Name: competxprograma; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.competxprograma (programa_prog_id, competencia_comp_id) FROM stdin;
-223345	1
-223345	2
-54654	1
-54654	2
-\.
+INSERT INTO public.competxprograma VALUES (223345, 1);
+INSERT INTO public.competxprograma VALUES (223345, 2);
+INSERT INTO public.competxprograma VALUES (54654, 1);
+INSERT INTO public.competxprograma VALUES (54654, 2);
+INSERT INTO public.competxprograma VALUES (223345, 3);
+INSERT INTO public.competxprograma VALUES (54654, 3);
+INSERT INTO public.competxprograma VALUES (2349012, 3);
+INSERT INTO public.competxprograma VALUES (223345, 4);
+INSERT INTO public.competxprograma VALUES (54654, 4);
+INSERT INTO public.competxprograma VALUES (2349012, 4);
 
 
 --
--- TOC entry 5174 (class 0 OID 22038)
+-- TOC entry 5174 (class 0 OID 17995)
 -- Dependencies: 228
 -- Data for Name: coordinacion; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.coordinacion (coord_descripcion, centro_formacion_cent_id, coord_id, estado, coordinador_actual) FROM stdin;
-Industria y Comercio	1	3	1	2345678643
-TIC	1	2	1	234567
-\.
+INSERT INTO public.coordinacion VALUES ('Industria y Comercio', 1, 3, 1, 2345678643);
+INSERT INTO public.coordinacion VALUES ('TIC', 1, 2, 1, 1234);
 
 
 --
--- TOC entry 5179 (class 0 OID 22116)
--- Dependencies: 233
+-- TOC entry 5176 (class 0 OID 18004)
+-- Dependencies: 230
 -- Data for Name: detallexasignacion; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.detallexasignacion (detasig_id, asignacion_asig_id, detasig_hora_ini, detasig_hora_fin, detasig_fecha) FROM stdin;
-12	20	08:00:00	12:00:00	2026-03-04
-13	20	08:00:00	12:00:00	2026-03-05
-14	20	08:00:00	12:00:00	2026-03-06
-15	20	08:00:00	12:00:00	2026-03-09
-16	20	08:00:00	12:00:00	2026-03-10
-\.
+INSERT INTO public.detallexasignacion VALUES (13, 20, '08:00:00', '12:00:00', '2026-03-05');
+INSERT INTO public.detallexasignacion VALUES (15, 20, '08:00:00', '12:00:00', '2026-03-09');
+INSERT INTO public.detallexasignacion VALUES (16, 20, '08:00:00', '12:00:00', '2026-03-10');
+INSERT INTO public.detallexasignacion VALUES (14, 20, '06:00:00', '09:00:00', '2026-03-06');
+INSERT INTO public.detallexasignacion VALUES (12, 20, '08:00:00', '12:00:00', '2026-03-04');
+INSERT INTO public.detallexasignacion VALUES (66, 26, '08:00:00', '12:00:00', '2026-03-16');
+INSERT INTO public.detallexasignacion VALUES (67, 26, '08:00:00', '12:00:00', '2026-03-17');
+INSERT INTO public.detallexasignacion VALUES (68, 26, '08:00:00', '12:00:00', '2026-03-18');
+INSERT INTO public.detallexasignacion VALUES (69, 26, '08:00:00', '12:00:00', '2026-03-19');
+INSERT INTO public.detallexasignacion VALUES (70, 26, '08:00:00', '12:00:00', '2026-03-20');
+INSERT INTO public.detallexasignacion VALUES (71, 26, '08:00:00', '12:00:00', '2026-03-23');
+INSERT INTO public.detallexasignacion VALUES (72, 26, '08:00:00', '12:00:00', '2026-03-24');
+INSERT INTO public.detallexasignacion VALUES (73, 26, '08:00:00', '12:00:00', '2026-03-25');
+INSERT INTO public.detallexasignacion VALUES (74, 26, '08:00:00', '12:00:00', '2026-03-26');
+INSERT INTO public.detallexasignacion VALUES (75, 26, '08:00:00', '12:00:00', '2026-03-27');
+INSERT INTO public.detallexasignacion VALUES (76, 26, '08:00:00', '12:00:00', '2026-03-30');
+INSERT INTO public.detallexasignacion VALUES (77, 26, '08:00:00', '12:00:00', '2026-03-31');
+INSERT INTO public.detallexasignacion VALUES (78, 26, '08:00:00', '12:00:00', '2026-04-01');
+INSERT INTO public.detallexasignacion VALUES (79, 26, '08:00:00', '12:00:00', '2026-04-02');
+INSERT INTO public.detallexasignacion VALUES (80, 26, '08:00:00', '12:00:00', '2026-04-03');
+INSERT INTO public.detallexasignacion VALUES (81, 26, '08:00:00', '12:00:00', '2026-04-06');
+INSERT INTO public.detallexasignacion VALUES (82, 26, '08:00:00', '12:00:00', '2026-04-07');
+INSERT INTO public.detallexasignacion VALUES (83, 26, '08:00:00', '12:00:00', '2026-04-08');
+INSERT INTO public.detallexasignacion VALUES (84, 26, '08:00:00', '12:00:00', '2026-04-09');
+INSERT INTO public.detallexasignacion VALUES (85, 26, '08:00:00', '12:00:00', '2026-04-10');
+INSERT INTO public.detallexasignacion VALUES (86, 28, '08:00:00', '12:00:00', '2026-04-13');
+INSERT INTO public.detallexasignacion VALUES (87, 28, '08:00:00', '12:00:00', '2026-04-14');
+INSERT INTO public.detallexasignacion VALUES (88, 28, '08:00:00', '12:00:00', '2026-04-15');
+INSERT INTO public.detallexasignacion VALUES (89, 28, '08:00:00', '12:00:00', '2026-04-16');
+INSERT INTO public.detallexasignacion VALUES (90, 28, '08:00:00', '12:00:00', '2026-04-17');
+INSERT INTO public.detallexasignacion VALUES (91, 28, '08:00:00', '12:00:00', '2026-04-20');
+INSERT INTO public.detallexasignacion VALUES (92, 28, '08:00:00', '12:00:00', '2026-04-21');
+INSERT INTO public.detallexasignacion VALUES (93, 28, '08:00:00', '12:00:00', '2026-04-22');
+INSERT INTO public.detallexasignacion VALUES (94, 28, '08:00:00', '12:00:00', '2026-04-23');
+INSERT INTO public.detallexasignacion VALUES (95, 28, '08:00:00', '12:00:00', '2026-04-24');
+INSERT INTO public.detallexasignacion VALUES (96, 28, '08:00:00', '12:00:00', '2026-04-27');
+INSERT INTO public.detallexasignacion VALUES (97, 28, '08:00:00', '12:00:00', '2026-04-28');
+INSERT INTO public.detallexasignacion VALUES (98, 28, '08:00:00', '12:00:00', '2026-04-29');
+INSERT INTO public.detallexasignacion VALUES (99, 28, '08:00:00', '12:00:00', '2026-04-30');
+INSERT INTO public.detallexasignacion VALUES (100, 28, '08:00:00', '12:00:00', '2026-05-01');
+INSERT INTO public.detallexasignacion VALUES (101, 28, '08:00:00', '12:00:00', '2026-05-04');
+INSERT INTO public.detallexasignacion VALUES (102, 28, '08:00:00', '12:00:00', '2026-05-05');
+INSERT INTO public.detallexasignacion VALUES (103, 28, '08:00:00', '12:00:00', '2026-05-06');
+INSERT INTO public.detallexasignacion VALUES (104, 28, '08:00:00', '12:00:00', '2026-05-07');
+INSERT INTO public.detallexasignacion VALUES (105, 28, '08:00:00', '12:00:00', '2026-05-08');
+INSERT INTO public.detallexasignacion VALUES (106, 30, '08:00:00', '12:00:00', '2026-05-11');
+INSERT INTO public.detallexasignacion VALUES (107, 30, '08:00:00', '12:00:00', '2026-05-12');
+INSERT INTO public.detallexasignacion VALUES (108, 30, '08:00:00', '12:00:00', '2026-05-13');
+INSERT INTO public.detallexasignacion VALUES (109, 30, '08:00:00', '12:00:00', '2026-05-14');
+INSERT INTO public.detallexasignacion VALUES (110, 30, '08:00:00', '12:00:00', '2026-05-15');
+INSERT INTO public.detallexasignacion VALUES (111, 30, '08:00:00', '12:00:00', '2026-05-18');
+INSERT INTO public.detallexasignacion VALUES (112, 30, '08:00:00', '12:00:00', '2026-05-19');
+INSERT INTO public.detallexasignacion VALUES (113, 30, '08:00:00', '12:00:00', '2026-05-20');
+INSERT INTO public.detallexasignacion VALUES (114, 30, '08:00:00', '12:00:00', '2026-05-21');
+INSERT INTO public.detallexasignacion VALUES (115, 30, '08:00:00', '12:00:00', '2026-05-22');
+INSERT INTO public.detallexasignacion VALUES (116, 30, '08:00:00', '12:00:00', '2026-05-25');
+INSERT INTO public.detallexasignacion VALUES (117, 30, '08:00:00', '12:00:00', '2026-05-26');
+INSERT INTO public.detallexasignacion VALUES (118, 30, '08:00:00', '12:00:00', '2026-05-27');
+INSERT INTO public.detallexasignacion VALUES (119, 30, '08:00:00', '12:00:00', '2026-05-28');
+INSERT INTO public.detallexasignacion VALUES (120, 30, '08:00:00', '12:00:00', '2026-05-29');
+INSERT INTO public.detallexasignacion VALUES (121, 30, '08:00:00', '12:00:00', '2026-06-01');
+INSERT INTO public.detallexasignacion VALUES (122, 30, '08:00:00', '12:00:00', '2026-06-02');
+INSERT INTO public.detallexasignacion VALUES (123, 30, '08:00:00', '12:00:00', '2026-06-03');
+INSERT INTO public.detallexasignacion VALUES (124, 30, '08:00:00', '12:00:00', '2026-06-04');
+INSERT INTO public.detallexasignacion VALUES (125, 30, '08:00:00', '12:00:00', '2026-06-05');
+INSERT INTO public.detallexasignacion VALUES (126, 31, '08:00:00', '12:00:00', '2026-06-08');
+INSERT INTO public.detallexasignacion VALUES (127, 31, '08:00:00', '12:00:00', '2026-06-09');
+INSERT INTO public.detallexasignacion VALUES (128, 31, '08:00:00', '12:00:00', '2026-06-10');
+INSERT INTO public.detallexasignacion VALUES (129, 31, '08:00:00', '12:00:00', '2026-06-11');
+INSERT INTO public.detallexasignacion VALUES (130, 31, '08:00:00', '12:00:00', '2026-06-12');
+INSERT INTO public.detallexasignacion VALUES (131, 31, '08:00:00', '12:00:00', '2026-06-15');
+INSERT INTO public.detallexasignacion VALUES (132, 31, '08:00:00', '12:00:00', '2026-06-16');
+INSERT INTO public.detallexasignacion VALUES (133, 31, '08:00:00', '12:00:00', '2026-06-17');
+INSERT INTO public.detallexasignacion VALUES (134, 31, '08:00:00', '12:00:00', '2026-06-18');
+INSERT INTO public.detallexasignacion VALUES (135, 31, '08:00:00', '12:00:00', '2026-06-19');
+INSERT INTO public.detallexasignacion VALUES (136, 31, '08:00:00', '12:00:00', '2026-06-22');
+INSERT INTO public.detallexasignacion VALUES (137, 31, '08:00:00', '12:00:00', '2026-06-23');
+INSERT INTO public.detallexasignacion VALUES (138, 31, '08:00:00', '12:00:00', '2026-06-24');
+INSERT INTO public.detallexasignacion VALUES (139, 31, '08:00:00', '12:00:00', '2026-06-25');
+INSERT INTO public.detallexasignacion VALUES (140, 31, '08:00:00', '12:00:00', '2026-06-26');
+INSERT INTO public.detallexasignacion VALUES (141, 31, '08:00:00', '12:00:00', '2026-06-29');
+INSERT INTO public.detallexasignacion VALUES (142, 31, '08:00:00', '12:00:00', '2026-06-30');
+INSERT INTO public.detallexasignacion VALUES (143, 31, '08:00:00', '12:00:00', '2026-07-01');
+INSERT INTO public.detallexasignacion VALUES (144, 31, '08:00:00', '12:00:00', '2026-07-02');
+INSERT INTO public.detallexasignacion VALUES (145, 31, '08:00:00', '12:00:00', '2026-07-03');
+INSERT INTO public.detallexasignacion VALUES (146, 33, '18:00:00', '22:00:00', '2026-07-20');
+INSERT INTO public.detallexasignacion VALUES (147, 33, '18:00:00', '22:00:00', '2026-07-22');
+INSERT INTO public.detallexasignacion VALUES (148, 33, '18:00:00', '22:00:00', '2026-07-23');
+INSERT INTO public.detallexasignacion VALUES (149, 33, '18:00:00', '22:00:00', '2026-07-24');
+INSERT INTO public.detallexasignacion VALUES (150, 33, '18:00:00', '22:00:00', '2026-07-25');
+INSERT INTO public.detallexasignacion VALUES (151, 33, '18:00:00', '22:00:00', '2026-07-26');
+INSERT INTO public.detallexasignacion VALUES (152, 33, '18:00:00', '22:00:00', '2026-07-27');
+INSERT INTO public.detallexasignacion VALUES (153, 33, '18:00:00', '22:00:00', '2026-07-28');
+INSERT INTO public.detallexasignacion VALUES (154, 33, '18:00:00', '22:00:00', '2026-07-29');
+INSERT INTO public.detallexasignacion VALUES (155, 33, '18:00:00', '22:00:00', '2026-08-01');
+INSERT INTO public.detallexasignacion VALUES (156, 33, '18:00:00', '22:00:00', '2026-08-02');
+INSERT INTO public.detallexasignacion VALUES (157, 33, '18:00:00', '22:00:00', '2026-08-03');
+INSERT INTO public.detallexasignacion VALUES (158, 33, '18:00:00', '22:00:00', '2026-08-04');
+INSERT INTO public.detallexasignacion VALUES (159, 33, '18:00:00', '22:00:00', '2026-08-05');
+INSERT INTO public.detallexasignacion VALUES (160, 33, '16:00:00', '21:00:00', '2026-08-07');
+INSERT INTO public.detallexasignacion VALUES (161, 33, '18:00:00', '22:00:00', '2026-08-08');
+INSERT INTO public.detallexasignacion VALUES (162, 33, '18:00:00', '22:00:00', '2026-08-10');
+INSERT INTO public.detallexasignacion VALUES (163, 34, '06:00:00', '08:00:00', '2026-04-27');
+INSERT INTO public.detallexasignacion VALUES (164, 34, '06:00:00', '08:00:00', '2026-04-28');
+INSERT INTO public.detallexasignacion VALUES (165, 34, '06:00:00', '08:00:00', '2026-04-29');
+INSERT INTO public.detallexasignacion VALUES (166, 34, '06:00:00', '08:00:00', '2026-04-30');
+INSERT INTO public.detallexasignacion VALUES (167, 34, '06:00:00', '08:00:00', '2026-05-01');
+INSERT INTO public.detallexasignacion VALUES (168, 34, '06:00:00', '08:00:00', '2026-05-04');
+INSERT INTO public.detallexasignacion VALUES (169, 34, '06:00:00', '08:00:00', '2026-05-05');
+INSERT INTO public.detallexasignacion VALUES (170, 34, '06:00:00', '08:00:00', '2026-05-06');
+INSERT INTO public.detallexasignacion VALUES (171, 34, '06:00:00', '08:00:00', '2026-05-07');
+INSERT INTO public.detallexasignacion VALUES (172, 34, '06:00:00', '08:00:00', '2026-05-08');
+INSERT INTO public.detallexasignacion VALUES (173, 35, '12:00:00', '14:00:00', '2026-04-27');
+INSERT INTO public.detallexasignacion VALUES (174, 35, '12:00:00', '14:00:00', '2026-04-28');
+INSERT INTO public.detallexasignacion VALUES (175, 35, '12:00:00', '14:00:00', '2026-04-29');
+INSERT INTO public.detallexasignacion VALUES (176, 35, '12:00:00', '14:00:00', '2026-04-30');
+INSERT INTO public.detallexasignacion VALUES (177, 35, '12:00:00', '14:00:00', '2026-05-01');
+INSERT INTO public.detallexasignacion VALUES (178, 35, '12:00:00', '14:00:00', '2026-05-04');
+INSERT INTO public.detallexasignacion VALUES (179, 35, '12:00:00', '14:00:00', '2026-05-05');
+INSERT INTO public.detallexasignacion VALUES (180, 35, '12:00:00', '14:00:00', '2026-05-06');
+INSERT INTO public.detallexasignacion VALUES (181, 35, '12:00:00', '14:00:00', '2026-05-07');
+INSERT INTO public.detallexasignacion VALUES (182, 35, '16:00:00', '18:00:00', '2026-05-08');
 
 
 --
--- TOC entry 5175 (class 0 OID 22054)
--- Dependencies: 229
+-- TOC entry 5178 (class 0 OID 18014)
+-- Dependencies: 232
 -- Data for Name: ficha; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.ficha (fich_id, programa_prog_id, instructor_inst_id_lider, fich_jornada, coordinacion_coord_id, fich_fecha_ini_lectiva, fich_fecha_fin_lectiva) FROM stdin;
-3115418	223345	1092834765	Mañana	2	2026-03-01	2027-12-13
-\.
+INSERT INTO public.ficha VALUES (3115418, 223345, 1092834765, 'Mañana', 2, '2026-03-01', '2027-12-13');
+INSERT INTO public.ficha VALUES (3225818, 54654, 5678657856856, 'Tarde', 2, '2026-02-01', '2027-12-31');
+INSERT INTO public.ficha VALUES (3218713, 223345, 1092834765, 'Mixta', 2, '2026-01-04', '2028-02-07');
 
 
 --
--- TOC entry 5181 (class 0 OID 22132)
--- Dependencies: 235
+-- TOC entry 5179 (class 0 OID 18024)
+-- Dependencies: 233
 -- Data for Name: instru_competencia; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.instru_competencia (inscomp_id, instructor_inst_id, competxprograma_programa_prog_id, competxprograma_competencia_comp_id, inscomp_vigencia) FROM stdin;
-1	1092834765	223345	1	2027-12-31
-10	76758463	223345	1	2026-12-31
-11	76758463	54654	1	2026-12-31
-12	76758463	223345	2	2026-12-31
-13	76758463	54654	2	2026-12-31
-16	5678657856856	223345	1	2026-12-31
-17	5678657856856	54654	1	2026-12-31
-\.
+INSERT INTO public.instru_competencia VALUES (1, 1092834765, 223345, 1, '2027-12-31');
+INSERT INTO public.instru_competencia VALUES (18, 5678657856856, 223345, 1, '2026-12-31');
+INSERT INTO public.instru_competencia VALUES (19, 5678657856856, 54654, 1, '2026-12-31');
+INSERT INTO public.instru_competencia VALUES (29, 1093189418, 223345, 3, '2026-12-31');
+INSERT INTO public.instru_competencia VALUES (30, 1093189418, 54654, 3, '2026-12-31');
+INSERT INTO public.instru_competencia VALUES (31, 1093189418, 2349012, 3, '2026-12-31');
+INSERT INTO public.instru_competencia VALUES (32, 1093189418, 223345, 1, '2026-12-31');
+INSERT INTO public.instru_competencia VALUES (33, 1093189418, 54654, 1, '2026-12-31');
+INSERT INTO public.instru_competencia VALUES (34, 1093189418, 223345, 4, '2026-12-31');
+INSERT INTO public.instru_competencia VALUES (35, 1093189418, 54654, 4, '2026-12-31');
+INSERT INTO public.instru_competencia VALUES (36, 1093189418, 2349012, 4, '2026-12-31');
+INSERT INTO public.instru_competencia VALUES (37, 1093189418, 223345, 2, '2026-12-31');
+INSERT INTO public.instru_competencia VALUES (38, 1093189418, 54654, 2, '2026-12-31');
+INSERT INTO public.instru_competencia VALUES (39, 76758463, 223345, 1, '2026-12-31');
+INSERT INTO public.instru_competencia VALUES (40, 76758463, 54654, 1, '2026-12-31');
 
 
 --
--- TOC entry 5173 (class 0 OID 22021)
--- Dependencies: 227
+-- TOC entry 5181 (class 0 OID 18033)
+-- Dependencies: 235
 -- Data for Name: instructor; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.instructor (inst_nombres, inst_apellidos, inst_correo, inst_telefono, centro_formacion_cent_id, inst_password, numero_documento, estado) FROM stdin;
-Cristian	Chaustre	chaustre@gmail.com	1234556789	1	Sena123*	1092834765	1
-Breyner	Pena	breygud@gmail.com	978202439875	1	$2y$10$DjPXpiACiItvlN1Tx4gBoex5BE3IR.h.nLx0qJqTsY.7SsgVyHVhe	76758463	1
-Carlos	Pietro	pietro@gmail.com	3239284393	1	$2y$10$Di2c2fd1w.zzFBiuSzmi7.s/WPmvW7dft8y.ovhtdr/vkH5/LFBTK	5678657856856	1
-\.
+INSERT INTO public.instructor VALUES ('Cristian', 'Chaustre', 'chaustre@gmail.com', 1234556789, 1, 'Sena123*', 1092834765, 1);
+INSERT INTO public.instructor VALUES ('Carlos', 'Pietro', 'pietro@gmail.com', 3239284393, 1, '$2y$10$GNZFjI5SpKSWcOQnLV1nuehKl6Dxq5LTdrikd3dsNnA37Erry8wAu', 5678657856856, 1);
+INSERT INTO public.instructor VALUES ('Sergio', 'Rodriguez', 'serrod@gmail.com', 3225906525, 1, '$2y$10$.xD396X9f4RzD6/SiWPR8.wQNFXc5zACGv.cLhB0t.yV2aViKFQGO', 1093189418, 1);
+INSERT INTO public.instructor VALUES ('Breyner', 'Pena', 'breygud@gmail.com', 978202439875, 1, '$2y$10$lPuCUhRRSD4x1c.IBT8DLuPfRo6hlCqO9J78v.c0i6OxCyW5XECmG', 76758463, 1);
 
 
 --
--- TOC entry 5170 (class 0 OID 21981)
--- Dependencies: 224
+-- TOC entry 5182 (class 0 OID 18045)
+-- Dependencies: 236
 -- Data for Name: programa; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.programa (prog_codigo, prog_denominacion, tit_programa_titpro_id, prog_tipo, centro_formacion_cent_id) FROM stdin;
-223345	Análisis y Desarrollo de Software	2	Tecnólogo	1
-54654	Gestión contable	3	Tecnólogo	1
-\.
+INSERT INTO public.programa VALUES (223345, 'Análisis y Desarrollo de Software', 2, 'Tecnólogo', 1);
+INSERT INTO public.programa VALUES (54654, 'Gestión contable', 3, 'Tecnólogo', 1);
+INSERT INTO public.programa VALUES (2349012, 'Técnico Especialista en Cosmetología', 4, 'Técnico', 1);
 
 
 --
--- TOC entry 5167 (class 0 OID 21951)
--- Dependencies: 221
+-- TOC entry 5183 (class 0 OID 18052)
+-- Dependencies: 237
 -- Data for Name: sede; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.sede (sede_id, sede_nombre, centro_formacion_cent_id) FROM stdin;
-1	Calzado - manufactura, marroquinería y calzado.	1
-2	Comuneros - moda, confección, maderas y multimedia	1
-4	Tecnoparque - proyectos de innovación	1
-5	Villa del Rosario - Comercio, logística y servicios fronterizo	1
-6	Patios - Atención en servicios y comercio para el área metropolitana	1
-7	Biblioteca - servicio a todos los aprendices	1
-3	Industria - áreas técnicas, de mantenimiento, mecánicas e industriales	1
-8	Pescadero - CIES	1
-\.
+INSERT INTO public.sede VALUES (1, 'Calzado - manufactura, marroquinería y calzado.', 1);
+INSERT INTO public.sede VALUES (2, 'Comuneros - moda, confección, maderas y multimedia', 1);
+INSERT INTO public.sede VALUES (4, 'Tecnoparque - proyectos de innovación', 1);
+INSERT INTO public.sede VALUES (5, 'Villa del Rosario - Comercio, logística y servicios fronterizo', 1);
+INSERT INTO public.sede VALUES (6, 'Patios - Atención en servicios y comercio para el área metropolitana', 1);
+INSERT INTO public.sede VALUES (3, 'Industria - áreas técnicas, de mantenimiento, mecánicas e industriales', 1);
+INSERT INTO public.sede VALUES (8, 'Pescadero - CIES', 1);
+INSERT INTO public.sede VALUES (9, 'Sede Principal Cucuta', 1);
+INSERT INTO public.sede VALUES (7, 'Biblioteca - servicio a todos los aprendices', 1);
 
 
 --
--- TOC entry 5169 (class 0 OID 21974)
--- Dependencies: 223
+-- TOC entry 5184 (class 0 OID 18057)
+-- Dependencies: 238
 -- Data for Name: titulo_programa; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.titulo_programa (titpro_id, titpro_nombre, centro_formacion_cent_id) FROM stdin;
-2	Tecnólogo en Análisis y Desarrollo de Software	1
-3	Tecnólogo en Gestión Contable	1
-\.
+INSERT INTO public.titulo_programa VALUES (2, 'Tecnólogo en Análisis y Desarrollo de Software', 1);
+INSERT INTO public.titulo_programa VALUES (3, 'Tecnólogo en Gestión Contable', 1);
+INSERT INTO public.titulo_programa VALUES (4, ' tecnico en cosmetologia', 1);
 
 
 --
--- TOC entry 5184 (class 0 OID 22384)
--- Dependencies: 238
+-- TOC entry 5185 (class 0 OID 18062)
+-- Dependencies: 239
 -- Data for Name: usuario_coordinador; Type: TABLE DATA; Schema: public; Owner: postgres
 --
 
-COPY public.usuario_coordinador (numero_documento, coord_nombre_coordinador, coord_correo, coord_password, estado, centro_formacion_id) FROM stdin;
-2345678643	Juan Diego Rubio	chuni@gmail.com	$2y$10$VxwL4vZzXNwk5HV6qtVr7OtoQvTe25QxMI/0w7en8IPZ83kqOa74q	1	1
-234567	Gustavo Petro	petrosky@gmail.com	$2y$10$6CeswVyXRk2OZqoCzhHWKusAZn.34mXwJF5xz9xKpnjr3YZBC3.dy	1	1
-\.
+INSERT INTO public.usuario_coordinador VALUES (2345678643, 'Juan Diego Rubio', 'chuni@gmail.com', '$2y$10$VxwL4vZzXNwk5HV6qtVr7OtoQvTe25QxMI/0w7en8IPZ83kqOa74q', 1, 1);
+INSERT INTO public.usuario_coordinador VALUES (234567, 'Gustavo Petro', 'petrosky@gmail.com', '$2y$10$6CeswVyXRk2OZqoCzhHWKusAZn.34mXwJF5xz9xKpnjr3YZBC3.dy', 1, 1);
+INSERT INTO public.usuario_coordinador VALUES (1234, 'Palomita', 'paloma@gmail.com', '$2y$10$3MiVnegLrKBbit4mvvrULeOJzHvzkRtRbBqPQNL0E1wxmJs2Q2md6', 1, 1);
 
 
 --
 -- TOC entry 5197 (class 0 OID 0)
--- Dependencies: 230
+-- Dependencies: 222
 -- Name: asignacion_asig_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.asignacion_asig_id_seq', 21, true);
+SELECT pg_catalog.setval('public.asignacion_asig_id_seq', 35, true);
 
 
 --
 -- TOC entry 5198 (class 0 OID 0)
--- Dependencies: 236
+-- Dependencies: 224
 -- Name: auditoria_asignacion_id_auditoria_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.auditoria_asignacion_id_auditoria_seq', 8, true);
+SELECT pg_catalog.setval('public.auditoria_asignacion_id_auditoria_seq', 24, true);
 
 
 --
 -- TOC entry 5199 (class 0 OID 0)
--- Dependencies: 239
+-- Dependencies: 229
 -- Name: coordinacion_coord_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
@@ -750,11 +943,11 @@ SELECT pg_catalog.setval('public.coordinacion_coord_id_seq', 3, true);
 
 --
 -- TOC entry 5200 (class 0 OID 0)
--- Dependencies: 232
+-- Dependencies: 231
 -- Name: detallexasignacion_detasig_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.detallexasignacion_detasig_id_seq', 16, true);
+SELECT pg_catalog.setval('public.detallexasignacion_detasig_id_seq', 182, true);
 
 
 --
@@ -763,11 +956,11 @@ SELECT pg_catalog.setval('public.detallexasignacion_detasig_id_seq', 16, true);
 -- Name: instru_competencia_inscomp_id_seq; Type: SEQUENCE SET; Schema: public; Owner: postgres
 --
 
-SELECT pg_catalog.setval('public.instru_competencia_inscomp_id_seq', 17, true);
+SELECT pg_catalog.setval('public.instru_competencia_inscomp_id_seq', 40, true);
 
 
 --
--- TOC entry 4972 (class 2606 OID 21968)
+-- TOC entry 4968 (class 2606 OID 18077)
 -- Name: ambiente ambiente_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -776,7 +969,7 @@ ALTER TABLE ONLY public.ambiente
 
 
 --
--- TOC entry 4988 (class 2606 OID 22094)
+-- TOC entry 4970 (class 2606 OID 18079)
 -- Name: asignacion asignacion_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -785,7 +978,7 @@ ALTER TABLE ONLY public.asignacion
 
 
 --
--- TOC entry 4994 (class 2606 OID 22234)
+-- TOC entry 4972 (class 2606 OID 18081)
 -- Name: auditoria_asignacion auditoria_asignacion_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -794,7 +987,7 @@ ALTER TABLE ONLY public.auditoria_asignacion
 
 
 --
--- TOC entry 4968 (class 2606 OID 21950)
+-- TOC entry 4974 (class 2606 OID 18083)
 -- Name: centro_formacion centro_formacion_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -803,7 +996,7 @@ ALTER TABLE ONLY public.centro_formacion
 
 
 --
--- TOC entry 4978 (class 2606 OID 22003)
+-- TOC entry 4976 (class 2606 OID 18085)
 -- Name: competencia competencia_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -812,7 +1005,7 @@ ALTER TABLE ONLY public.competencia
 
 
 --
--- TOC entry 4980 (class 2606 OID 22010)
+-- TOC entry 4978 (class 2606 OID 18087)
 -- Name: competxprograma competxprograma_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -821,7 +1014,7 @@ ALTER TABLE ONLY public.competxprograma
 
 
 --
--- TOC entry 4984 (class 2606 OID 22404)
+-- TOC entry 4980 (class 2606 OID 18089)
 -- Name: coordinacion coordinacion_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -830,7 +1023,7 @@ ALTER TABLE ONLY public.coordinacion
 
 
 --
--- TOC entry 4990 (class 2606 OID 22125)
+-- TOC entry 4982 (class 2606 OID 18091)
 -- Name: detallexasignacion detallexasignacion_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -839,7 +1032,7 @@ ALTER TABLE ONLY public.detallexasignacion
 
 
 --
--- TOC entry 4986 (class 2606 OID 22065)
+-- TOC entry 4984 (class 2606 OID 18093)
 -- Name: ficha ficha_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -848,7 +1041,7 @@ ALTER TABLE ONLY public.ficha
 
 
 --
--- TOC entry 4992 (class 2606 OID 22142)
+-- TOC entry 4986 (class 2606 OID 18095)
 -- Name: instru_competencia instru_competencia_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -857,7 +1050,7 @@ ALTER TABLE ONLY public.instru_competencia
 
 
 --
--- TOC entry 4982 (class 2606 OID 22174)
+-- TOC entry 4988 (class 2606 OID 18097)
 -- Name: instructor instructor_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -866,7 +1059,7 @@ ALTER TABLE ONLY public.instructor
 
 
 --
--- TOC entry 4976 (class 2606 OID 21989)
+-- TOC entry 4990 (class 2606 OID 18099)
 -- Name: programa programa_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -875,7 +1068,7 @@ ALTER TABLE ONLY public.programa
 
 
 --
--- TOC entry 4970 (class 2606 OID 21958)
+-- TOC entry 4992 (class 2606 OID 18101)
 -- Name: sede sede_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -884,7 +1077,7 @@ ALTER TABLE ONLY public.sede
 
 
 --
--- TOC entry 4974 (class 2606 OID 21980)
+-- TOC entry 4994 (class 2606 OID 18103)
 -- Name: titulo_programa titulo_programa_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -893,7 +1086,7 @@ ALTER TABLE ONLY public.titulo_programa
 
 
 --
--- TOC entry 4996 (class 2606 OID 22394)
+-- TOC entry 4996 (class 2606 OID 18105)
 -- Name: usuario_coordinador usuario_coordinador_pkey; Type: CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -902,7 +1095,7 @@ ALTER TABLE ONLY public.usuario_coordinador
 
 
 --
--- TOC entry 5018 (class 2620 OID 22236)
+-- TOC entry 5018 (class 2620 OID 18106)
 -- Name: asignacion trg_asignacion_audit; Type: TRIGGER; Schema: public; Owner: postgres
 --
 
@@ -910,7 +1103,7 @@ CREATE TRIGGER trg_asignacion_audit AFTER INSERT OR DELETE OR UPDATE ON public.a
 
 
 --
--- TOC entry 4997 (class 2606 OID 21969)
+-- TOC entry 4997 (class 2606 OID 18107)
 -- Name: ambiente fk_ambiente_sede1; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -919,7 +1112,7 @@ ALTER TABLE ONLY public.ambiente
 
 
 --
--- TOC entry 5010 (class 2606 OID 22095)
+-- TOC entry 4998 (class 2606 OID 18112)
 -- Name: asignacion fk_asignacion_ambiente1; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -928,7 +1121,7 @@ ALTER TABLE ONLY public.asignacion
 
 
 --
--- TOC entry 5011 (class 2606 OID 22100)
+-- TOC entry 4999 (class 2606 OID 18117)
 -- Name: asignacion fk_asignacion_competencia1; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -937,7 +1130,7 @@ ALTER TABLE ONLY public.asignacion
 
 
 --
--- TOC entry 5012 (class 2606 OID 22105)
+-- TOC entry 5000 (class 2606 OID 18122)
 -- Name: asignacion fk_asignacion_ficha1; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -946,7 +1139,7 @@ ALTER TABLE ONLY public.asignacion
 
 
 --
--- TOC entry 5013 (class 2606 OID 22176)
+-- TOC entry 5001 (class 2606 OID 18127)
 -- Name: asignacion fk_asignacion_instructor1; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -955,7 +1148,7 @@ ALTER TABLE ONLY public.asignacion
 
 
 --
--- TOC entry 5001 (class 2606 OID 22366)
+-- TOC entry 5002 (class 2606 OID 18132)
 -- Name: competencia fk_competencia_centro; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -964,7 +1157,7 @@ ALTER TABLE ONLY public.competencia
 
 
 --
--- TOC entry 5002 (class 2606 OID 22011)
+-- TOC entry 5003 (class 2606 OID 18137)
 -- Name: competxprograma fk_competxprograma_competencia1; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -973,7 +1166,7 @@ ALTER TABLE ONLY public.competxprograma
 
 
 --
--- TOC entry 5003 (class 2606 OID 22016)
+-- TOC entry 5004 (class 2606 OID 18142)
 -- Name: competxprograma fk_competxprograma_programa1; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -982,7 +1175,7 @@ ALTER TABLE ONLY public.competxprograma
 
 
 --
--- TOC entry 5005 (class 2606 OID 22049)
+-- TOC entry 5005 (class 2606 OID 18147)
 -- Name: coordinacion fk_coordinacion_centro_formacion1; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -991,7 +1184,7 @@ ALTER TABLE ONLY public.coordinacion
 
 
 --
--- TOC entry 5006 (class 2606 OID 22411)
+-- TOC entry 5006 (class 2606 OID 18152)
 -- Name: coordinacion fk_coordinador_actual; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1000,7 +1193,7 @@ ALTER TABLE ONLY public.coordinacion
 
 
 --
--- TOC entry 5014 (class 2606 OID 22211)
+-- TOC entry 5007 (class 2606 OID 18157)
 -- Name: detallexasignacion fk_detallexasignacion_asignacion1; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1009,7 +1202,7 @@ ALTER TABLE ONLY public.detallexasignacion
 
 
 --
--- TOC entry 5007 (class 2606 OID 22421)
+-- TOC entry 5008 (class 2606 OID 18162)
 -- Name: ficha fk_ficha_coordinacion; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1018,7 +1211,7 @@ ALTER TABLE ONLY public.ficha
 
 
 --
--- TOC entry 5008 (class 2606 OID 22187)
+-- TOC entry 5009 (class 2606 OID 18167)
 -- Name: ficha fk_ficha_instructor1; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1027,7 +1220,7 @@ ALTER TABLE ONLY public.ficha
 
 
 --
--- TOC entry 5009 (class 2606 OID 22076)
+-- TOC entry 5010 (class 2606 OID 18172)
 -- Name: ficha fk_ficha_programa1; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1036,7 +1229,7 @@ ALTER TABLE ONLY public.ficha
 
 
 --
--- TOC entry 5015 (class 2606 OID 22143)
+-- TOC entry 5011 (class 2606 OID 18177)
 -- Name: instru_competencia fk_instru_competencia_competxprograma1; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1045,7 +1238,7 @@ ALTER TABLE ONLY public.instru_competencia
 
 
 --
--- TOC entry 5016 (class 2606 OID 22202)
+-- TOC entry 5012 (class 2606 OID 18182)
 -- Name: instru_competencia fk_instru_competencia_instructor1; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1054,7 +1247,7 @@ ALTER TABLE ONLY public.instru_competencia
 
 
 --
--- TOC entry 5004 (class 2606 OID 22033)
+-- TOC entry 5013 (class 2606 OID 18187)
 -- Name: instructor fk_instructor_centro_formacion1; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1063,7 +1256,7 @@ ALTER TABLE ONLY public.instructor
 
 
 --
--- TOC entry 4999 (class 2606 OID 22361)
+-- TOC entry 5014 (class 2606 OID 18192)
 -- Name: programa fk_programa_centro; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1072,7 +1265,7 @@ ALTER TABLE ONLY public.programa
 
 
 --
--- TOC entry 5000 (class 2606 OID 21990)
+-- TOC entry 5015 (class 2606 OID 18197)
 -- Name: programa fk_programa_tipo_programa; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1081,7 +1274,7 @@ ALTER TABLE ONLY public.programa
 
 
 --
--- TOC entry 4998 (class 2606 OID 22371)
+-- TOC entry 5016 (class 2606 OID 18202)
 -- Name: titulo_programa fk_titulo_programa_centro; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1090,7 +1283,7 @@ ALTER TABLE ONLY public.titulo_programa
 
 
 --
--- TOC entry 5017 (class 2606 OID 22395)
+-- TOC entry 5017 (class 2606 OID 18207)
 -- Name: usuario_coordinador fk_user_centro; Type: FK CONSTRAINT; Schema: public; Owner: postgres
 --
 
@@ -1098,11 +1291,11 @@ ALTER TABLE ONLY public.usuario_coordinador
     ADD CONSTRAINT fk_user_centro FOREIGN KEY (centro_formacion_id) REFERENCES public.centro_formacion(cent_id) ON UPDATE CASCADE ON DELETE SET NULL;
 
 
--- Completed on 2026-03-04 07:48:11
+-- Completed on 2026-03-13 11:56:10
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict hNibkJIxqdINqv2EyyZAE2EZ6u63DWNozFOQWiQxeg9f7iVAXebkof3jxXKht9z
+
 
