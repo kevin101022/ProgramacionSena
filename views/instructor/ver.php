@@ -2,21 +2,29 @@
 $pageTitle = 'Detalle de Instructor - SENA';
 $activeNavItem = 'instructores';
 require_once '../layouts/head.php';
-require_once '../layouts/sidebar.php';
+
+$rol = $_SESSION['rol'] ?? '';
+if ($rol === 'instructor') {
+    require_once '../layouts/instructor_sidebar.php';
+    $backUrl = 'javascript:history.back()';
+} else {
+    require_once '../layouts/sidebar.php';
+    $backUrl = 'index.php';
+}
 ?>
 
 <main class="main-content">
     <header class="main-header">
         <div class="header-content">
             <nav class="breadcrumb">
-                <a href="index.php">Instructores</a>
+                <a href="<?php echo htmlspecialchars($backUrl); ?>">Instructores</a>
                 <ion-icon src="../../assets/ionicons/chevron-forward-outline.svg"></ion-icon>
                 <span>Detalle de Instructor</span>
             </nav>
             <h1 class="page-title">Información del Instructor</h1>
         </div>
         <div class="header-actions">
-            <a href="index.php" class="btn-secondary">
+            <a href="<?php echo htmlspecialchars($backUrl); ?>" class="btn-secondary">
                 <ion-icon src="../../assets/ionicons/arrow-back-outline.svg"></ion-icon>
                 Regresar
             </a>
@@ -169,7 +177,7 @@ require_once '../layouts/sidebar.php';
             </div>
             <h3 class="text-lg font-bold text-gray-900 mb-2">¡Ups! Algo salió mal</h3>
             <p id="errorMessage" class="text-gray-500 mb-6">No pudimos encontrar al instructor solicitado.</p>
-            <a href="index.php" class="btn-primary inline-flex">Volver al inicio</a>
+            <a href="<?php echo htmlspecialchars($backUrl); ?>" class="btn-primary inline-flex">Volver al inicio</a>
         </div>
     </div>
 </main>

@@ -232,17 +232,24 @@ if ($navItem) {
     <!-- Mobile Back Bar (visible only on mobile, replaces hidden main-header) -->
     <div class="mobile-back-bar">
         <?php
-        // Determine smart back URL
-        $backUrl = '../dashboard/index.php';
+        // Determine smart back URL based on role
+        $sysRol = $_SESSION['rol'] ?? '';
+        $backUrl = ($sysRol === 'instructor') ? '../asignacion/instructor_index.php' : '../dashboard/index.php';
+        
         if (isset($activeNavItem)) {
             // Sub-pages: crear, editar, ver, calendarios → go to parent listing
             $currentFile = basename($_SERVER['SCRIPT_NAME'] ?? '', '.php');
             if (in_array($currentFile, ['crear', 'editar', 'ver', 'eliminar'])) {
-                $backUrl = 'index.php';
+                $backUrl = ($sysRol === 'instructor') ? 'javascript:history.back()' : 'index.php';
             } elseif (strpos($currentFile, 'calendario_') === 0) {
+                // If it's a report calendar for the coordinator
                 $backUrl = '../reportes/index.php';
             } elseif ($activeNavItem === 'dashboard') {
                 $backUrl = '';
+            } elseif ($sysRol === 'instructor' && strpos($currentFile, 'instructor_') === 0 && $currentFile !== 'instructor_index') {
+                $backUrl = '../asignacion/instructor_index.php';
+            } elseif ($sysRol === 'instructor' && $activeNavItem === 'mis_competencias') {
+                 $backUrl = '../asignacion/instructor_index.php';
             }
         }
         ?>

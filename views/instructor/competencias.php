@@ -25,7 +25,7 @@ require_once '../layouts/instructor_sidebar.php';
             <h1 class="page-title">Mis Competencias</h1>
         </div>
         <div class="header-actions">
-            <a href="index.php" class="btn-secondary">
+            <a href="javascript:history.back()" class="btn-secondary">
                 <ion-icon src="../../assets/ionicons/arrow-back-outline.svg"></ion-icon>
                 Volver
             </a>

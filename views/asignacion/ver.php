@@ -2,21 +2,29 @@
 $pageTitle = 'Detalle de Asignación - SENA';
 $activeNavItem = 'asignaciones';
 require_once '../layouts/head.php';
-require_once '../layouts/sidebar.php';
+
+$rol = $_SESSION['rol'] ?? '';
+if ($rol === 'instructor') {
+    require_once '../layouts/instructor_sidebar.php';
+    $backUrl = 'javascript:history.back()';
+} else {
+    require_once '../layouts/sidebar.php';
+    $backUrl = 'index.php';
+}
 ?>
 
 <main class="main-content">
     <header class="main-header">
         <div class="header-content">
             <nav class="breadcrumb">
-                <a href="index.php">Asignaciones</a>
+                <a href="<?php echo htmlspecialchars($backUrl); ?>">Asignaciones</a>
                 <ion-icon src="../../assets/ionicons/chevron-forward-outline.svg"></ion-icon>
                 <span>Detalle de Asignación</span>
             </nav>
             <h1 class="page-title">Detalle de Carga Académica</h1>
         </div>
         <div class="header-actions">
-            <a href="index.php" class="btn-secondary">
+            <a href="<?php echo htmlspecialchars($backUrl); ?>" class="btn-secondary">
                 <ion-icon src="../../assets/ionicons/arrow-back-outline.svg"></ion-icon>
                 Regresar
             </a>
@@ -180,7 +188,7 @@ require_once '../layouts/sidebar.php';
             </div>
             <h3 class="text-lg font-bold text-gray-900 mb-2">Asignación no encontrada</h3>
             <p id="errorMessage" class="text-gray-500 mb-6">El registro solicitado no existe o fue eliminado.</p>
-            <a href="index.php" class="btn-primary inline-flex">Volver al listado</a>
+            <a href="<?php echo htmlspecialchars($backUrl); ?>" class="btn-primary inline-flex">Volver al listado</a>
         </div>
     </div>
 </main>
