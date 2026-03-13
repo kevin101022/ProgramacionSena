@@ -33,7 +33,7 @@ if ($navItem) {
     } elseif ($rol === 'coordinador') {
         $allowed = in_array($navItem, ['dashboard', 'competencias', 'fichas', 'instruc_comp', 'asignaciones', 'reportes', 'auditoria_asignacion', 'setdata']);
     } elseif ($rol === 'instructor') {
-        $allowed = in_array($navItem, ['asignaciones', 'mis_competencias']);
+        $allowed = in_array($navItem, ['dashboard', 'asignaciones', 'mis_competencias']);
     }
 
     if (!$allowed) {
@@ -118,6 +118,61 @@ if ($navItem) {
             justify-content: center;
         }
 
+        /* Mobile Back Bar (hidden on desktop) */
+        .mobile-back-bar {
+            display: none;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+            position: fixed;
+            top: 57px;
+            left: 0;
+            width: 100%;
+            z-index: 79;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+        }
+
+        .mobile-back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: none;
+            border: 1px solid var(--gray-200, #e5e7eb);
+            color: var(--gray-700, #374151);
+            font-size: 13px;
+            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            flex-shrink: 0;
+        }
+
+        .mobile-back-btn:hover {
+            background: var(--light-green, #E8F5E8);
+            color: var(--primary-green, #39A900);
+            border-color: var(--primary-green, #39A900);
+        }
+
+        .mobile-back-btn ion-icon {
+            font-size: 16px;
+        }
+
+        .mobile-back-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--gray-800, #1f2937);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex: 1;
+            text-align: right;
+        }
+
         @media (max-width: 768px) {
             body {
                 display: block;
@@ -126,6 +181,10 @@ if ($navItem) {
             }
 
             .mobile-header {
+                display: flex;
+            }
+
+            .mobile-back-bar {
                 display: flex;
             }
 
@@ -146,8 +205,8 @@ if ($navItem) {
             .main-content {
                 height: auto;
                 overflow: visible;
-                padding-top: 60px;
-                /* Space for the fixed mobile header */
+                padding-top: 104px;
+                /* Space for fixed mobile header (57px) + back bar (47px) */
             }
         }
     </style>
@@ -169,3 +228,29 @@ if ($navItem) {
 
     <!-- Sidebar Overlay -->
     <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Mobile Back Bar (visible only on mobile, replaces hidden main-header) -->
+    <div class="mobile-back-bar">
+        <?php
+        // Determine smart back URL
+        $backUrl = '../dashboard/index.php';
+        if (isset($activeNavItem)) {
+            // Sub-pages: crear, editar, ver, calendarios → go to parent listing
+            $currentFile = basename($_SERVER['SCRIPT_NAME'] ?? '', '.php');
+            if (in_array($currentFile, ['crear', 'editar', 'ver', 'eliminar'])) {
+                $backUrl = 'index.php';
+            } elseif (strpos($currentFile, 'calendario_') === 0) {
+                $backUrl = '../reportes/index.php';
+            } elseif ($activeNavItem === 'dashboard') {
+                $backUrl = '';
+            }
+        }
+        ?>
+        <?php if (!empty($backUrl)): ?>
+            <a href="<?php echo $backUrl; ?>" class="mobile-back-btn">
+                <ion-icon src="../../assets/ionicons/arrow-back-outline.svg"></ion-icon>
+                Volver
+            </a>
+        <?php endif; ?>
+        <span class="mobile-back-title"><?php echo isset($pageTitle) ? htmlspecialchars(str_replace(' - SENA', '', str_replace(' - Programaciones', '', $pageTitle))) : ''; ?></span>
+    </div>

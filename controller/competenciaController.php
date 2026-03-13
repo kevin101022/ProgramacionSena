@@ -26,6 +26,11 @@ class CompetenciaController
             $this->sendResponse(['error' => 'ID requerido'], 400);
             return;
         }
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $cent_id = $_SESSION['centro_id'] ?? null;
+
         $this->model->setCompId($id);
         $result = $this->model->read();
         if (empty($result)) {
@@ -35,7 +40,7 @@ class CompetenciaController
 
         $competencia = $result[0];
         $competencia['programas'] = $this->model->getProgramasByCompetencia();
-        $competencia['instructores'] = $this->model->getInstructoresByCompetencia();
+        $competencia['instructores'] = $this->model->getInstructoresByCompetencia($cent_id);
 
         $this->sendResponse($competencia);
     }

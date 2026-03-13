@@ -45,10 +45,23 @@ document.addEventListener('DOMContentLoaded', () => {
             content.innerHTML = html;
             loading.style.display = 'none';
             content.style.display = '';
+
+            // Wrap each .report-table in a .table-container for mobile scroll
+            content.querySelectorAll('.report-table').forEach(table => {
+                if (table.parentElement.classList.contains('table-container')) return;
+                const wrapper = document.createElement('div');
+                wrapper.className = 'table-container';
+                table.parentNode.insertBefore(wrapper, table);
+                wrapper.appendChild(table);
+            });
+
+            // Auto-scroll to report output so user sees it immediately
+            content.closest('.bg-white, .report-output')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         } catch (e) {
             loading.style.display = 'none';
             content.innerHTML = `<div class="text-center py-8 text-red-500"><p>Error: ${e.message}</p></div>`;
             content.style.display = '';
+            content.closest('.bg-white, .report-output')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
     };
 

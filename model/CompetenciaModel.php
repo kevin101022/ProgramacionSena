@@ -176,17 +176,24 @@ class CompetenciaModel
     /**
      * Obtiene los instructores habilitados para esta competencia
      */
-    public function getInstructoresByCompetencia()
+    public function getInstructoresByCompetencia($cent_id = null)
     {
         $sql = "SELECT i.numero_documento as inst_id, i.inst_nombres, i.inst_apellidos, 
                        i.inst_correo, p.prog_codigo, p.prog_denominacion
                 FROM INSTRU_COMPETENCIA ic
                 INNER JOIN INSTRUCTOR i ON ic.INSTRUCTOR_inst_id = i.numero_documento
                 INNER JOIN PROGRAMA p ON ic.COMPETxPROGRAMA_PROGRAMA_prog_id = p.prog_codigo
-                WHERE ic.COMPETxPROGRAMA_COMPETENCIA_comp_id = :comp_id
-                ORDER BY i.inst_apellidos, i.inst_nombres";
+                WHERE ic.COMPETxPROGRAMA_COMPETENCIA_comp_id = :comp_id";
+        
+        $params = [':comp_id' => $this->comp_id];
+        if ($cent_id) {
+            $sql .= " AND i.CENTRO_FORMACION_cent_id = :cent_id";
+            $params[':cent_id'] = $cent_id;
+        }
+        
+        $sql .= " ORDER BY i.inst_apellidos, i.inst_nombres";
         $stmt = $this->db->prepare($sql);
-        $stmt->execute([':comp_id' => $this->comp_id]);
+        $stmt->execute($params);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

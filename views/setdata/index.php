@@ -61,17 +61,17 @@ require_once '../layouts/sidebar.php';
 
             <!-- Tabla de Datos -->
             <div class="glass-container overflow-hidden">
-                <div class="p-6 border-b border-slate-100 flex justify-between items-center bg-white">
-                    <div class="flex items-center gap-4">
+                <div class="p-4 md:p-6 border-b border-slate-100 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white">
+                    <div class="flex flex-col md:flex-row items-start md:items-center gap-4 w-full md:w-auto">
                         <h3 class="font-bold text-slate-800">Vista Previa de Datos</h3>
-                        <button id="downloadBtn" class="flex items-center gap-2 px-3 py-1.5 bg-[#39A900] text-white text-xs font-bold rounded-lg hover:bg-[#2d8500] transition-colors shadow-sm">
+                        <button id="downloadBtn" class="flex justify-center items-center gap-2 px-3 py-2 md:py-1.5 bg-[#39A900] text-white text-xs font-bold rounded-lg hover:bg-[#2d8500] transition-colors shadow-sm w-full md:w-auto">
                             <ion-icon name="document-text-outline"></ion-icon>
                             Descargar Reporte Visual (PDF)
                         </button>
                     </div>
-                    <div class="search-container !w-64">
+                    <div class="search-container w-full md:!w-64">
                         <ion-icon src="../../assets/ionicons/search-outline.svg" class="search-icon"></ion-icon>
-                        <input type="text" id="tableSearch" placeholder="Filtrar datos..." class="search-input">
+                        <input type="text" id="tableSearch" placeholder="Filtrar datos..." class="search-input w-full">
                     </div>
                 </div>
                 <div class="overflow-x-auto">

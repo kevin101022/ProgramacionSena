@@ -124,7 +124,19 @@ document.addEventListener('DOMContentLoaded', () => {
             if (section) section.style.display = 'block';
 
             container.innerHTML = '';
+
+            // Agrupar asignaciones por asig_id para evitar tarjetas duplicadas por cada día de clase
+            const uniqueAsignaciones = {};
             asignaciones.forEach(a => {
+                if (!uniqueAsignaciones[a.asig_id]) {
+                    uniqueAsignaciones[a.asig_id] = a;
+                }
+            });
+
+            const asignacionesAgrupadas = Object.values(uniqueAsignaciones);
+            if (countEl) countEl.textContent = asignacionesAgrupadas.length;
+
+            asignacionesAgrupadas.forEach(a => {
                 const item = document.createElement('div');
                 item.className = 'p-4 bg-gray-50 rounded-xl border border-gray-100 hover:bg-white hover:border-sena-green/30 transition-all cursor-pointer group shadow-sm flex items-center justify-between gap-4';
                 item.onclick = () => window.location.href = `../asignacion/ver.php?id=${a.asig_id}`;

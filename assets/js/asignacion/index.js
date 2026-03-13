@@ -88,6 +88,9 @@ class AsignacionManager {
 
         const deleteAsigBtn = document.getElementById('deleteDayAsig');
         if (deleteAsigBtn) deleteAsigBtn.onclick = () => this.handleDeleteAsig();
+
+        const applyDefaultHoursBtn = document.getElementById('applyDefaultHours');
+        if (applyDefaultHoursBtn) applyDefaultHoursBtn.onclick = () => this.handleApplyDefaultHours();
     }
 
     async handleDeleteAsig() {
@@ -115,6 +118,39 @@ class AsignacionManager {
                 NotificationService.showError('Error de conexión');
             }
         });
+    }
+
+    handleApplyDefaultHours() {
+        const defaultIni = document.getElementById('default_hora_ini')?.value || '08:00';
+        const defaultFin = document.getElementById('default_hora_fin')?.value || '12:00';
+        
+        if (defaultIni >= defaultFin) {
+            NotificationService.showError('La hora de inicio por defecto debe ser menor a la hora de fin.');
+            return;
+        }
+
+        const container = document.getElementById('diasListContainer');
+        if (!container) return;
+
+        const checkboxes = container.querySelectorAll('.day-checkbox:not(:disabled)');
+        if (checkboxes.length === 0) {
+            NotificationService.showError('Selecciones un rango de fechas válido primero.');
+            return;
+        }
+
+        checkboxes.forEach(chk => {
+            chk.checked = true;
+            chk.dispatchEvent(new Event('change'));
+            
+            const dateISO = chk.id.split('chk_')[1];
+            const ini = document.getElementById(`ini_${dateISO}`);
+            const fin = document.getElementById(`fin_${dateISO}`);
+            
+            if (ini) ini.value = defaultIni;
+            if (fin) fin.value = defaultFin;
+        });
+        
+        NotificationService.showSuccess('Horario predeterminado aplicado a todos los días.');
     }
 
     onDateRangeChange() {
@@ -591,6 +627,9 @@ class AsignacionManager {
         let start = new Date(startStr + 'T00:00:00');
         let end = new Date(endStr + 'T00:00:00');
 
+        const defaultIni = document.getElementById('default_hora_ini')?.value || '08:00';
+        const defaultFin = document.getElementById('default_hora_fin')?.value || '12:00';
+
         // Safety: max 90 days to avoid browser hang
         const diffDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
         if (diffDays > 90) {
@@ -621,23 +660,23 @@ class AsignacionManager {
             const isPast = dateISO < today;
 
             const row = document.createElement('div');
-            row.className = `flex items-center gap-4 p-3 bg-white border rounded-lg shadow-sm transition-all ${isPast ? 'border-red-200 bg-red-50/30 opacity-60' : 'border-gray-100 hover:border-sena-green/30'}`;
+            row.className = `flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-4 p-3 bg-white border rounded-lg shadow-sm transition-all ${isPast ? 'border-red-200 bg-red-50/30 opacity-60' : 'border-gray-100 hover:border-sena-green/30'}`;
 
             row.innerHTML = `
-                <div class="flex items-center gap-3 w-2/5">
-                    <input type="checkbox" id="chk_${dateISO}" class="day-checkbox w-4 h-4 text-sena-green rounded focus:ring-sena-green accent-[#39a900]" ${isPast ? 'disabled' : ''}>
-                    <label for="chk_${dateISO}" class="text-sm font-medium text-gray-700 capitalize cursor-pointer leading-tight">${dateLabel}</label>
+                <div class="flex items-center gap-3 w-full md:w-2/5 md:min-w-[140px]">
+                    <input type="checkbox" id="chk_${dateISO}" class="day-checkbox w-4 h-4 text-sena-green rounded focus:ring-sena-green accent-[#39a900] flex-shrink-0" ${isPast ? 'disabled' : ''}>
+                    <label for="chk_${dateISO}" class="text-sm font-medium text-gray-700 capitalize cursor-pointer leading-tight flex-1">${dateLabel}</label>
                 </div>
-                <div class="flex-1 flex items-center gap-3">
-                    <div class="flex-1">
-                        <input type="time" id="ini_${dateISO}" class="day-time-ini w-full px-3 py-1.5 text-sm border border-gray-200 rounded-md focus:ring-2 focus:ring-sena-green/20 focus:border-sena-green transition-all" value="08:00" disabled min="06:00" max="22:00">
+                <div class="flex-1 flex items-center gap-2 md:gap-3 w-full pl-7 md:pl-0">
+                    <div class="flex-1 min-w-[110px]">
+                        <input type="time" id="ini_${dateISO}" class="day-time-ini w-full px-2 md:px-3 py-1.5 text-xs md:text-sm border border-gray-200 rounded-md focus:ring-2 focus:ring-sena-green/20 focus:border-sena-green transition-all" value="${defaultIni}" disabled min="06:00" max="22:00">
                     </div>
-                    <span class="text-gray-400 font-bold">—</span>
-                    <div class="flex-1">
-                        <input type="time" id="fin_${dateISO}" class="day-time-fin w-full px-3 py-1.5 text-sm border border-gray-200 rounded-md focus:ring-2 focus:ring-sena-green/20 focus:border-sena-green transition-all" value="12:00" disabled min="06:00" max="22:00">
+                    <span class="text-gray-400 font-bold hidden md:inline">—</span>
+                    <div class="flex-1 min-w-[110px]">
+                        <input type="time" id="fin_${dateISO}" class="day-time-fin w-full px-2 md:px-3 py-1.5 text-xs md:text-sm border border-gray-200 rounded-md focus:ring-2 focus:ring-sena-green/20 focus:border-sena-green transition-all" value="${defaultFin}" disabled min="06:00" max="22:00">
                     </div>
                 </div>
-                ${isPast ? '<span class="text-[10px] text-red-400 font-bold whitespace-nowrap">Fecha pasada</span>' : ''}
+                ${isPast ? '<span class="text-[10px] text-red-400 font-bold whitespace-nowrap hidden md:block">Fecha pasada</span>' : ''}
             `;
 
             container.appendChild(row);

@@ -100,11 +100,6 @@ class ProgramaModel
 
         $params = [':prog_codigo' => $this->prog_codigo];
 
-        if ($cent_id) {
-            $sql .= " AND p.centro_formacion_cent_id = :cent_id";
-            $params[':cent_id'] = $cent_id;
-        }
-
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);

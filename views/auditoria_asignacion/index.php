@@ -58,19 +58,19 @@ if (isset($rol) && $rol === 'centro' && isset($_SESSION['centro_id'])) {
         </div>
 
         <!-- Action Bar -->
-        <div class="action-bar flex-wrap">
-            <div class="flex flex-1 gap-4 items-center min-w-[300px]">
-                <div class="search-container flex-1">
+        <div class="action-bar flex-col md:flex-row flex-wrap gap-4">
+            <div class="flex flex-1 gap-4 items-center w-full md:w-auto">
+                <div class="search-container flex-1 w-full">
                     <ion-icon src="../../assets/ionicons/search-outline.svg" class="search-icon"></ion-icon>
-                    <input type="text" id="searchInput" placeholder="Buscar por instructor, competencia o acción..." class="search-input">
+                    <input type="text" id="searchInput" placeholder="Buscar por instructor, competencia o acción..." class="search-input w-full">
                 </div>
             </div>
 
-            <div class="flex gap-4 items-center">
+            <div class="flex flex-col md:flex-row gap-4 items-stretch md:items-center w-full md:w-auto">
                 <?php if ($rol === 'centro'): ?>
-                    <div class="search-container w-64">
+                    <div class="search-container w-full md:w-64">
                         <ion-icon src="../../assets/ionicons/business-outline.svg" class="search-icon"></ion-icon>
-                        <select id="coordFilter" class="search-input bg-transparent border-none focus:ring-0 cursor-pointer">
+                        <select id="coordFilter" class="search-input bg-transparent border-none focus:ring-0 cursor-pointer w-full">
                             <option value="">TODAS LAS COORDINACIONES</option>
                             <?php foreach ($coordinaciones as $c): ?>
                                 <option value="<?php echo $c['coord_id']; ?>"><?php echo htmlspecialchars($c['coord_descripcion']); ?></option>
@@ -78,7 +78,7 @@ if (isset($rol) && $rol === 'centro' && isset($_SESSION['centro_id'])) {
                         </select>
                     </div>
                 <?php endif; ?>
-                <select id="actionFilter" class="p-2.5 bg-gray-50 border border-gray-100 rounded-xl text-xs font-bold text-gray-500 uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-sena-green/20">
+                <select id="actionFilter" class="w-full md:w-auto p-2.5 bg-gray-50 border border-gray-100 rounded-xl text-xs font-bold text-gray-500 uppercase tracking-wider focus:outline-none focus:ring-2 focus:ring-sena-green/20">
                     <option value="">TODAS LAS ACCIONES</option>
                     <option value="INSERT">INSERT (CREAR)</option>
                     <option value="UPDATE">UPDATE (EDITAR)</option>

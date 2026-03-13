@@ -45,8 +45,32 @@
 
                 </div>
 
+                <!-- Horario por Defecto (Rango rápido) -->
+                <div class="mt-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-xl">
+                    <h4 class="text-sm font-bold text-gray-800 mb-3 flex items-center gap-2">
+                        <ion-icon src="../../assets/ionicons/time-outline.svg" class="text-sena-green"></ion-icon>
+                        Horario por Defecto
+                    </h4>
+                    <div class="flex flex-wrap items-end gap-3">
+                        <div class="flex-1 min-w-[120px]">
+                            <label class="text-xs text-gray-600 font-medium mb-1 block">Hora Inicio</label>
+                            <input type="time" id="default_hora_ini" value="08:00" min="06:00" max="22:00" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-sena-green/30 focus:border-sena-green transition-all">
+                        </div>
+                        <span class="text-gray-400 font-bold pb-2">—</span>
+                        <div class="flex-1 min-w-[120px]">
+                            <label class="text-xs text-gray-600 font-medium mb-1 block">Hora Fin</label>
+                            <input type="time" id="default_hora_fin" value="12:00" min="06:00" max="22:00" class="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:ring-2 focus:ring-sena-green/30 focus:border-sena-green transition-all">
+                        </div>
+                        <button type="button" id="applyDefaultHours" class="btn-primary flex items-center gap-2 px-4 py-2 text-sm whitespace-nowrap" style="min-height: 38px;">
+                            <ion-icon src="../../assets/ionicons/checkmark-done-outline.svg"></ion-icon>
+                            Aplicar a todos
+                        </button>
+                    </div>
+                    <p class="text-[11px] text-gray-500 mt-2 italic">Aplica este horario a todos los días del rango. Luego puede editar días individuales.</p>
+                </div>
+
                 <!-- Detalle por Días -->
-                <div class="mt-6">
+                <div class="mt-4">
                     <h4 class="text-sm font-bold text-gray-800 mb-3 border-b border-gray-100 pb-2">Asignación de Horas por Día</h4>
                     <p class="text-xs text-gray-500 mb-4">Seleccione los días específicos y asigne el horario correspondiente para el centro de formación. Tenga en cuenta que no todos los días deben tener horas asignadas o las mismas franjas horarias.</p>
                     <div id="diasListContainer" class="space-y-3 max-h-80 overflow-y-auto pr-2 custom-scrollbar">

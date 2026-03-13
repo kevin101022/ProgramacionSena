@@ -1871,7 +1871,9 @@ ion-icon {
     .main-content {
         width: 100%;
         margin-left: 0;
-        height: calc(100vh - 57px); /* header height */
+        height: auto;
+        overflow: visible;
+        padding-top: 104px; /* mobile-header (57px) + back-bar (47px) */
     }
 
     .content-wrapper {
@@ -1899,25 +1901,151 @@ ion-icon {
         align-items: flex-start;
     }
 
+    .welcome-content h2 {
+        font-size: 22px;
+    }
+
+    .welcome-content p {
+        font-size: 14px;
+    }
+
     .welcome-actions {
         width: 100%;
     }
-    .welcome-actions .btn {
+    .welcome-actions .btn,
+    .welcome-actions .btn-primary {
         width: 100%;
         justify-content: center;
     }
     
     .stats-grid {
         grid-template-columns: 1fr;
+        padding: 16px;
+        gap: 12px;
+    }
+
+    .stat-card {
+        padding: 16px 20px;
+    }
+
+    .stat-card-number {
+        font-size: 28px;
+    }
+
+    .stat-card-context {
+        font-size: 12px;
+        max-width: 100%;
     }
 
     .action-bar {
         flex-direction: column;
         align-items: stretch;
+        gap: 12px;
     }
     
     .search-container {
         max-width: 100%;
+    }
+
+    /* Table responsive: custom visible scroll system for mobile */
+    .table-container {
+        display: block;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        border-radius: 12px;
+        max-width: 100%;
+        position: relative;
+    }
+
+    /* Hide native scrollbar on mobile (we replace it with custom one) */
+    .table-container::-webkit-scrollbar {
+        height: 0;
+        display: none;
+    }
+    .table-container {
+        scrollbar-width: none; /* Firefox */
+    }
+
+    /* Right fade gradient to hint more content */
+    .table-scroll-wrapper {
+        position: relative;
+    }
+
+    .table-scroll-wrapper::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 40px;
+        width: 30px;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.85));
+        pointer-events: none;
+        z-index: 3;
+        border-radius: 0 12px 0 0;
+        transition: opacity 0.3s ease;
+    }
+
+    .table-scroll-wrapper.scrolled-end::after {
+        opacity: 0;
+    }
+
+    /* Custom visible scroll track */
+    .table-scroll-track {
+        width: 100%;
+        height: 6px;
+        background: #e2e8f0;
+        border-radius: 3px;
+        margin-top: 10px;
+        position: relative;
+        cursor: pointer;
+    }
+
+    .table-scroll-thumb {
+        height: 100%;
+        background: linear-gradient(90deg, #39a900, #2d8a00);
+        border-radius: 3px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        min-width: 30px;
+        transition: background 0.2s;
+        cursor: grab;
+    }
+
+    .table-scroll-thumb:active {
+        cursor: grabbing;
+        background: linear-gradient(90deg, #2d8a00, #1e6b00);
+    }
+
+    /* Swipe hint text */
+    .table-scroll-hint {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        font-size: 11px;
+        color: #94a3b8;
+        font-weight: 600;
+        margin-top: 6px;
+        letter-spacing: 0.03em;
+    }
+
+    .table-scroll-hint ion-icon {
+        font-size: 14px;
+    }
+
+    .data-table,
+    .report-table {
+        min-width: 600px;
+    }
+
+    .data-table th,
+    .data-table td,
+    .report-table th,
+    .report-table td {
+        padding: 12px 16px;
+        font-size: 13px;
+        white-space: nowrap;
     }
 
     .form-actions {
@@ -1937,12 +2065,148 @@ ion-icon {
     
     .pagination-container {
         flex-direction: column;
-        gap: 16px;
+        gap: 12px;
         align-items: center;
+        padding: 12px 16px;
+    }
+
+    .pagination-info {
+        font-size: 12px;
+        text-align: center;
+    }
+
+    /* Report cards grid (reportes/index.php uses Tailwind grid, override) */
+    .grid.grid-cols-1.md\:grid-cols-2.lg\:grid-cols-4 {
+        grid-template-columns: 1fr 1fr !important;
+    }
+
+    .grid.grid-cols-1.md\:grid-cols-3 {
+        grid-template-columns: 1fr !important;
+    }
+
+    .report-card {
+        padding: 1rem;
+    }
+
+    .report-card h3 {
+        font-size: 0.8rem;
+    }
+
+    .report-card p {
+        font-size: 0.7rem;
+    }
+
+    /* Report tables responsive */
+    .report-table th,
+    .report-table td {
+        padding: 0.4rem 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    /* FullCalendar responsive */
+    .fc .fc-toolbar {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .fc .fc-toolbar-title {
+        font-size: 0.95rem;
+    }
+
+    .fc .fc-button {
+        font-size: 0.7rem;
+        padding: 4px 8px;
+    }
+
+    .fc .fc-daygrid-day-frame {
+        min-height: 60px;
+    }
+
+    .fc .fc-event {
+        font-size: 0.65rem;
+        padding: 1px 4px;
+    }
+
+    /* Calendar container padding */
+    .bg-white.rounded-xl.shadow-sm.border.border-gray-100.p-6 {
+        padding: 12px !important;
+    }
+
+    /* Quick access */
+    .quick-access-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+    }
+
+    .quick-access-card {
+        padding: 14px;
+        gap: 12px;
+    }
+
+    .quick-access-info h4 {
+        font-size: 13px;
+    }
+
+    .quick-access-info p {
+        font-size: 11px;
+    }
+
+    /* Dashboard hero responsive */
+    .dashboard-hero {
+        padding: 0 20px;
+    }
+
+    .welcome-title {
+        font-size: 32px;
+    }
+
+    .welcome-subtitle {
+        font-size: 15px;
+        margin-bottom: 24px;
+    }
+
+    .hero-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .dashboard-btn {
+        padding: 12px 20px;
+        font-size: 14px;
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Form content */
+    .form-content {
+        padding: 16px;
+    }
+
+    .form-header {
+        padding: 16px;
+        gap: 12px;
+    }
+
+    .form-header h2 {
+        font-size: 17px;
+    }
+
+    /* Section titles */
+    .section-title {
+        margin-top: 20px;
+        margin-bottom: 12px;
     }
 }
 
 @media (max-width: 480px) {
+    .main-content {
+        padding-top: 104px;
+    }
+
+    .content-wrapper {
+        padding: 12px;
+    }
+
     .quick-access-grid {
         grid-template-columns: 1fr;
     }
@@ -1954,5 +2218,102 @@ ion-icon {
     .btn-primary, .btn-secondary, .btn-danger {
         padding: 10px 16px;
         font-size: 13px;
+    }
+
+    /* Report cards single column on very small screens */
+    .grid.grid-cols-1.md\:grid-cols-2.lg\:grid-cols-4 {
+        grid-template-columns: 1fr !important;
+    }
+
+    .welcome-title {
+        font-size: 26px;
+    }
+
+    .stat-card-number {
+        font-size: 24px;
+    }
+
+    .stat-card {
+        padding: 14px 16px;
+    }
+
+    .stats-grid {
+        padding: 12px;
+        gap: 10px;
+    }
+
+    /* FullCalendar very small */
+    .fc .fc-toolbar-title {
+        font-size: 0.85rem;
+    }
+
+    .fc .fc-daygrid-day-frame {
+        min-height: 50px;
+    }
+}
+
+/* ==========================================================================
+   Coordinator & General Mobile Responsive Hooks
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    /* Action Bar Adjustments (when flex-col is applied) */
+    .action-bar {
+        padding: 16px;
+        gap: 12px;
+    }
+    
+    .search-container {
+        max-width: 100%;
+    }
+
+    /* Modal adjustments */
+    .modal-content {
+        width: 95%;
+        margin: 20px auto;
+        max-height: 90vh;
+    }
+    
+    .modal-footer {
+        flex-direction: column-reverse;
+        gap: 12px;
+    }
+    
+    .modal-footer button {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Tables horizontal scroll */
+    .table-container {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin-left: -16px; 
+        margin-right: -16px; 
+        border-radius: 0;
+        border-left: none;
+        border-right: none;
+    }
+
+    .data-table {
+        min-width: 700px; /* Forces scroll if content is wide */
+    }
+
+    /* Pagination */
+    .pagination-container {
+        padding: 16px;
+    }
+    .pagination-btn {
+        width: 32px;
+        height: 32px;
+    }
+}
+
+@media (max-width: 480px) {
+    .report-card {
+        padding: 1rem;
+    }
+    .stats-grid {
+        grid-template-columns: 1fr;
     }
 }

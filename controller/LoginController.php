@@ -27,20 +27,7 @@ class LoginController
     {
         $this->initSession();
 
-        // Limit attempts (Rate Limiting)
-        if (!isset($_SESSION['login_attempts'])) {
-            $_SESSION['login_attempts'] = 0;
-            $_SESSION['last_attempt_time'] = time();
-        }
 
-        if ($_SESSION['login_attempts'] >= 5) {
-            if (time() - $_SESSION['last_attempt_time'] < 300) { // 5 minutes block
-                header("Location: routing.php?controller=login&action=showLogin&error=" . urlencode("Demasiados intentos. Intenta de nuevo en 5 minutos."));
-                exit;
-            } else {
-                $_SESSION['login_attempts'] = 0; // Reset after 5 min
-            }
-        }
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             // CSRF verify
@@ -53,8 +40,6 @@ class LoginController
             $password = $_POST['password'] ?? '';
 
             if (empty($email) || empty($password)) {
-                $_SESSION['login_attempts']++;
-                $_SESSION['last_attempt_time'] = time();
                 header("Location: routing.php?controller=login&action=showLogin&error=" . urlencode("Por favor, completa todos los campos."));
                 exit;
             }
@@ -80,8 +65,6 @@ class LoginController
             }
 
             if (!$user) {
-                $_SESSION['login_attempts']++;
-                $_SESSION['last_attempt_time'] = time();
                 header("Location: routing.php?controller=login&action=showLogin&error=" . urlencode("Usuario no encontrado o rol no válido."));
                 exit;
             }
@@ -90,7 +73,6 @@ class LoginController
             if (password_verify($password, $user['password']) || $password === $user['password']) {
                 // Success: Regenerate ID securely
                 session_regenerate_id(true);
-                $_SESSION['login_attempts'] = 0;
 
                 $_SESSION['id'] = $user['id'];
                 $_SESSION['nombre'] = $user['nombre'];
@@ -113,8 +95,6 @@ class LoginController
                 exit;
             } else {
                 // Fail
-                $_SESSION['login_attempts']++;
-                $_SESSION['last_attempt_time'] = time();
                 header("Location: routing.php?controller=login&action=showLogin&error=" . urlencode("Credenciales incorrectas o rol equivocado."));
                 exit;
             }

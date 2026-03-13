@@ -1,6 +1,6 @@
 <?php
-$pageTitle = "Mis Asignaciones - SENA";
-$activeNavItem = 'asignaciones';
+$pageTitle = "Dashboard Instructor - SENA";
+$activeNavItem = 'dashboard';
 require_once '../layouts/head.php';
 
 // Enforce role
@@ -8,55 +8,25 @@ if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'instructor') {
     header("Location: ../../routing.php?controller=login&action=showLogin");
     exit;
 }
+
+// Get the Centro de Formación name to display it in the welcome section
+$centroNombre = "Centro de Formación";
+if (isset($_SESSION['centro_id'])) {
+    require_once '../../Conexion.php';
+    try {
+        $db = Conexion::getConnect();
+        $stmt = $db->prepare("SELECT cent_nombre FROM CENTRO_FORMACION WHERE cent_id = :id");
+        $stmt->execute([':id' => $_SESSION['centro_id']]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row) {
+            $centroNombre = $row['cent_nombre'];
+        }
+    } catch (Exception $e) {
+        // Silently continue
+    }
+}
+$instructorNombre = $_SESSION['nombre'] ?? 'Instructor';
 ?>
-<!-- FullCalendar CDN -->
-<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.js"></script>
-<style>
-    .fc {
-        font-family: 'Public Sans', sans-serif;
-    }
-
-    .fc .fc-toolbar-title {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: #1a1a2e;
-    }
-
-    .fc .fc-button {
-        background: #39a900;
-        border-color: #39a900;
-        font-size: 0.8rem;
-        text-transform: capitalize;
-    }
-
-    .fc .fc-button:hover {
-        background: #2d8a00;
-        border-color: #2d8a00;
-    }
-
-    .fc .fc-button-active {
-        background: #1e6b00 !important;
-        border-color: #1e6b00 !important;
-    }
-
-    .fc .fc-daygrid-day-number {
-        font-weight: 600;
-        color: #4a5568;
-    }
-
-    .fc .fc-event {
-        border-radius: 6px;
-        padding: 2px 6px;
-        font-size: 0.75rem;
-        border: none;
-        cursor: pointer !important;
-    }
-
-    .fc .fc-daygrid-day.fc-day-today {
-        background: #f0fdf4;
-    }
-</style>
 
 <?php require_once '../layouts/instructor_sidebar.php'; ?>
 
@@ -66,13 +36,24 @@ if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'instructor') {
             <nav class="breadcrumb">
                 <a href="#">Inicio</a>
                 <ion-icon src="../../assets/ionicons/chevron-forward-outline.svg"></ion-icon>
-                <span>Mis Asignaciones</span>
+                <span>Dashboard Instructor</span>
             </nav>
-            <h1 class="page-title">Mi Horario de Formación</h1>
+            <h1 class="page-title">Mi Espacio</h1>
         </div>
     </header>
 
     <div class="content-wrapper">
+        <!-- Welcome Section -->
+        <div class="welcome-section glass-container">
+            <div class="welcome-content">
+                <h2>¡Hola, <?php echo htmlspecialchars($instructorNombre); ?>! 👋</h2>
+                <p>Bienvenido al sistema de programación. Tienes asignaciones activas en <span class="font-bold text-sena-green"><?php echo htmlspecialchars($centroNombre); ?></span>.</p>
+            </div>
+            <!-- Decorative Elements -->
+            <div class="absolute top-0 right-0 w-64 h-64 bg-sena-green/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 pointer-events-none"></div>
+            <div class="absolute bottom-0 left-10 w-48 h-48 bg-blue-500/5 rounded-full blur-2xl translate-y-1/3 pointer-events-none"></div>
+        </div>
+
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-card-bg-icon">
@@ -87,64 +68,29 @@ if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'instructor') {
                 <div class="stat-card-body">
                     <span class="stat-card-number" id="totalAsignaciones">0</span>
                     <span class="stat-card-desc">clases programadas</span>
-                    <p class="stat-card-context">Visualiza todas tus responsabilidades semanales de manera read-only.</p>
+                    <p class="stat-card-context">Resumen de responsabilidades. Accede al menú lateral para ver tu calendario o competencias organizadas.</p>
+                </div>
+                <div class="stat-card-pill-container">
+                    <a href="instructor_calendario.php" class="stat-pill hover:bg-sena-green hover:text-white transition-colors cursor-pointer" style="text-decoration:none;">
+                        <ion-icon src="../../assets/ionicons/arrow-forward-outline.svg"></ion-icon>
+                        Ver Calendario Completo
+                    </a>
                 </div>
             </div>
         </div>
 
-        <!-- Calendar area -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mt-4">
-            <div id="calendar"></div>
-        </div>
     </div>
 </main>
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const calendarEl = document.getElementById('calendar');
-
-        // We fetch assignments for THIS instructor
-        // We need an endpoint in InstructorController to get assignments for logged instructor
+        // We fetch assignments for THIS instructor to show the count
         const instructorId = <?php echo json_encode($_SESSION['id']); ?>;
 
         fetch(`../../routing.php?controller=instructor&action=getAsignaciones&id=${instructorId}`)
             .then(response => response.json())
             .then(data => {
                 document.getElementById('totalAsignaciones').textContent = data.length || 0;
-
-                const events = data.map(asig => {
-                    return {
-                        id: asig.asig_id,
-                        title: `Amb. ${asig.amb_id || 'N/A'} (${asig.sede_nombre || ''}) | Ficha: ${asig.fich_id} | ${asig.comp_nombre}`,
-                        start: asig.asig_fecha_ini,
-                        end: asig.asig_fecha_fin,
-                        backgroundColor: '#39a900',
-                        borderColor: '#39a900'
-                    };
-                });
-
-                const calendar = new FullCalendar.Calendar(calendarEl, {
-                    initialView: 'dayGridMonth',
-                    locale: 'es',
-                    headerToolbar: {
-                        left: 'prev,next today',
-                        center: 'title',
-                        right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
-                    },
-                    buttonText: {
-                        today: 'Hoy',
-                        month: 'Mes',
-                        week: 'Semana',
-                        day: 'Día',
-                        list: 'Lista'
-                    },
-                    events: events,
-                    eventClick: function(info) {
-                        window.location.href = `ver.php?id=${info.event.id}`;
-                    }
-                });
-
-                calendar.render();
             })
             .catch(err => console.error("Error loading events", err));
     });

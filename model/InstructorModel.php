@@ -214,13 +214,15 @@ class InstructorModel
                        comp.comp_nombre_corto as comp_nombre,
                        amb.amb_id,
                        amb.amb_nombre,
-                       s.sede_nombre
+                       s.sede_nombre,
+                       d.detasig_fecha, d.detasig_hora_ini, d.detasig_hora_fin
                 FROM ASIGNACION a
                 LEFT JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
                 LEFT JOIN PROGRAMA p ON f.PROGRAMA_prog_id = p.prog_codigo
                 LEFT JOIN COMPETENCIA comp ON a.COMPETENCIA_comp_id = comp.comp_id
                 LEFT JOIN AMBIENTE amb ON a.AMBIENTE_amb_id = amb.amb_id
                 LEFT JOIN SEDE s ON amb.SEDE_sede_id = s.sede_id
+                LEFT JOIN DETALLExASIGNACION d ON a.asig_id = d.ASIGNACION_asig_id
                 WHERE a.INSTRUCTOR_inst_id = :numero_documento
                 ORDER BY a.asig_fecha_ini DESC";
         $stmt = $this->db->prepare($sql);
