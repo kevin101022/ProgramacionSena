@@ -8,8 +8,8 @@ if (!isset($_SESSION['rol'])) {
     exit;
 }
 
-$rol = $_SESSION['rol'];
-$navItem = isset($activeNavItem) ? $activeNavItem : '';
+$rol = isset($_SESSION['rol']) ? trim(strtolower($_SESSION['rol'])) : '';
+$navItem = isset($activeNavItem) ? trim($activeNavItem) : '';
 
 // --- Verificación de Coordinación para Coordinadores ---
 $hasCoordinacion = true;
@@ -33,10 +33,11 @@ if ($navItem) {
     } elseif ($rol === 'coordinador') {
         $allowed = in_array($navItem, ['dashboard', 'competencias', 'fichas', 'instruc_comp', 'asignaciones', 'reportes', 'auditoria_asignacion', 'setdata']);
     } elseif ($rol === 'instructor') {
-        $allowed = in_array($navItem, ['dashboard', 'asignaciones', 'mis_competencias']);
+        $allowed = in_array($navItem, ['dashboard', 'asignaciones', 'mis_competencias', 'mi_ficha', 'mis_fichas', 'fichas']);
     }
 
     if (!$allowed) {
+        error_log("RBAC Denied: Rol=$rol, item=$navItem, File=" . $_SERVER['PHP_SELF']);
         if ($rol === 'centro' || $rol === 'coordinador') {
             header("Location: ../dashboard/index.php");
         } elseif ($rol === 'instructor') {

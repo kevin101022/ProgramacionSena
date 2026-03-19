@@ -54,7 +54,8 @@ class DetalleAsignacionController
                 return;
             }
 
-            $model = new DetalleAsignacionModel($data['asignacion_asig_id'], $data['detasig_fecha'], $data['detasig_hora_ini'], $data['detasig_hora_fin'], null);
+            $observaciones = $data['observaciones'] ?? null;
+            $model = new DetalleAsignacionModel($data['asignacion_asig_id'], $data['detasig_fecha'], $data['detasig_hora_ini'], $data['detasig_hora_fin'], null, $observaciones);
             $id = $model->create();
             if ($id) {
                 $this->sendResponse(['message' => 'Detalle de asignación creado', 'id' => $id]);
@@ -127,7 +128,8 @@ class DetalleAsignacionController
                 return;
             }
 
-            $model = new DetalleAsignacionModel($data['asignacion_asig_id'], $data['detasig_fecha'], $data['detasig_hora_ini'], $data['detasig_hora_fin'], $data['detasig_id']);
+            $observaciones = $data['observaciones'] ?? null;
+            $model = new DetalleAsignacionModel($data['asignacion_asig_id'], $data['detasig_fecha'], $data['detasig_hora_ini'], $data['detasig_hora_fin'], $data['detasig_id'], $observaciones);
             if ($model->update()) {
                 $this->sendResponse(['message' => 'Detalle actualizado']);
             } else {
@@ -146,7 +148,7 @@ class DetalleAsignacionController
             $this->sendResponse(['error' => 'ID requerido'], 400);
             return;
         }
-        $model = new DetalleAsignacionModel(null, null, null, $id);
+        $model = new DetalleAsignacionModel(null, null, null, null, $id);
         if ($model->delete()) {
             $this->sendResponse(['message' => 'Detalle eliminado']);
         } else {

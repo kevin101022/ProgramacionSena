@@ -91,10 +91,8 @@ class fichaController
 
     public function show($id = null)
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
-        $cent_id = $_SESSION['centro_id'] ?? null;
+        $rol = $_SESSION['rol'] ?? null;
+        $cent_id = ($rol === 'instructor') ? null : ($_SESSION['centro_id'] ?? null);
 
         if (!$id) {
             $this->sendResponse(['error' => 'Número de ficha requerido'], 400);
@@ -153,6 +151,26 @@ class fichaController
             $this->sendResponse(['message' => 'Ficha eliminada correctamente']);
         } else {
             $this->sendResponse(['error' => 'Error al eliminar ficha'], 500);
+        }
+    }
+    public function getDetalleCompetencias($id = null)
+    {
+        if (!$id) {
+            $this->sendResponse(['error' => 'Número de ficha requerido'], 400);
+            return;
+        }
+
+        try {
+            $model = new FichaModel($id);
+            $vistas = $model->getCompetenciasVistas();
+            $faltantes = $model->getCompetenciasFaltantes();
+
+            $this->sendResponse([
+                'vistas' => $vistas,
+                'faltantes' => $faltantes
+            ]);
+        } catch (Exception $e) {
+            $this->sendResponse(['error' => 'Error al obtener detalle de competencias: ' . $e->getMessage()], 500);
         }
     }
 

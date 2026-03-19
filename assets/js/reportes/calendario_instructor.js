@@ -55,7 +55,8 @@ class CalendarioInstructorManager {
             const res = await fetch('../../routing.php?controller=instructor&action=index', {
                 headers: { 'Accept': 'application/json' }
             });
-            this.instructores = await res.json();
+            const data = await res.json();
+            this.instructores = Array.isArray(data) ? data : [];
         } catch (e) {
             console.error('Error cargando instructores:', e);
         }
@@ -217,6 +218,18 @@ class CalendarioInstructorManager {
         document.getElementById('dayDetailFicha').textContent = `Ficha ${asig.ficha_fich_id || asig.fich_id}`;
         document.getElementById('dayDetailCompetencia').textContent = asig.comp_nombre_corto || 'N/A';
         document.getElementById('dayDetailAmbiente').textContent = `Ambiente ${asig.ambiente_amb_id || 'N/A'}`;
+
+        const obsEl = document.getElementById('dayDetailObservaciones');
+        const obsContainer = document.getElementById('dayDetailObsContainer');
+        if (obsEl && obsContainer) {
+            if (props.observaciones && props.observaciones.trim() !== '') {
+                obsEl.textContent = props.observaciones;
+                obsContainer.classList.remove('hidden');
+            } else {
+                obsEl.textContent = '--';
+                obsContainer.classList.add('hidden');
+            }
+        }
 
         // Show modal
         const modal = document.getElementById('dayDetailModal');

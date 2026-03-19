@@ -31,8 +31,16 @@
                         <p class="text-xs text-gray-400 mt-1">Solo instructores habilitados</p>
                     </div>
                     <div class="form-group">
+                        <label class="form-label">Sede <span class="text-red-500">*</span></label>
+                        <select id="sede_id" name="sede_id" required class="search-input" style="padding-left: 12px !important;">
+                            <option value="">Seleccione sede...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
                         <label class="form-label">Ambiente <span class="text-red-500">*</span></label>
-                        <select id="ambiente_id" name="ambiente_amb_id" required class="search-input" style="padding-left: 12px !important;"></select>
+                        <select id="ambiente_id" name="ambiente_amb_id" required class="search-input" style="padding-left: 12px !important;">
+                            <option value="">Primero seleccione sede...</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Fecha Inicio (Rango) <span class="text-red-500">*</span></label>

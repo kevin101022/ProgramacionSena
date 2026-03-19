@@ -18,26 +18,25 @@ class CalendarioAmbienteManager {
 
     async init() {
         this.bindEvents();
-        await this.loadAmbientes();
+        await this.loadSedes();
+        await this.loadAllAmbientes();
     }
 
     bindEvents() {
-        const ambienteSearch = document.getElementById('ambienteSearch');
-        if (ambienteSearch) {
-            ambienteSearch.addEventListener('focus', () => this.renderAmbienteDropdown(ambienteSearch.value));
-            ambienteSearch.addEventListener('input', (e) => this.renderAmbienteDropdown(e.target.value));
-            ambienteSearch.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.renderAmbienteDropdown(e.target.value);
-            });
+        const sedeSelect = document.getElementById('sedeSelect');
+        const ambienteSelect = document.getElementById('ambienteSelect');
+
+        if (sedeSelect) {
+            sedeSelect.addEventListener('change', () => this.handleSedeChange());
         }
 
-        document.addEventListener('click', (e) => {
-            const ambienteDropdown = document.getElementById('ambienteDropdown');
-            if (ambienteDropdown && ambienteSearch && !ambienteSearch.contains(e.target) && !ambienteDropdown.contains(e.target)) {
-                ambienteDropdown.style.display = 'none';
-            }
-        });
+        if (ambienteSelect) {
+            ambienteSelect.addEventListener('change', (e) => {
+                const ambId = e.target.value;
+                const amb = this.ambientes.find(a => a.amb_id == ambId);
+                if (amb) this.selectAmbiente(amb);
+            });
+        }
 
         // Modal events
         const closeDayDetail = document.getElementById('closeDayDetail');
@@ -50,49 +49,65 @@ class CalendarioAmbienteManager {
         if (downloadPdfBtn) downloadPdfBtn.onclick = () => this.downloadPDF();
     }
 
-    async loadAmbientes() {
+    async loadSedes() {
+        try {
+            const res = await fetch('../../routing.php?controller=sede&action=index', {
+                headers: { 'Accept': 'application/json' }
+            });
+            const sedes = await res.json();
+            const sedeSelect = document.getElementById('sedeSelect');
+            if (sedeSelect && Array.isArray(sedes)) {
+                sedeSelect.innerHTML = '<option value="">Seleccione Sede...</option>';
+                sedes.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.sede_id;
+                    opt.textContent = s.sede_nombre;
+                    sedeSelect.appendChild(opt);
+                });
+            }
+        } catch (e) {
+            console.error('Error cargando sedes:', e);
+        }
+    }
+
+    async loadAllAmbientes() {
         try {
             const res = await fetch('../../routing.php?controller=ambiente&action=index', {
                 headers: { 'Accept': 'application/json' }
             });
             this.ambientes = await res.json();
+            if (!Array.isArray(this.ambientes)) this.ambientes = [];
         } catch (e) {
             console.error('Error cargando ambientes:', e);
+            this.ambientes = [];
         }
     }
 
-    renderAmbienteDropdown(filter = '') {
-        const ambienteDropdown = document.getElementById('ambienteDropdown');
-        if (!ambienteDropdown) return;
+    handleSedeChange() {
+        const sedeId = document.getElementById('sedeSelect')?.value;
+        const ambSelect = document.getElementById('ambienteSelect');
+        
+        if (!ambSelect) return;
 
-        ambienteDropdown.innerHTML = '';
-        const searchTerm = filter.toLowerCase().trim();
+        ambSelect.innerHTML = '<option value="">Seleccione Ambiente...</option>';
+        if (!sedeId) {
+            ambSelect.disabled = true;
+            return;
+        }
 
-        const filtered = this.ambientes.filter(a => {
-            const id = String(a.amb_id).toLowerCase();
-            const nombre = (a.amb_nombre || '').toLowerCase();
-            const sede = (a.sede_nombre || '').toLowerCase();
-            return id.includes(searchTerm) || nombre.includes(searchTerm) || sede.includes(searchTerm);
-        });
-
+        const filtered = this.ambientes.filter(a => a.sede_sede_id == sedeId);
         if (filtered.length === 0) {
-            ambienteDropdown.innerHTML = '<div class="p-4 text-center text-sm text-gray-500">No se encontraron ambientes</div>';
+            ambSelect.innerHTML = '<option value="">No hay ambientes en esta sede</option>';
+            ambSelect.disabled = true;
         } else {
             filtered.forEach(a => {
-                const item = document.createElement('div');
-                item.className = 'custom-dropdown-item';
-                item.innerHTML = `
-                    <div style="font-weight: 700; font-size: 0.9rem;">Ambiente ${a.amb_id} — ${a.amb_nombre || 'Sin nombre'}</div>
-                    <div style="font-size: 0.75rem; color: #6b7280;">${a.sede_nombre || 'Sin sede'}</div>
-                `;
-                item.onclick = (e) => {
-                    e.stopPropagation();
-                    this.selectAmbiente(a);
-                };
-                ambienteDropdown.appendChild(item);
+                const opt = document.createElement('option');
+                opt.value = a.amb_id;
+                opt.textContent = `${a.amb_id} — ${a.amb_nombre}`;
+                ambSelect.appendChild(opt);
             });
+            ambSelect.disabled = false;
         }
-        ambienteDropdown.style.display = 'block';
     }
 
     async selectAmbiente(a) {
@@ -217,6 +232,18 @@ class CalendarioAmbienteManager {
         document.getElementById('dayDetailFicha').textContent = `Ficha ${asig.ficha_fich_id || asig.fich_id}`;
         document.getElementById('dayDetailCompetencia').textContent = asig.comp_nombre_corto || 'N/A';
         document.getElementById('dayDetailInstructor').textContent = `${asig.inst_nombres || ''} ${asig.inst_apellidos || ''}`.trim() || 'N/A';
+
+        const obsEl = document.getElementById('dayDetailObservaciones');
+        const obsContainer = document.getElementById('dayDetailObsContainer');
+        if (obsEl && obsContainer) {
+            if (props.observaciones && props.observaciones.trim() !== '') {
+                obsEl.textContent = props.observaciones;
+                obsContainer.classList.remove('hidden');
+            } else {
+                obsEl.textContent = '--';
+                obsContainer.classList.add('hidden');
+            }
+        }
 
         // Show modal
         const modal = document.getElementById('dayDetailModal');

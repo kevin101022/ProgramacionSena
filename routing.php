@@ -29,15 +29,15 @@ $controllers = array(
     'detalle_asignacion' => ['index', 'show', 'store', 'update', 'destroy'],
     'ambiente' => ['index', 'show', 'store', 'update', 'destroy', 'getProgramacion'],
     'programa' => ['index', 'show', 'store', 'update', 'destroy', 'getTitulos'],
-    'ficha' => ['index', 'show', 'store', 'update', 'destroy'],
+    'ficha' => ['index', 'show', 'store', 'update', 'destroy', 'getDetalleCompetencias'],
     'competencia' => ['index', 'show', 'store', 'update', 'destroy'],
     'competencia_programa' => ['index', 'sync', 'getByPrograma', 'getAllPairs'],
     'titulo_programa' => ['index', 'show', 'store', 'update', 'destroy'],
     'centro_formacion' => ['index', 'show', 'store', 'update', 'destroy', 'getInstructores', 'getCoordinaciones'],
-    'instructor' => ['index', 'show', 'showByCentro', 'store', 'update', 'destroy', 'getCentros', 'getAsignaciones', 'getCompetencias'],
+    'instructor' => ['index', 'show', 'showByCentro', 'store', 'update', 'destroy', 'getCentros', 'getAsignaciones', 'getCompetencias', 'getFichasLider'],
     'instru_competencia' => ['index', 'show', 'store', 'update', 'destroy'],
-    'reporte' => ['instructoresPorCentro', 'fichasActivasPorPrograma', 'asignacionesPorInstructor', 'competenciasPorPrograma'],
-    'reporte_pdf' => ['calendarioFicha', 'calendarioInstructor', 'calendarioAmbiente'],
+    'reporte' => ['instructoresPorCentro', 'fichasActivasPorPrograma', 'asignacionesPorInstructor', 'competenciasPorPrograma', 'calendarioTotal'],
+    'reporte_pdf' => ['calendarioFicha', 'calendarioInstructor', 'calendarioAmbiente', 'calendarioTotal'],
     'login' => ['showLogin', 'login', 'logout', 'registroCoordinador', 'guardarCoordinador', 'getCoordinacionesByCentro'],
     'auditoria_asignacion' => ['index', 'show'],
     'usuario_coordinador' => ['index', 'show', 'store', 'update', 'toggle'],
@@ -95,7 +95,7 @@ try {
         $allowedControllersByRole = [
             'centro' => ['sede', 'ambiente', 'programa', 'titulo_programa', 'instructor', 'competencia', 'competencia_programa', 'coordinacion', 'usuario_coordinador', 'reporte', 'reporte_pdf', 'centro_formacion', 'auditoria_asignacion', 'detalle_asignacion'],
             'coordinador' => ['competencia_programa', 'ficha', 'instru_competencia', 'asignacion', 'detalle_asignacion', 'reporte', 'reporte_pdf', 'auditoria_asignacion', 'coordinacion', 'setdata'],
-            'instructor' => ['asignacion', 'instructor']
+            'instructor' => ['asignacion', 'instructor', 'ficha', 'reporte', 'reporte_pdf']
         ];
 
         // --- Verificación de Coordinación Activa ---

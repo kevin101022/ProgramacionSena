@@ -67,6 +67,23 @@ require_once '../layouts/sidebar.php';
                     </tr>
                 </tbody>
             </table>
+
+            <div class="pagination-container border-t border-slate-50 p-6 flex flex-wrap items-center justify-between gap-4">
+                <div class="pagination-info">
+                    <p class="text-[10px] font-black text-slate-500 uppercase tracking-wider">
+                        Mostrando <span id="showingFrom" class="text-sena-green font-black">0</span> a <span id="showingTo" class="text-sena-green font-black">0</span> de <span id="totalRecords" class="text-sena-green font-black">0</span> habilitaciones
+                    </p>
+                </div>
+                <nav class="pagination flex items-center gap-2">
+                    <button class="pagination-btn w-10 h-10 rounded-xl border border-slate-200 flex items-center justify-center text-slate-400 hover:border-sena-green hover:text-sena-green disabled:opacity-30 disabled:pointer-events-none transition-all" id="prevBtn">
+                        <ion-icon src="../../assets/ionicons/chevron-back-outline.svg"></ion-icon>
+                    </button>
+                    <div id="paginationNumbers" class="flex items-center gap-1"></div>
+                    <button class="pagination-btn w-10 h-10 rounded-xl border border-slate-200 flex items-center justify-center text-slate-400 hover:border-sena-green hover:text-sena-green disabled:opacity-30 disabled:pointer-events-none transition-all" id="nextBtn">
+                        <ion-icon src="../../assets/ionicons/chevron-forward-outline.svg"></ion-icon>
+                    </button>
+                </nav>
+            </div>
         </div>
     </div>
 </main>

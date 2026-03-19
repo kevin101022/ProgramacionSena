@@ -2,21 +2,29 @@
 $pageTitle = 'Detalle de Ficha - SENA';
 $activeNavItem = 'fichas';
 require_once '../layouts/head.php';
-require_once '../layouts/sidebar.php';
+if ($_SESSION['rol'] === 'instructor') {
+    require_once '../layouts/instructor_sidebar.php';
+} else {
+    require_once '../layouts/sidebar.php';
+}
 ?>
 
 <main class="main-content">
     <header class="main-header">
         <div class="header-content">
             <nav class="breadcrumb">
-                <a href="index.php">Fichas</a>
+                <?php if ($_SESSION['rol'] === 'instructor'): ?>
+                    <a href="../instructor/mi_ficha.php">Mis Fichas</a>
+                <?php else: ?>
+                    <a href="index.php">Fichas</a>
+                <?php endif; ?>
                 <ion-icon src="../../assets/ionicons/chevron-forward-outline.svg"></ion-icon>
                 <span>Detalle de Ficha</span>
             </nav>
             <h1 class="page-title">Información de la Ficha</h1>
         </div>
         <div class="header-actions">
-            <a href="index.php" class="btn-secondary">
+            <a href="<?php echo ($_SESSION['rol'] === 'instructor') ? '../instructor/mi_ficha.php' : 'index.php'; ?>" class="btn-secondary">
                 <ion-icon src="../../assets/ionicons/arrow-back-outline.svg"></ion-icon>
                 Regresar
             </a>
@@ -72,6 +80,7 @@ require_once '../layouts/sidebar.php';
                             </div>
                         </div>
 
+                        <?php if ($_SESSION['rol'] !== 'instructor'): ?>
                         <div class="mt-8 pt-6 border-t border-gray-50 flex flex-col gap-3">
                             <button id="editBtn" class="btn-primary w-full justify-center">
                                 <ion-icon src="../../assets/ionicons/create-outline.svg"></ion-icon>
@@ -82,6 +91,7 @@ require_once '../layouts/sidebar.php';
                                 Eliminar Ficha
                             </button>
                         </div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>
@@ -96,22 +106,34 @@ require_once '../layouts/sidebar.php';
                         </h3>
                     </div>
 
-                    <!-- Asignaciones de la Ficha -->
-                    <div>
-                        <h4 class="text-sm font-bold text-gray-700 mb-3">Asignaciones del Trimestre</h4>
-                        <div id="asignacionesList" class="space-y-3">
-                            <p class="text-sm text-gray-400 italic">Cargando asignaciones...</p>
+                    <!-- Competencias Vistas -->
+                    <div class="mb-8">
+                        <h4 class="text-sm font-bold text-sena-green mb-3 flex items-center gap-2">
+                            <ion-icon src="../../assets/ionicons/checkmark-circle-outline.svg"></ion-icon>
+                            Competencias Vistas (Con Instructor)
+                        </h4>
+                        <div id="compVistasList" class="space-y-3">
+                            <p class="text-sm text-gray-400 italic">Cargando competencias vistas...</p>
                         </div>
-                        <div id="noAsignaciones" class="p-6 bg-gray-50 rounded-xl border border-dashed border-gray-200 text-center" style="display: none;">
-                            <ion-icon src="../../assets/ionicons/calendar-outline.svg" class="text-4xl text-gray-300 mb-2"></ion-icon>
-                            <p class="text-sm text-gray-500 font-medium">No hay asignaciones registradas para esta ficha</p>
+                        <div id="noCompVistas" class="p-6 bg-green-50/50 rounded-xl border border-dashed border-green-200 text-center" style="display: none;">
+                            <ion-icon src="../../assets/ionicons/leaf-outline.svg" class="text-4xl text-green-300 mb-2"></ion-icon>
+                            <p class="text-sm text-green-600 font-medium">Aún no se ha impartido ninguna competencia a esta ficha.</p>
                         </div>
                     </div>
 
-                    <div class="mt-6 p-6 bg-gray-50 rounded-2xl border border-dashed border-gray-200 text-center">
-                        <ion-icon src="../../assets/ionicons/people-outline.svg" class="text-4xl text-gray-300 mb-2"></ion-icon>
-                        <p class="text-sm text-gray-500 font-medium">Aprendices Vinculados</p>
-                        <p class="text-xs text-gray-400 mt-1">Módulo en desarrollo</p>
+                    <!-- Competencias Faltantes -->
+                    <div>
+                        <h4 class="text-sm font-bold text-amber-500 mb-3 flex items-center gap-2">
+                            <ion-icon src="../../assets/ionicons/time-outline.svg"></ion-icon>
+                            Competencias Faltantes por Ver
+                        </h4>
+                        <div id="compFaltantesList" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <p class="text-sm text-gray-400 italic col-span-full">Cargando competencias faltantes...</p>
+                        </div>
+                        <div id="noCompFaltantes" class="p-6 bg-slate-50 rounded-xl border border-dashed border-slate-200 text-center" style="display: none;">
+                            <ion-icon src="../../assets/ionicons/trophy-outline.svg" class="text-4xl text-slate-300 mb-2"></ion-icon>
+                            <p class="text-sm text-slate-500 font-medium">¡Excelente! Esta ficha ya tiene cubiertas todas las competencias del programa.</p>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -124,14 +146,17 @@ require_once '../layouts/sidebar.php';
             </div>
             <h3 class="text-lg font-bold text-gray-900 mb-2">Error de Carga</h3>
             <p id="errorMessage" class="text-gray-500 mb-6">No se pudo cargar la información de la ficha.</p>
-            <a href="index.php" class="btn-primary inline-flex">Volver a Fichas</a>
+            <a href="<?php echo ($_SESSION['rol'] === 'instructor') ? '../instructor/mi_ficha.php' : 'index.php'; ?>" class="btn-primary inline-flex">Volver a Fichas</a>
         </div>
     </div>
 </main>
 
 <!-- Modal de Edición (Reutilizamos el de index si es necesario o simplificamos) -->
-<?php require_once 'modal_edit.php'; ?>
+<?php if ($_SESSION['rol'] !== 'instructor') require_once 'modal_edit.php'; ?>
 
+<script>
+    window.isInstructor = <?php echo ($_SESSION['rol'] === 'instructor') ? 'true' : 'false'; ?>;
+</script>
 <script src="../../assets/js/ficha/ver.js?v=<?php echo time(); ?>"></script>
 </body>
 

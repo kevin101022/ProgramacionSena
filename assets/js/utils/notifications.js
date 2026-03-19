@@ -33,8 +33,48 @@ const NotificationService = {
         if (this.cancelBtn) this.cancelBtn.onclick = () => this.hide();
     },
 
-    showConfirm(message, callback) {
+    showConfirm(message, callback, options = {}) {
         if (!this.overlay) this.init();
+
+        const title = options.title || '¿Confirmar Acción?';
+        const confirmText = options.confirmText || 'Sí, confirmar';
+        const cancelText = options.cancelText || 'No, cancelar';
+        const type = options.type || 'danger'; // danger, warning, success, info
+
+        // Elements
+        const titleEl = document.getElementById('confirm-title');
+        const iconBg = document.getElementById('confirm-icon-bg');
+        const icon = document.getElementById('confirm-icon');
+        
+        if (titleEl) titleEl.textContent = title;
+        if (this.confirmBtn) this.confirmBtn.textContent = confirmText;
+        if (this.cancelBtn) this.cancelBtn.textContent = cancelText;
+
+        // Apply theme colors
+        if (iconBg && icon) {
+            // Reset
+            iconBg.className = iconBg.className.replace(/bg-\w+-\d+/g, '');
+            icon.className = icon.className.replace(/text-\w+-\d+/g, '');
+            this.confirmBtn.className = this.confirmBtn.className.replace(/bg-\w+-\d+/g, '').replace(/hover:bg-\w+-\d+/g, '').replace(/shadow-\w+-\d+/g, '');
+
+            if (type === 'warning') {
+                iconBg.classList.add('bg-amber-100');
+                icon.classList.add('text-amber-600');
+                icon.setAttribute('src', '../../assets/ionicons/alert-circle-outline.svg');
+                this.confirmBtn.classList.add('bg-amber-600', 'hover:bg-amber-700', 'shadow-amber-200');
+            } else if (type === 'success') {
+                iconBg.classList.add('bg-green-100');
+                icon.classList.add('text-green-600');
+                icon.setAttribute('src', '../../assets/ionicons/checkmark-circle-outline.svg');
+                this.confirmBtn.classList.add('bg-sena-green', 'hover:bg-dark-green', 'shadow-sena-green/20');
+            } else {
+                // Default: danger (red)
+                iconBg.classList.add('bg-red-100');
+                icon.classList.add('text-red-600');
+                icon.setAttribute('src', '../../assets/ionicons/alert-circle-outline.svg');
+                this.confirmBtn.classList.add('bg-red-600', 'hover:bg-red-700', 'shadow-red-200');
+            }
+        }
 
         this.confirmText.textContent = message;
         this.confirmAlert.classList.remove('hidden');

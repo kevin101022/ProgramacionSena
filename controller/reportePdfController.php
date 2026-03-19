@@ -118,6 +118,120 @@ class ReportePdfController
     }
 
     /**
+     * Genera PDF del Calendario Total (filtrado por rol)
+     */
+    public function calendarioTotal()
+    {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+
+        $rol     = $_SESSION['rol'] ?? null;
+        $cent_id = $_SESSION['centro_id'] ?? null;
+        $user_id = $_SESSION['id'] ?? null;
+
+        // Resolver coord_id para coordinador
+        $coord_id   = null;
+        $coord_desc = 'Todas las coordinaciones';
+        if ($rol === 'coordinador' && $user_id) {
+            $stmt = $this->db->prepare("SELECT coord_id, coord_descripcion FROM COORDINACION WHERE coordinador_actual = :uid AND estado = 1 LIMIT 1");
+            $stmt->execute([':uid' => $user_id]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            $coord_id   = $row['coord_id'] ?? null;
+            $coord_desc = $row['coord_descripcion'] ?? 'Mi coordinación';
+        }
+
+        // Subtítulo según rol
+        $subtitulo = $rol === 'coordinador' ? "Coordinación: {$coord_desc}" : 'Todas las coordinaciones del centro';
+
+        $asignaciones = $this->getAsignacionesTotal($cent_id, $coord_id);
+
+        $this->generarPDF(
+            'Reporte de Asignaciones - Calendario Total',
+            $subtitulo,
+            'Generado: ' . date('d/m/Y H:i'),
+            $asignaciones,
+            'total',
+            'Calendario_Total_' . date('Ymd') . '.pdf'
+        );
+    }
+
+    /**
+     * Obtiene todas las asignaciones filtradas por centro o coordinación
+     */
+    private function getAsignacionesTotal($cent_id = null, $coord_id = null)
+    {
+        $sql = "SELECT a.asig_id, a.asig_fecha_ini, a.asig_fecha_fin,
+                       co.coord_descripcion,
+                       f.fich_id,
+                       c.comp_nombre_corto, c.comp_nombre_unidad_competencia,
+                       i.inst_nombres, i.inst_apellidos,
+                       amb.amb_id, amb.amb_nombre,
+                       d.detasig_fecha, d.detasig_hora_ini, d.detasig_hora_fin
+                FROM ASIGNACION a
+                INNER JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
+                INNER JOIN COORDINACION co ON f.COORDINACION_coord_id = co.coord_id
+                INNER JOIN COMPETENCIA c ON a.COMPETENCIA_comp_id = c.comp_id
+                INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.numero_documento
+                LEFT JOIN AMBIENTE amb ON a.AMBIENTE_amb_id = amb.amb_id
+                LEFT JOIN DETALLExASIGNACION d ON a.asig_id = d.ASIGNACION_asig_id";
+
+        $params = [];
+        if ($coord_id) {
+            $sql .= " WHERE co.coord_id = :coord_id";
+            $params[':coord_id'] = $coord_id;
+        } elseif ($cent_id) {
+            $sql .= " WHERE co.CENTRO_FORMACION_cent_id = :cent_id";
+            $params[':cent_id'] = $cent_id;
+        }
+        $sql .= " ORDER BY co.coord_descripcion, d.detasig_fecha, d.detasig_hora_ini";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $this->agruparAsignacionesTotal($stmt->fetchAll(PDO::FETCH_ASSOC));
+    }
+
+    /**
+     * Agrupa asignaciones del calendario total por asig_id (una fila por asignación)
+     */
+    private function agruparAsignacionesTotal($detalles)
+    {
+        if (empty($detalles)) return [];
+
+        $grupos = [];
+
+        foreach ($detalles as $d) {
+            $key = $d['asig_id'];
+
+            if (!isset($grupos[$key])) {
+                $grupos[$key] = [
+                    'key'              => $key,
+                    'fecha_inicio'     => $d['detasig_fecha'],
+                    'fecha_fin'        => $d['detasig_fecha'],
+                    'hora_ini'         => $d['detasig_hora_ini'],
+                    'hora_fin'         => $d['detasig_hora_fin'],
+                    'coordinacion'     => $d['coord_descripcion'],
+                    'ficha'            => $d['fich_id'],
+                    'competencia'      => $d['comp_nombre_corto'],
+                    'competencia_full' => $d['comp_nombre_unidad_competencia'],
+                    'instructor'       => trim($d['inst_nombres'] . ' ' . $d['inst_apellidos']),
+                    'ambiente'         => $d['amb_id']
+                        ? $d['amb_id'] . ' - ' . ($d['amb_nombre'] ?? '')
+                        : null,
+                ];
+            } else {
+                // Extender rango de fechas
+                if ($d['detasig_fecha'] < $grupos[$key]['fecha_inicio']) {
+                    $grupos[$key]['fecha_inicio'] = $d['detasig_fecha'];
+                }
+                if ($d['detasig_fecha'] > $grupos[$key]['fecha_fin']) {
+                    $grupos[$key]['fecha_fin'] = $d['detasig_fecha'];
+                }
+            }
+        }
+
+        return array_values($grupos);
+    }
+
+    /**
      * Obtiene datos de una ficha
      */
     private function getFichaData($fichId)
@@ -227,57 +341,45 @@ class ReportePdfController
     }
 
     /**
-     * Agrupa asignaciones consecutivas con el mismo horario
+     * Agrupa asignaciones por asig_id — una fila por asignación con rango min/max de fechas
      */
     private function agruparAsignaciones($detalles)
     {
         if (empty($detalles)) return [];
 
-        $agrupadas = [];
-        $grupo_actual = null;
+        $grupos = [];
 
-        foreach ($detalles as $detalle) {
-            $key = $detalle['asig_id'] . '_' . 
-                   $detalle['detasig_hora_ini'] . '_' . 
-                   $detalle['detasig_hora_fin'];
+        foreach ($detalles as $d) {
+            $key = $d['asig_id'];
 
-            if ($grupo_actual === null || $grupo_actual['key'] !== $key) {
-                // Guardar grupo anterior si existe
-                if ($grupo_actual !== null) {
-                    $agrupadas[] = $grupo_actual;
-                }
-
-                // Iniciar nuevo grupo
-                $grupo_actual = [
-                    'key' => $key,
-                    'fecha_inicio' => $detalle['detasig_fecha'],
-                    'fecha_fin' => $detalle['detasig_fecha'],
-                    'hora_ini' => $detalle['detasig_hora_ini'],
-                    'hora_fin' => $detalle['detasig_hora_fin'],
-                    'ficha' => $detalle['fich_id'] ?? null,
-                    'competencia' => $detalle['comp_nombre_corto'],
-                    'competencia_full' => $detalle['comp_nombre_unidad_competencia'],
-                    'instructor' => isset($detalle['inst_nombres']) 
-                        ? trim($detalle['inst_nombres'] . ' ' . $detalle['inst_apellidos']) 
+            if (!isset($grupos[$key])) {
+                $grupos[$key] = [
+                    'key'              => $key,
+                    'fecha_inicio'     => $d['detasig_fecha'],
+                    'fecha_fin'        => $d['detasig_fecha'],
+                    'hora_ini'         => $d['detasig_hora_ini'],
+                    'hora_fin'         => $d['detasig_hora_fin'],
+                    'ficha'            => $d['fich_id'] ?? null,
+                    'competencia'      => $d['comp_nombre_corto'],
+                    'competencia_full' => $d['comp_nombre_unidad_competencia'],
+                    'instructor'       => isset($d['inst_nombres'])
+                        ? trim($d['inst_nombres'] . ' ' . $d['inst_apellidos'])
                         : null,
-                    'ambiente' => isset($detalle['amb_id']) 
-                        ? $detalle['amb_id'] . ' - ' . ($detalle['amb_nombre'] ?? '') 
+                    'ambiente'         => isset($d['amb_id'])
+                        ? $d['amb_id'] . ' - ' . ($d['amb_nombre'] ?? '')
                         : null,
-                    'fechas' => [$detalle['detasig_fecha']]
                 ];
             } else {
-                // Extender grupo actual
-                $grupo_actual['fecha_fin'] = $detalle['detasig_fecha'];
-                $grupo_actual['fechas'][] = $detalle['detasig_fecha'];
+                if ($d['detasig_fecha'] < $grupos[$key]['fecha_inicio']) {
+                    $grupos[$key]['fecha_inicio'] = $d['detasig_fecha'];
+                }
+                if ($d['detasig_fecha'] > $grupos[$key]['fecha_fin']) {
+                    $grupos[$key]['fecha_fin'] = $d['detasig_fecha'];
+                }
             }
         }
 
-        // Guardar último grupo
-        if ($grupo_actual !== null) {
-            $agrupadas[] = $grupo_actual;
-        }
-
-        return $agrupadas;
+        return array_values($grupos);
     }
 
     /**
@@ -508,15 +610,23 @@ class ReportePdfController
                                 </td>
                                 <td class="hora-col"><?php echo substr($asig['hora_ini'], 0, 5); ?></td>
                                 <td class="hora-col"><?php echo substr($asig['hora_fin'], 0, 5); ?></td>
-                                <?php if ($tipo !== 'ficha'): ?>
+                                <?php if ($tipo === 'total'): ?>
+                                    <td><?php echo htmlspecialchars($asig['coordinacion'] ?? 'N/A'); ?></td>
                                     <td><?php echo htmlspecialchars($asig['ficha'] ?? 'N/A'); ?></td>
-                                <?php endif; ?>
-                                <td class="competencia-col"><?php echo htmlspecialchars($asig['competencia']); ?></td>
-                                <?php if ($tipo !== 'ambiente'): ?>
-                                    <td><?php echo htmlspecialchars($asig['ambiente'] ?? 'N/A'); ?></td>
-                                <?php endif; ?>
-                                <?php if ($tipo !== 'instructor'): ?>
+                                    <td class="competencia-col"><?php echo htmlspecialchars($asig['competencia']); ?></td>
                                     <td><?php echo htmlspecialchars($asig['instructor'] ?? 'N/A'); ?></td>
+                                    <td><?php echo htmlspecialchars($asig['ambiente'] ?? 'N/A'); ?></td>
+                                <?php else: ?>
+                                    <?php if ($tipo !== 'ficha'): ?>
+                                        <td><?php echo htmlspecialchars($asig['ficha'] ?? 'N/A'); ?></td>
+                                    <?php endif; ?>
+                                    <td class="competencia-col"><?php echo htmlspecialchars($asig['competencia']); ?></td>
+                                    <?php if ($tipo !== 'ambiente'): ?>
+                                        <td><?php echo htmlspecialchars($asig['ambiente'] ?? 'N/A'); ?></td>
+                                    <?php endif; ?>
+                                    <?php if ($tipo !== 'instructor'): ?>
+                                        <td><?php echo htmlspecialchars($asig['instructor'] ?? 'N/A'); ?></td>
+                                    <?php endif; ?>
                                 <?php endif; ?>
                             </tr>
                         <?php endforeach; ?>
@@ -548,6 +658,8 @@ class ReportePdfController
                 return array_merge($base, ['Ficha', 'Competencia', 'Ambiente']);
             case 'ambiente':
                 return array_merge($base, ['Ficha', 'Competencia', 'Instructor']);
+            case 'total':
+                return array_merge($base, ['Coordinación', 'Ficha', 'Competencia', 'Instructor', 'Ambiente']);
             default:
                 return $base;
         }
@@ -615,21 +727,26 @@ class ReportePdfController
             
             // Columnas dinámicas según tipo
             $colIndex = 3;
-            if ($tipo !== 'ficha') {
-                $pdf->Cell($widths[$colIndex], 7, utf8_decode($asig['ficha'] ?? 'N/A'), 1, 0, 'L', true);
+            if ($tipo === 'total') {
+                $pdf->Cell($widths[$colIndex], 7, utf8_decode(substr($asig['coordinacion'] ?? 'N/A', 0, 25)), 1, 0, 'L', true); $colIndex++;
+                $pdf->Cell($widths[$colIndex], 7, utf8_decode($asig['ficha'] ?? 'N/A'), 1, 0, 'L', true); $colIndex++;
+                $pdf->Cell($widths[$colIndex], 7, utf8_decode(substr($asig['competencia'], 0, 30)), 1, 0, 'L', true); $colIndex++;
+                $pdf->Cell($widths[$colIndex], 7, utf8_decode(substr($asig['instructor'] ?? 'N/A', 0, 25)), 1, 0, 'L', true); $colIndex++;
+                $pdf->Cell($widths[$colIndex], 7, utf8_decode(substr($asig['ambiente'] ?? 'N/A', 0, 15)), 1, 0, 'L', true);
+            } else {
+                if ($tipo !== 'ficha') {
+                    $pdf->Cell($widths[$colIndex], 7, utf8_decode($asig['ficha'] ?? 'N/A'), 1, 0, 'L', true);
+                    $colIndex++;
+                }
+                $pdf->Cell($widths[$colIndex], 7, utf8_decode(substr($asig['competencia'], 0, 30)), 1, 0, 'L', true);
                 $colIndex++;
-            }
-            
-            $pdf->Cell($widths[$colIndex], 7, utf8_decode(substr($asig['competencia'], 0, 30)), 1, 0, 'L', true);
-            $colIndex++;
-            
-            if ($tipo !== 'ambiente') {
-                $pdf->Cell($widths[$colIndex], 7, utf8_decode(substr($asig['ambiente'] ?? 'N/A', 0, 20)), 1, 0, 'L', true);
-                $colIndex++;
-            }
-            
-            if ($tipo !== 'instructor') {
-                $pdf->Cell($widths[$colIndex], 7, utf8_decode(substr($asig['instructor'] ?? 'N/A', 0, 25)), 1, 0, 'L', true);
+                if ($tipo !== 'ambiente') {
+                    $pdf->Cell($widths[$colIndex], 7, utf8_decode(substr($asig['ambiente'] ?? 'N/A', 0, 20)), 1, 0, 'L', true);
+                    $colIndex++;
+                }
+                if ($tipo !== 'instructor') {
+                    $pdf->Cell($widths[$colIndex], 7, utf8_decode(substr($asig['instructor'] ?? 'N/A', 0, 25)), 1, 0, 'L', true);
+                }
             }
             
             $pdf->Ln();
@@ -658,6 +775,8 @@ class ReportePdfController
                 return [45, 20, 20, 25, 80, 45]; // Fecha, HoraIni, HoraFin, Ficha, Competencia, Ambiente
             case 'ambiente':
                 return [45, 20, 20, 25, 80, 50]; // Fecha, HoraIni, HoraFin, Ficha, Competencia, Instructor
+            case 'total':
+                return [38, 18, 18, 45, 18, 55, 45, 30]; // Fecha, HoraIni, HoraFin, Coord, Ficha, Comp, Instructor, Ambiente
             default:
                 return [45, 20, 20, 80, 45, 50];
         }

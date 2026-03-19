@@ -133,6 +133,14 @@ Al registrar una hora (ej: 7:00 AM a 10:00 AM), el sistema realiza un **Escaneo 
 | 6 | Fechas Vigentes | `controller/asignacionController.php` | `store()` y `update()` — `fecha_ini < date('Y-m-d')` retorna error 400 |
 | 🎁 | Habilitación Instructor-Competencia | `controller/asignacionController.php` | `store()` y `update()` — `InstruCompetenciaModel::isQualified()` |
 
+#### ⚖️ Límites y Regulaciones Académicas
+Para asegurar el bienestar del instructor y la correcta ejecución del plan de estudios:
+1. **Límite Mensual de Horas:** Un instructor no puede ser asignado por más de **160 horas en un mismo mes**. El sistema abortará la operación si se supera este tope garantizando el límite laboral.
+2. **Horas Totales de Competencia:** No se pueden asignar más horas de las que estipula el programa original. Por ejemplo, si una competencia es de 48h, el sistema no permitirá programar 50h, evitando sobre-ejecución.
+3. **Control del 80% (Umbral Mínimo):** Si se intenta registrar una distribución donde las horas cubren menos del 80% del total de la competencia, el sistema levanta una alerta requiriendo **Aceptación Directa del Coordinador** para proceder.
+4. **Cálculo Automático de Fechas:** Las diferencias temporales entre Fecha de Inicio / Fin están fuertemente validadas con el volumen real de clases programadas en días de semana.
+5. **Vencimiento de Certificación Técnica:** Se cruza la "Fecha de Vigencia" certificada del Instructor vs la "Fecha de Asignación"; bloqueando la programación si el instructor está expirado para dictar el módulo.
+
 > **Nota:** Los cruces (1-3) se validan en **dos niveles**: a nivel de **Asignación** (`AsignacionModel::checkConflicts` — solapamiento de fechas) y a nivel de **Detalle/Franja Horaria** (`DetalleAsignacionModel::checkGlobalConflicts` — solapamiento de horas dentro de fechas solapadas). El bloqueo real que impide guardar ocurre en el nivel de Detalle.
 
 #### ✅ Precisión Quirúrgica

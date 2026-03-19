@@ -7,34 +7,37 @@ class DetalleAsignacionModel
     private $detasig_hora_ini;
     private $detasig_hora_fin;
     private $detasig_id;
+    private $observaciones;
     private $db;
 
-    public function __construct($asignacion_asig_id = null, $detasig_fecha = null, $detasig_hora_ini = null, $detasig_hora_fin = null, $detasig_id = null)
+    public function __construct($asignacion_asig_id = null, $detasig_fecha = null, $detasig_hora_ini = null, $detasig_hora_fin = null, $detasig_id = null, $observaciones = null)
     {
         $this->asignacion_asig_id = $asignacion_asig_id;
         $this->detasig_fecha = $detasig_fecha;
         $this->detasig_hora_ini = $detasig_hora_ini;
         $this->detasig_hora_fin = $detasig_hora_fin;
         $this->detasig_id = $detasig_id;
+        $this->observaciones = $observaciones;
         $this->db = Conexion::getConnect();
     }
 
     public function create()
     {
-        $query = "INSERT INTO DETALLExASIGNACION (ASIGNACION_asig_id, detasig_fecha, detasig_hora_ini, detasig_hora_fin) 
-                  VALUES (:asig_id, :fecha, :hora_ini, :hora_fin)";
+        $query = "INSERT INTO DETALLExASIGNACION (ASIGNACION_asig_id, detasig_fecha, detasig_hora_ini, detasig_hora_fin, observaciones) 
+                  VALUES (:asig_id, :fecha, :hora_ini, :hora_fin, :observaciones)";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':asig_id', $this->asignacion_asig_id);
         $stmt->bindParam(':fecha', $this->detasig_fecha);
         $stmt->bindParam(':hora_ini', $this->detasig_hora_ini);
         $stmt->bindParam(':hora_fin', $this->detasig_hora_fin);
+        $stmt->bindParam(':observaciones', $this->observaciones);
         $stmt->execute();
         return $this->db->lastInsertId();
     }
 
     public function readAllByAsignacion($asig_id)
     {
-        $sql = "SELECT detasig_id, ASIGNACION_asig_id as asignacion_asig_id, detasig_fecha, detasig_hora_ini, detasig_hora_fin 
+        $sql = "SELECT detasig_id, ASIGNACION_asig_id as asignacion_asig_id, detasig_fecha, detasig_hora_ini, detasig_hora_fin, observaciones 
                 FROM DETALLExASIGNACION WHERE ASIGNACION_asig_id = :asig_id ORDER BY detasig_fecha ASC, detasig_hora_ini ASC";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([':asig_id' => $asig_id]);
@@ -44,12 +47,13 @@ class DetalleAsignacionModel
     // ... otros métodos actualizados con el nombre de tabla DETALLExASIGNACION
     public function update()
     {
-        $query = "UPDATE DETALLExASIGNACION SET ASIGNACION_asig_id = :asig_id, detasig_fecha = :fecha, detasig_hora_ini = :hora_ini, detasig_hora_fin = :hora_fin WHERE detasig_id = :id";
+        $query = "UPDATE DETALLExASIGNACION SET ASIGNACION_asig_id = :asig_id, detasig_fecha = :fecha, detasig_hora_ini = :hora_ini, detasig_hora_fin = :hora_fin, observaciones = :observaciones WHERE detasig_id = :id";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':asig_id', $this->asignacion_asig_id);
         $stmt->bindParam(':fecha', $this->detasig_fecha);
         $stmt->bindParam(':hora_ini', $this->detasig_hora_ini);
         $stmt->bindParam(':hora_fin', $this->detasig_hora_fin);
+        $stmt->bindParam(':observaciones', $this->observaciones);
         $stmt->bindParam(':id', $this->detasig_id);
         return $stmt->execute();
     }

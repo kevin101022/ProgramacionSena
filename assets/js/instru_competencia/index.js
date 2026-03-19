@@ -40,6 +40,18 @@ class HabilitacionManager {
                     filter.appendChild(opt);
                 });
             }
+
+            // Si hay un param por URL, seleccionarlo y recargar
+            const urlParams = new URLSearchParams(window.location.search);
+            const compId = urlParams.get('comp_id');
+            if (compId) {
+                filter.value = compId;
+                // Render table happens automatically as loadHabilitaciones completes around the same time or after.
+                // If it already finished, we render again just in case:
+                this.currentPage = 1;
+                this.renderTable();
+            }
+
         } catch (e) {
             console.error('Error loading filters:', e);
         }

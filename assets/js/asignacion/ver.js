@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let currentAsig = null;
     let allAmbientes = [];
+    let allSedes = [];
     let allCompetencias = [];
     let allHabilitaciones = [];
 
@@ -22,10 +23,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            await loadAsignacionData();
+            await Promise.all([
+                loadAsignacionData(),
+                loadSedes()
+            ]);
         } catch (error) {
             console.error('Error:', error);
             showError('Error al recuperar los datos del servidor');
+        }
+    };
+
+    const loadSedes = async () => {
+        try {
+            const res = await fetch('../../routing.php?controller=sede&action=index', {
+                headers: { 'Accept': 'application/json' }
+            });
+            allSedes = await res.json();
+        } catch (e) {
+            console.error('Error cargando sedes:', e);
         }
     };
 
@@ -181,6 +196,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         while (current <= end) {
             const dateISO = current.toISOString().split('T')[0];
+            
+            // Skip Sundays (Day 0)
+            if (current.getDay() === 0) {
+                current.setDate(current.getDate() + 1);
+                continue;
+            }
+
             const dateLabel = current.toLocaleDateString('es-CO', formatOptions);
             const isPast = dateISO < today;
 
@@ -254,6 +276,33 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    const handleSedeChange = (targetAmbienteId = null) => {
+        const sedeId = document.getElementById('sede_id')?.value;
+        const ambSelect = document.getElementById('ambiente_id');
+        if (!ambSelect) return;
+
+        ambSelect.innerHTML = '<option value="">Seleccione ambiente...</option>';
+        if (!sedeId) {
+            ambSelect.innerHTML = '<option value="">Primero seleccione sede...</option>';
+            return;
+        }
+
+        const filtered = allAmbientes.filter(a => a.sede_sede_id == sedeId);
+        if (filtered.length === 0) {
+            ambSelect.innerHTML = '<option value="">No hay ambientes en esta sede</option>';
+        } else {
+            filtered.forEach(a => {
+                const opt = document.createElement('option');
+                opt.value = a.amb_id;
+                opt.textContent = `${a.amb_id} - ${a.amb_nombre || 'Sin nombre'} (${a.tipo_ambiente || 'Convencional'})`;
+                ambSelect.appendChild(opt);
+            });
+            if (targetAmbienteId) {
+                ambSelect.value = targetAmbienteId;
+            }
+        }
+    };
+
     const openEditModal = (asig) => {
         if (!form) return;
         form.reset();
@@ -273,16 +322,30 @@ document.addEventListener('DOMContentLoaded', () => {
         if (modalFichaId) modalFichaId.value = asig.ficha_fich_id || asig.fich_id || '';
         if (fichaDisplay) fichaDisplay.value = `Ficha ${asig.fich_id || asig.ficha_fich_id}`;
 
-        // Populate ambientes
-        if (ambSelect) {
-            ambSelect.innerHTML = '<option value="">Seleccione ambiente...</option>';
-            allAmbientes.forEach(a => {
+        // Populate sedes
+        const sedeSelect = document.getElementById('sede_id');
+        if (sedeSelect) {
+            sedeSelect.innerHTML = '<option value="">Seleccione sede...</option>';
+            allSedes.forEach(s => {
                 const opt = document.createElement('option');
-                opt.value = a.amb_id;
-                opt.textContent = `${a.amb_id} - ${a.amb_nombre || ''} (${a.sede_nombre || ''})`;
-                ambSelect.appendChild(opt);
+                opt.value = s.sede_id;
+                opt.textContent = s.sede_nombre;
+                sedeSelect.appendChild(opt);
             });
-            ambSelect.value = asig.ambiente_amb_id || '';
+
+            // Bind change event if not already bound (ver.js uses a different pattern)
+            sedeSelect.onchange = () => handleSedeChange();
+        }
+
+        // Pre-seleccionar Sede si existe ambiente
+        if (sedeSelect && asig.ambiente_amb_id) {
+            const amb = allAmbientes.find(a => a.amb_id == asig.ambiente_amb_id);
+            if (amb) {
+                sedeSelect.value = amb.sede_sede_id;
+                handleSedeChange(asig.ambiente_amb_id);
+            }
+        } else if (ambSelect) {
+            ambSelect.innerHTML = '<option value="">Primero seleccione sede...</option>';
         }
 
         // Populate competencias

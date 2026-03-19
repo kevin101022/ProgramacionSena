@@ -11,6 +11,20 @@ $instructorNombre = isset($_SESSION['nombre']) ? $_SESSION['nombre'] : 'Instruct
         </div>
     </div>
 
+<?php
+$isLider = false;
+if (isset($_SESSION['id']) && $_SESSION['rol'] === 'instructor') {
+    require_once dirname(__DIR__) . '/../Conexion.php';
+    try {
+        $db = Conexion::getConnect();
+        $stmt = $db->prepare("SELECT COUNT(*) FROM ficha WHERE instructor_inst_id_lider = :id");
+        $stmt->execute([':id' => $_SESSION['id']]);
+        if ($stmt->fetchColumn() > 0) {
+            $isLider = true;
+        }
+    } catch (Exception $e) {}
+}
+?>
     <nav class="sidebar-nav">
         <p class="nav-section">Mi Espacio</p>
         <a href="../asignacion/instructor_index.php" class="nav-item <?php echo ($activeNavItem === 'dashboard') ? 'active' : ''; ?>">
@@ -25,6 +39,12 @@ $instructorNombre = isset($_SESSION['nombre']) ? $_SESSION['nombre'] : 'Instruct
             <ion-icon src="../../assets/ionicons/bookmarks-outline.svg"></ion-icon>
             Competencias
         </a>
+        <?php if ($isLider): ?>
+        <a href="../instructor/mi_ficha.php" class="nav-item <?php echo ($activeNavItem === 'mi_ficha') ? 'active' : ''; ?>">
+            <ion-icon src="../../assets/ionicons/people-circle-outline.svg"></ion-icon>
+            Mis Fichas
+        </a>
+        <?php endif; ?>
     </nav>
 
     <div class="sidebar-footer">
@@ -43,9 +63,8 @@ $instructorNombre = isset($_SESSION['nombre']) ? $_SESSION['nombre'] : 'Instruct
     </div>
 </aside>
 
-<!-- Custom Notifications -->
-<?php require_once dirname(__DIR__) . '/layouts/notifications.php'; ?>
-<script src="../../assets/js/utils/notifications.js?v=<?php echo time(); ?>"></script>
+<div id="sidebarOverlay" class="sidebar-overlay"></div>
+
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         // --- Mobile sidebar toggle ---
@@ -72,13 +91,11 @@ $instructorNombre = isset($_SESSION['nombre']) ? $_SESSION['nombre'] : 'Instruct
             if (container.dataset.scrollSetup) return;
             container.dataset.scrollSetup = '1';
 
-            // Wrap in a scroll-wrapper
             const wrapper = document.createElement('div');
             wrapper.className = 'table-scroll-wrapper';
             container.parentNode.insertBefore(wrapper, container);
             wrapper.appendChild(container);
 
-            // Create track
             const track = document.createElement('div');
             track.className = 'table-scroll-track';
             const thumb = document.createElement('div');
@@ -86,7 +103,6 @@ $instructorNombre = isset($_SESSION['nombre']) ? $_SESSION['nombre'] : 'Instruct
             track.appendChild(thumb);
             wrapper.appendChild(track);
 
-            // Hint text
             const hint = document.createElement('div');
             hint.className = 'table-scroll-hint';
             hint.innerHTML = '<ion-icon src="../../assets/ionicons/swap-horizontal-outline.svg"></ion-icon> Deslizar para ver más';
@@ -98,8 +114,7 @@ $instructorNombre = isset($_SESSION['nombre']) ? $_SESSION['nombre'] : 'Instruct
                 if (scrollWidth <= clientWidth) {
                     track.style.display = 'none';
                     hint.style.display = 'none';
-                    if (wrapper.querySelector('.table-scroll-wrapper::after'))
-                        wrapper.classList.add('scrolled-end');
+                    wrapper.classList.add('scrolled-end');
                     return;
                 }
                 track.style.display = 'block';
@@ -114,7 +129,6 @@ $instructorNombre = isset($_SESSION['nombre']) ? $_SESSION['nombre'] : 'Instruct
                 thumb.style.width = thumbWidth + '%';
                 thumb.style.left = thumbPos + '%';
 
-                // Update fade gradient
                 if (scrollLeft >= maxScroll - 5) {
                     wrapper.classList.add('scrolled-end');
                 } else {
@@ -125,7 +139,6 @@ $instructorNombre = isset($_SESSION['nombre']) ? $_SESSION['nombre'] : 'Instruct
             container.addEventListener('scroll', updateThumb);
             window.addEventListener('resize', updateThumb);
 
-            // Drag thumb to scroll
             let dragging = false;
             let startX = 0;
             let startScrollLeft = 0;
@@ -134,7 +147,6 @@ $instructorNombre = isset($_SESSION['nombre']) ? $_SESSION['nombre'] : 'Instruct
                 dragging = true;
                 startX = (e.touches ? e.touches[0].clientX : e.clientX);
                 startScrollLeft = container.scrollLeft;
-                e.preventDefault();
             }
 
             function onDragMove(e) {
@@ -142,10 +154,8 @@ $instructorNombre = isset($_SESSION['nombre']) ? $_SESSION['nombre'] : 'Instruct
                 const x = (e.touches ? e.touches[0].clientX : e.clientX);
                 const dx = x - startX;
                 const trackWidth = track.clientWidth;
-                const scrollWidth = container.scrollWidth - container.clientWidth;
                 const scrollDelta = (dx / trackWidth) * container.scrollWidth;
                 container.scrollLeft = startScrollLeft + scrollDelta;
-                e.preventDefault();
             }
 
             function onDragEnd() {
@@ -159,7 +169,6 @@ $instructorNombre = isset($_SESSION['nombre']) ? $_SESSION['nombre'] : 'Instruct
             document.addEventListener('mouseup', onDragEnd);
             document.addEventListener('touchend', onDragEnd);
 
-            // Click on track to jump
             track.addEventListener('click', (e) => {
                 if (e.target === thumb) return;
                 const rect = track.getBoundingClientRect();
@@ -167,7 +176,6 @@ $instructorNombre = isset($_SESSION['nombre']) ? $_SESSION['nombre'] : 'Instruct
                 container.scrollLeft = clickRatio * (container.scrollWidth - container.clientWidth);
             });
 
-            // Initial update
             setTimeout(updateThumb, 300);
             setTimeout(updateThumb, 1000);
         }
@@ -178,7 +186,6 @@ $instructorNombre = isset($_SESSION['nombre']) ? $_SESSION['nombre'] : 'Instruct
         }
 
         initAllTables();
-        // Re-init on dynamic content load
         const observer = new MutationObserver(() => {
             if (isMobile()) initAllTables();
         });
@@ -186,6 +193,6 @@ $instructorNombre = isset($_SESSION['nombre']) ? $_SESSION['nombre'] : 'Instruct
     });
 </script>
 
-<!-- Custom Notifications -->
+<!-- Custom Notifications (Included only once at the end) -->
 <?php require_once dirname(__DIR__) . '/layouts/notifications.php'; ?>
 <script src="../../assets/js/utils/notifications.js?v=<?php echo time(); ?>"></script>

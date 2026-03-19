@@ -87,7 +87,8 @@ class CompetenciaManager {
         // Update stats
         const totalStatsCount = document.getElementById('totalCompetencias');
         const totalCountLabel = document.getElementById('totalCount');
-        const showingCountLabel = document.getElementById('showingCount');
+        const showingFromLabel = document.getElementById('showingFrom');
+        const showingToLabel = document.getElementById('showingTo');
         if (totalStatsCount) totalStatsCount.textContent = this.competencias.length;
         if (totalCountLabel) totalCountLabel.textContent = total;
 
@@ -148,7 +149,8 @@ class CompetenciaManager {
             });
         }
 
-        if (showingCountLabel) showingCountLabel.textContent = end;
+        if (showingFromLabel) showingFromLabel.textContent = total > 0 ? start + 1 : 0;
+        if (showingToLabel) showingToLabel.textContent = end;
         this.updatePagination(totalPages);
     }
 

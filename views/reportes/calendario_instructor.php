@@ -205,6 +205,16 @@ require_once '../layouts/sidebar.php';
                         <p id="dayDetailAmbiente" class="text-sm font-bold text-gray-800">--</p>
                     </div>
                 </div>
+
+                <div class="flex items-start gap-3 hidden" id="dayDetailObsContainer">
+                    <div class="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
+                        <ion-icon src="../../assets/ionicons/chatbubble-ellipses-outline.svg" class="text-amber-500"></ion-icon>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-xs text-gray-500 font-semibold uppercase">Observaciones</p>
+                        <p id="dayDetailObservaciones" class="text-sm font-medium text-gray-700 italic mt-1">--</p>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="modal-footer" style="padding: 16px 24px;">
@@ -213,6 +223,11 @@ require_once '../layouts/sidebar.php';
     </div>
 </div>
 
+<script>
+    const USER_ROL = '<?php echo $_SESSION["rol"] ?? ""; ?>';
+    const USER_CENTRO_ID = '<?php echo $_SESSION["centro_id"] ?? ""; ?>';
+    const USER_ID = '<?php echo $_SESSION["id"] ?? ""; ?>';
+</script>
 <script src="../../assets/js/reportes/calendario_instructor.js?v=<?php echo time(); ?>"></script>
 </body>
 </html>

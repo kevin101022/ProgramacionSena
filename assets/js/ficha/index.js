@@ -214,38 +214,64 @@ class FichaManager {
                 const tr = document.createElement('tr');
                 tr.className = 'hover:bg-green-50/50 transition-colors cursor-pointer group';
                 tr.onclick = () => window.location.href = `ver.php?id=${f.fich_id}`;
+                
+                const totalComps = parseInt(f.total_comps) || 0;
+                const assignedComps = parseInt(f.assigned_comps) || 0;
+                const progress = totalComps > 0 ? Math.round((assignedComps / totalComps) * 100) : 0;
+                const historyHtml = f.instructores_historial ? `
+                    <div class="mt-2 text-xs border-t pt-2 border-gray-100">
+                        <span class="text-gray-400 block mb-1 font-semibold">Histórico:</span>
+                        <div class="text-gray-500 truncate max-w-xs" title="${f.instructores_historial}">
+                            ${f.instructores_historial}
+                        </div>
+                    </div>
+                ` : '';
+
                 tr.innerHTML = `
                     <td class="px-6 py-4">
-                        <span class="text-sena-green font-bold text-sm tracking-wider">
+                        <span class="text-sena-green font-bold text-sm tracking-wider flex items-center gap-1">
+                            <ion-icon src="../../assets/ionicons/folder-open-outline.svg"></ion-icon>
                             ${f.fich_id}
                         </span>
                     </td>
                     <td class="px-6 py-4">
                         <div class="user-cell">
                             <div class="user-info-sm px-0">
-                                <div class="user-name-sm">${f.titpro_nombre || 'N/A'}</div>
-                                <div class="user-meta-sm">${f.prog_denominacion || ''}</div>
+                                <div class="user-name-sm text-gray-800">${f.titpro_nombre || 'N/A'}</div>
+                                <div class="user-meta-sm text-gray-500">${f.prog_denominacion || ''}</div>
                             </div>
                         </div>
                     </td>
                     <td class="px-6 py-4">
-                        <div class="contact-cell">
-                            <div class="contact-item">
-                                <ion-icon src="../../assets/ionicons/business-outline.svg"></ion-icon>
-                                <span>${f.sede_nombre || 'N/A'}</span>
+                        <div class="flex items-center gap-2 w-fit">
+                            <div class="w-8 h-8 rounded-full bg-sena-green/10 text-sena-green flex items-center justify-center font-bold text-xs">
+                                ${f.inst_nombres ? f.inst_nombres[0] + (f.inst_apellidos ? f.inst_apellidos[0] : '') : '?'}
                             </div>
-                            <div class="contact-item">
-                                <ion-icon src="../../assets/ionicons/people-outline.svg"></ion-icon>
-                                <span>${f.coord_nombre || 'No asignada'}</span>
-                            </div>
+                            <span class="text-sm font-semibold text-gray-700">${f.inst_nombres ? (f.inst_nombres + ' ' + f.inst_apellidos) : 'Sin Líder'}</span>
                         </div>
                     </td>
                     <td class="px-6 py-4">
-                        <div class="text-sm font-medium text-gray-700">${f.inst_nombres || ''} ${f.inst_apellidos || ''}</div>
+                        <div class="inline-flex items-center gap-1.5 px-3 py-1 pb-1.5 rounded-full text-xs font-semibold whitespace-nowrap
+                            ${f.fich_jornada === 'Mañana' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 
+                              f.fich_jornada === 'Tarde' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 
+                              'bg-purple-50 text-purple-700 border border-purple-200'}">
+                            <ion-icon src="../../assets/ionicons/${f.fich_jornada === 'Mañana' ? 'sunny' : f.fich_jornada === 'Tarde' ? 'partly-sunny' : 'moon'}-outline.svg"></ion-icon>
+                            ${f.fich_jornada || 'Sin jornada'}
+                        </div>
                     </td>
-                    <td class="px-6 py-4">
-                        <div class="badge-glass">
-                            ${f.fich_jornada || 'N/A'}
+                    <td class="px-6 py-4 text-right">
+                        <div class="flex flex-col items-end w-full max-w-[120px] ml-auto" title="${assignedComps} de ${totalComps} competencias asignadas">
+                            <div class="flex justify-between w-full text-[10px] mb-1 font-semibold
+                                ${progress === 100 ? 'text-sena-green' : 'text-amber-600'}">
+                                <span>Cobertura</span>
+                                <span>${progress}%</span>
+                            </div>
+                            <div class="w-full bg-slate-100 rounded-full h-1.5 relative overflow-hidden">
+                                <div class="h-1.5 rounded-full transition-all duration-500
+                                    ${progress === 100 ? 'bg-sena-green' : 'bg-amber-400'}"
+                                    style="width: ${progress}%">
+                                </div>
+                            </div>
                         </div>
                     </td>
                 `;

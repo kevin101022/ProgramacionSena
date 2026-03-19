@@ -12,7 +12,16 @@ if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'instructor') {
 <!-- FullCalendar CDN -->
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.js"></script>
+
+<!-- Tom Select CDN -->
+<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
 <style>
+    /* Forzar que los mensajes de SweetAlert aparezcan por encima de los modales (.modal) */
+    .swal2-container {
+        z-index: 999999 !important;
+    }
+
     .fc {
         font-family: 'Public Sans', sans-serif;
     }
@@ -137,35 +146,51 @@ if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'instructor') {
                     <span class="stat-card-desc">asignaciones de la ficha</span>
                     <p class="stat-card-context">Distribución cronológica y técnica del tiempo de formación profesional.</p>
                 </div>
-                <div class="stat-card-pill-container">
-                    <div class="stat-pill">
-                        <ion-icon src="../../assets/ionicons/time-outline.svg"></ion-icon>
-                        Horario
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-bg-icon">
+                    <ion-icon src="../../assets/ionicons/book-outline.svg"></ion-icon>
+                </div>
+                <div class="stat-card-header">
+                    <span class="stat-card-label">COMPETENCIAS PENDIENTES</span>
+                    <div class="stat-card-icon text-amber-500 bg-amber-50">
+                        <ion-icon src="../../assets/ionicons/book-outline.svg"></ion-icon>
                     </div>
-                    <div class="stat-pill">
-                        <ion-icon src="../../assets/ionicons/analytics-outline.svg"></ion-icon>
-                        Optimizado
+                </div>
+                <div class="stat-card-body">
+                    <span class="stat-card-number" id="totalCompetenciasPendientes">0</span>
+                    <span class="stat-card-desc">por programar</span>
+                    <p class="stat-card-context">Competencias del programa que aún no tienen designación.</p>
+                </div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-card-bg-icon">
+                    <ion-icon src="../../assets/ionicons/people-outline.svg"></ion-icon>
+                </div>
+                <div class="stat-card-header">
+                    <span class="stat-card-label">INSTRUCTORES DISPONIBLES</span>
+                    <div class="stat-card-icon text-blue-500 bg-blue-50">
+                        <ion-icon src="../../assets/ionicons/people-outline.svg"></ion-icon>
                     </div>
+                </div>
+                <div class="stat-card-body">
+                    <span class="stat-card-number" id="totalInstructoresDisp">0</span>
+                    <span class="stat-card-desc">habilitados</span>
+                    <p class="stat-card-context">Profesionales calificados para impartir en esta ficha.</p>
                 </div>
             </div>
         </div>
 
         <!-- Ficha selector -->
         <div class="action-bar flex-col md:flex-row gap-4">
-            <div class="ficha-selector w-full">
-                <div class="relative">
-                    <ion-icon src="../../assets/ionicons/search-outline.svg" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></ion-icon>
-                    <input type="text" id="fichaSearch" autocomplete="off" placeholder="Buscar ficha o programa..." class="search-input w-full pl-10" style="padding-left: 2.5rem !important; border-radius: 12px;">
-                    <div id="fichaDropdown" class="custom-dropdown-list">
-                        <!-- Items dynamycally loaded -->
-                    </div>
-                </div>
-                <!-- Hidden native select to maintain JS compatibility -->
-                <select id="fichaSelector" class="hidden">
-                    <option value="">Seleccione una ficha...</option>
+            <div class="w-full" style="max-width: 600px;">
+                <select id="fichaSelector" placeholder="Buscar ficha o programa..." class="w-full">
+                    <option value="">Buscar ficha o programa...</option>
                 </select>
             </div>
-            <button id="addBtn" class="btn-primary" disabled>
+            <button id="addBtn" class="btn-primary flex-shrink-0" disabled>
                 <ion-icon src="../../assets/ionicons/add-outline.svg"></ion-icon>
                 Nueva Asignación
             </button>
@@ -198,40 +223,49 @@ if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'instructor') {
         <form id="dayEditForm">
             <input type="hidden" id="dayEdit_detasig_id">
             <input type="hidden" id="dayEdit_asig_id">
-            <div class="modal-body p-5">
-                <div class="flex items-center gap-3 mb-5 p-3 bg-gray-50 rounded-xl border border-gray-100">
-                    <div class="w-10 h-10 rounded-lg bg-sena-green/10 flex items-center justify-center">
-                        <ion-icon src="../../assets/ionicons/calendar-outline.svg" class="text-sena-green text-lg"></ion-icon>
+            
+            <div class="modal-body" style="padding: 16px 20px;">
+                <div id="dayEditError" class="hidden mb-4 p-3 bg-red-50 border-l-4 border-red-500 rounded text-sm text-red-700">
+                    <ion-icon src="../../assets/ionicons/warning-outline.svg" class="mr-1"></ion-icon>
+                    <span id="dayEditErrorMsg">Error</span>
+                </div>
+
+                <div class="mb-4 text-center">
+                    <p id="dayEditDateLabel" class="text-lg font-bold text-sena-green capitalize"></p>
+                    <p id="dayEditAsigInfo" class="text-xs text-gray-500 mt-1"></p>
+                </div>
+
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="flex-1">
+                        <label class="form-label text-xs">Hora Inicio</label>
+                        <input type="time" id="dayEdit_hora_ini" class="form-input text-sm" required min="06:00" max="22:00">
                     </div>
-                    <div>
-                        <p id="dayEditDateLabel" class="text-sm font-bold text-gray-800 capitalize">--</p>
-                        <p id="dayEditAsigInfo" class="text-[11px] text-gray-500">--</p>
+                    <div class="flex-1">
+                        <label class="form-label text-xs">Hora Fin</label>
+                        <input type="time" id="dayEdit_hora_fin" class="form-input text-sm" required min="06:00" max="22:00">
                     </div>
                 </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="form-group">
-                        <label class="form-label text-xs">Hora Inicio <span class="text-red-500">*</span></label>
-                        <input type="time" id="dayEdit_hora_ini" required class="search-input" style="padding-left: 12px !important;" min="06:00" max="22:00">
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label text-xs">Hora Fin <span class="text-red-500">*</span></label>
-                        <input type="time" id="dayEdit_hora_fin" required class="search-input" style="padding-left: 12px !important;" min="06:00" max="22:00">
-                    </div>
-                </div>
-                <div id="dayEditError" class="mt-3 hidden">
-                    <div class="p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg">
-                        <p class="text-xs text-red-600" id="dayEditErrorMsg"></p>
-                    </div>
+                
+                <div class="form-group mb-0">
+                    <label class="form-label text-xs">Observaciones (Opcional)</label>
+                    <textarea id="dayEdit_observaciones" class="form-input text-sm resize-none" rows="2" placeholder="Ej. Cambio de ambiente temporal..."></textarea>
                 </div>
             </div>
-            <div class="modal-footer" style="padding: 12px 20px; justify-content: space-between;">
-                <button type="button" class="text-sm flex items-center gap-1 px-3 py-2 rounded-lg text-red-500 hover:bg-red-50 transition-colors" id="deleteDayAsig" title="Eliminar asignación completa">
-                    <ion-icon src="../../assets/ionicons/trash-outline.svg"></ion-icon>
-                    Eliminar
-                </button>
+
+            <div class="form-actions mt-4" style="justify-content: space-between; padding: 12px 20px;">
                 <div class="flex gap-2">
-                    <button type="button" class="btn-secondary text-sm" id="cancelDayEdit">Cancelar</button>
-                    <button type="submit" class="btn-primary text-sm" id="saveDayEdit">
+                    <button type="button" class="btn-danger-soft" id="deleteDayOnly" style="padding: 8px 12px; font-size: 0.85rem;" title="Eliminar solo este horario">
+                        <ion-icon src="../../assets/ionicons/trash-outline.svg"></ion-icon>
+                        Día
+                    </button>
+                    <button type="button" class="btn-danger-soft" id="deleteDayAsig" style="padding: 8px 12px; font-size: 0.85rem;" title="Eliminar asignación completa">
+                        <ion-icon src="../../assets/ionicons/trash-bin-outline.svg"></ion-icon>
+                        Asig. Completa
+                    </button>
+                </div>
+                <div class="flex gap-2">
+                    <button type="button" class="btn-secondary" id="cancelDayEdit">Cancelar</button>
+                    <button type="submit" class="btn-primary" id="saveDayEdit">
                         <ion-icon src="../../assets/ionicons/save-outline.svg"></ion-icon>
                         Guardar
                     </button>

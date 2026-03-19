@@ -45,7 +45,7 @@ class AsignacionModel
         }
     }
 
-    public function readAll($cent_id = null)
+    public function readAll($cent_id = null, $coord_id = null)
     {
         $sql = "SELECT a.ASIG_ID as asig_id, a.INSTRUCTOR_inst_id as instructor_inst_id, 
                        a.asig_fecha_ini, a.asig_fecha_fin, 
@@ -60,17 +60,18 @@ class AsignacionModel
                 INNER JOIN COMPETENCIA c ON a.COMPETENCIA_comp_id = c.comp_id
                 INNER JOIN SEDE s ON am.SEDE_sede_id = s.sede_id";
 
-        if ($cent_id) {
+        $params = [];
+        if ($coord_id) {
+            $sql .= " WHERE f.COORDINACION_coord_id = :coord_id";
+            $params[':coord_id'] = $coord_id;
+        } elseif ($cent_id) {
             $sql .= " WHERE i.CENTRO_FORMACION_cent_id = :cent_id";
+            $params[':cent_id'] = $cent_id;
         }
         $sql .= " ORDER BY a.ASIG_ID DESC";
 
         $stmt = $this->db->prepare($sql);
-        if ($cent_id) {
-            $stmt->execute([':cent_id' => $cent_id]);
-        } else {
-            $stmt->execute();
-        }
+        $stmt->execute($params);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
@@ -166,5 +167,81 @@ class AsignacionModel
             if ($row['ficha_fich_id'] == $fich_id) $row['conflict_type'][] = 'ficha';
             return $row;
         }, $results);
+    }
+
+    /**
+     * Calcula las horas dictadas por el instructor en un mes y año específicos,
+     * excluyendo una asignación particular si se está editando.
+     */
+    public function getMonthlyHours($inst_id, $month, $year, $exclude_asig_id = null)
+    {
+        $sql = "SELECT SUM(EXTRACT(EPOCH FROM (d.detasig_hora_fin - d.detasig_hora_ini))/3600) as total_horas
+                FROM DETALLExASIGNACION d
+                INNER JOIN ASIGNACION a ON d.ASIGNACION_asig_id = a.ASIG_ID
+                WHERE a.INSTRUCTOR_inst_id = :inst_id
+                AND EXTRACT(MONTH FROM d.detasig_fecha) = :month
+                AND EXTRACT(YEAR FROM d.detasig_fecha) = :year";
+
+        $params = [
+            ':inst_id' => $inst_id,
+            ':month' => $month,
+            ':year' => $year
+        ];
+
+        if ($exclude_asig_id) {
+            $sql .= " AND a.ASIG_ID != :exclude_asig_id";
+            $params[':exclude_asig_id'] = $exclude_asig_id;
+        }
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        return $result['total_horas'] ? (float)$result['total_horas'] : 0.0;
+    }
+
+    /**
+     * Calcula las horas ya asignadas a una competencia en una ficha específica,
+     * excluyendo una asignación actual si se está editando.
+     */
+    public function getCompetenceHoursAssigned($fich_id, $comp_id, $exclude_asig_id = null)
+    {
+        $sql = "SELECT SUM(EXTRACT(EPOCH FROM (d.detasig_hora_fin - d.detasig_hora_ini))/3600) as total_horas
+                FROM DETALLExASIGNACION d
+                INNER JOIN ASIGNACION a ON d.ASIGNACION_asig_id = a.ASIG_ID
+                WHERE a.FICHA_fich_id = :fich_id
+                AND a.COMPETENCIA_comp_id = :comp_id";
+
+        $params = [
+            ':fich_id' => $fich_id,
+            ':comp_id' => $comp_id
+        ];
+
+        if ($exclude_asig_id) {
+            $sql .= " AND a.ASIG_ID != :exclude_asig_id";
+            $params[':exclude_asig_id'] = $exclude_asig_id;
+        }
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        return $result['total_horas'] ? (float)$result['total_horas'] : 0.0;
+    }
+    /**
+     * Obtiene todas las asignaciones de una ficha, incluyendo el total de horas programadas
+     * calculadas desde DETALLEXASIGNACION.
+     */
+    public function readByFicha($fich_id)
+    {
+        $sql = "SELECT a.*, 
+                       (SELECT COALESCE(SUM(EXTRACT(EPOCH FROM (da.detasig_hora_fin - da.detasig_hora_ini))/3600), 0)
+                        FROM DETALLExASIGNACION da 
+                        WHERE da.ASIGNACION_asig_id = a.asig_id) as total_horas
+                FROM ASIGNACION a
+                WHERE a.FICHA_fich_id = :fich_id";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':fich_id' => $fich_id]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

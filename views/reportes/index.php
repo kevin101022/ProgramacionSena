@@ -55,7 +55,7 @@ require_once '../layouts/sidebar.php';
 
         <!-- Calendarios de Reportes -->
         <h3 class="text-sm font-bold text-gray-500 uppercase tracking-wide mb-3 mt-8">Calendarios de Asignaciones</h3>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
             <a href="calendario_ficha.php" class="report-card" style="text-decoration: none;">
                 <div class="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center mb-3">
                     <ion-icon src="../../assets/ionicons/layers-outline.svg" class="text-purple-500 text-2xl"></ion-icon>
@@ -78,6 +78,14 @@ require_once '../layouts/sidebar.php';
                 </div>
                 <h3 class="font-bold text-gray-900 text-sm mb-1">Calendario de Ambiente</h3>
                 <p class="text-xs text-gray-400">Ver ocupación de un ambiente</p>
+            </a>
+
+            <a href="calendario_total.php" class="report-card" style="text-decoration: none;">
+                <div class="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center mb-3">
+                    <ion-icon src="../../assets/ionicons/calendar-number-outline.svg" class="text-sena-green text-2xl"></ion-icon>
+                </div>
+                <h3 class="font-bold text-gray-900 text-sm mb-1">Calendario Total</h3>
+                <p class="text-xs text-gray-400">Todas las asignaciones de tu área</p>
             </a>
         </div>
 

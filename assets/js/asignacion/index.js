@@ -11,6 +11,7 @@ class AsignacionManager {
         this.allCompetenciasPrograma = [];
         this.allHabilitaciones = [];
         this.ambientes = [];
+        this.sedes = []; // All available sedes
         this.allDetalles = []; // All detail events for calendar
 
         this.COLORS = [
@@ -25,28 +26,12 @@ class AsignacionManager {
         this.bindEvents();
         await Promise.all([
             this.loadFichas(),
+            this.loadSedes(),
             this.loadAmbientes()
         ]);
     }
 
     bindEvents() {
-        const fichaSearch = document.getElementById('fichaSearch');
-        if (fichaSearch) {
-            fichaSearch.addEventListener('focus', () => this.renderFichaDropdown(fichaSearch.value));
-            fichaSearch.addEventListener('input', (e) => this.renderFichaDropdown(e.target.value));
-            fichaSearch.addEventListener('click', (e) => {
-                e.stopPropagation();
-                this.renderFichaDropdown(e.target.value);
-            });
-        }
-
-        document.addEventListener('click', (e) => {
-            const fichaDropdown = document.getElementById('fichaDropdown');
-            if (fichaDropdown && fichaSearch && !fichaSearch.contains(e.target) && !fichaDropdown.contains(e.target)) {
-                fichaDropdown.style.display = 'none';
-            }
-        });
-
         const fichaSelector = document.getElementById('fichaSelector');
         if (fichaSelector) {
             fichaSelector.addEventListener('change', () => this.handleFichaChange());
@@ -77,6 +62,11 @@ class AsignacionManager {
         if (fechaIni) fechaIni.addEventListener('change', () => this.onDateRangeChange());
         if (fechaFin) fechaFin.addEventListener('change', () => this.onDateRangeChange());
 
+        const sedeSelect = document.getElementById('sede_id');
+        if (sedeSelect) {
+            sedeSelect.addEventListener('change', () => this.handleSedeChange());
+        }
+
         // Quick day edit modal bindings
         const closeDayEdit = document.getElementById('closeDayEdit');
         const cancelDayEdit = document.getElementById('cancelDayEdit');
@@ -88,6 +78,9 @@ class AsignacionManager {
 
         const deleteAsigBtn = document.getElementById('deleteDayAsig');
         if (deleteAsigBtn) deleteAsigBtn.onclick = () => this.handleDeleteAsig();
+
+        const deleteDayOnlyBtn = document.getElementById('deleteDayOnly');
+        if (deleteDayOnlyBtn) deleteDayOnlyBtn.onclick = () => this.handleDeleteDayOnly();
 
         const applyDefaultHoursBtn = document.getElementById('applyDefaultHours');
         if (applyDefaultHoursBtn) applyDefaultHoursBtn.onclick = () => this.handleApplyDefaultHours();
@@ -110,6 +103,32 @@ class AsignacionManager {
                     if (fichId) await this.loadAsignacionesFicha(fichId);
                     await this.loadAllDetalles();
                     this.initCalendar();
+                    this.updateDashboardStats();
+                } else {
+                    const data = await res.json();
+                    NotificationService.showError(data.error || 'Error al eliminar');
+                }
+            } catch (err) {
+                NotificationService.showError('Error de conexión');
+            }
+        });
+    }
+
+    async handleDeleteDayOnly() {
+        const detId = document.getElementById('dayEdit_detasig_id').value;
+        if (!detId) return;
+
+        NotificationService.showConfirm('¿Está seguro de eliminar solo este horario para este día?', async () => {
+            try {
+                const res = await fetch(`../../routing.php?controller=detalle_asignacion&action=destroy&id=${detId}`, {
+                    headers: { 'Accept': 'application/json' }
+                });
+                if (res.ok) {
+                    NotificationService.showSuccess('Día de asignación eliminado');
+                    this.closeDayEditModal();
+                    await this.loadAllDetalles();
+                    this.initCalendar();
+                    this.updateDashboardStats();
                 } else {
                     const data = await res.json();
                     NotificationService.showError(data.error || 'Error al eliminar');
@@ -167,8 +186,39 @@ class AsignacionManager {
                 headers: { 'Accept': 'application/json' }
             });
             this.fichas = await res.json();
+
+            const fichaSelector = document.getElementById('fichaSelector');
+            if (fichaSelector) {
+                this.fichas.forEach(f => {
+                    const opt = document.createElement('option');
+                    opt.value = f.fich_id;
+                    opt.textContent = `Ficha ${f.fich_id} — ${f.prog_denominacion || f.titpro_nombre || 'Sin nombre'}`;
+                    fichaSelector.appendChild(opt);
+                });
+                
+                // Initialize TomSelect if loaded
+                if (window.TomSelect) {
+                    new TomSelect('#fichaSelector', {
+                        create: false,
+                        maxOptions: null,
+                        placeholder: 'Buscar ficha o programa...',
+                    });
+                }
+            }
+
         } catch (e) {
             console.error('Error cargando fichas:', e);
+        }
+    }
+
+    async loadSedes() {
+        try {
+            const res = await fetch('../../routing.php?controller=sede&action=index', {
+                headers: { 'Accept': 'application/json' }
+            });
+            this.sedes = await res.json();
+        } catch (e) {
+            console.error('Error cargando sedes:', e);
         }
     }
 
@@ -178,74 +228,49 @@ class AsignacionManager {
                 headers: { 'Accept': 'application/json' }
             });
             this.ambientes = await res.json();
-            const ambienteSelect = document.getElementById('ambiente_id');
-            if (ambienteSelect) {
-                ambienteSelect.innerHTML = '<option value="">Seleccione ambiente...</option>';
-                this.ambientes.forEach(a => {
-                    const opt = document.createElement('option');
-                    opt.value = a.amb_id;
-                    opt.textContent = `${a.amb_id} - ${a.amb_nombre || 'Sin nombre'} (${a.sede_nombre || 'Sin Sede'})`;
-                    opt.setAttribute('data-sede', a.sede_nombre || '');
-                    ambienteSelect.appendChild(opt);
-                });
-            }
+            // We don't populate the select here, it will be done when sede is selected
         } catch (e) {
             console.error('Error cargando ambientes:', e);
         }
     }
 
-    renderFichaDropdown(filter = '') {
-        const fichaDropdown = document.getElementById('fichaDropdown');
-        if (!fichaDropdown) return;
+    handleSedeChange(targetAmbienteId = null) {
+        const sedeId = document.getElementById('sede_id')?.value;
+        const ambienteSelect = document.getElementById('ambiente_id');
+        if (!ambienteSelect) return;
 
-        fichaDropdown.innerHTML = '';
-        const searchTerm = filter.toLowerCase().trim();
-
-        const filtered = this.fichas.filter(f => {
-            const id = String(f.fich_id).toLowerCase();
-            const prog = (f.prog_denominacion || f.titpro_nombre || '').toLowerCase();
-            return id.includes(searchTerm) || prog.includes(searchTerm);
-        });
-
-        if (filtered.length === 0) {
-            fichaDropdown.innerHTML = '<div class="p-4 text-center text-sm text-gray-500">No se encontraron fichas</div>';
-        } else {
-            filtered.forEach(f => {
-                const item = document.createElement('div');
-                item.className = 'custom-dropdown-item';
-                item.innerHTML = `
-                    <div class="ficha-num">Ficha ${f.fich_id}</div>
-                    <div class="prog-name">${f.prog_denominacion || f.titpro_nombre || 'Sin nombre'}</div>
-                `;
-                item.onclick = (e) => {
-                    e.stopPropagation();
-                    this.selectFicha(f);
-                };
-                fichaDropdown.appendChild(item);
-            });
+        ambienteSelect.innerHTML = '<option value="">Seleccione ambiente...</option>';
+        
+        if (!sedeId) {
+            ambienteSelect.innerHTML = '<option value="">Primero seleccione sede...</option>';
+            return;
         }
-        fichaDropdown.style.display = 'block';
-    }
 
-    async selectFicha(f) {
-        if (!f) return;
-        this.selectedFicha = f;
-        const fichaSearch = document.getElementById('fichaSearch');
-        const fichaDropdown = document.getElementById('fichaDropdown');
-        const fichaSelector = document.getElementById('fichaSelector');
-
-        if (fichaSearch) fichaSearch.value = `Ficha ${f.fich_id} — ${f.prog_denominacion || f.titpro_nombre || ''}`;
-        if (fichaDropdown) fichaDropdown.style.display = 'none';
-
-        if (fichaSelector) {
-            fichaSelector.innerHTML = `<option value="${f.fich_id}" selected>Ficha ${f.fich_id}</option>`;
-            fichaSelector.dispatchEvent(new Event('change'));
+        const filtered = this.ambientes.filter(a => a.sede_sede_id == sedeId);
+        if (filtered.length === 0) {
+            ambienteSelect.innerHTML = '<option value="">No hay ambientes en esta sede</option>';
+        } else {
+            filtered.forEach(a => {
+                const opt = document.createElement('option');
+                opt.value = a.amb_id;
+                opt.textContent = `${a.amb_id} - ${a.amb_nombre || 'Sin nombre'} (${a.tipo_ambiente || 'Convencional'})`;
+                ambienteSelect.appendChild(opt);
+            });
+            if (targetAmbienteId) {
+                ambienteSelect.value = targetAmbienteId;
+            }
         }
     }
 
     async handleFichaChange() {
         const fichaSelector = document.getElementById('fichaSelector');
         const fichId = fichaSelector ? fichaSelector.value : null;
+
+        if (fichId) {
+            this.selectedFicha = this.fichas.find(f => f.fich_id == fichId) || null;
+        } else {
+            this.selectedFicha = null;
+        }
 
         const addBtn = document.getElementById('addBtn');
         const calendarEl = document.getElementById('calendar');
@@ -273,6 +298,28 @@ class AsignacionManager {
         // Load all detail events for the calendar
         await this.loadAllDetalles();
         this.initCalendar();
+        this.updateDashboardStats();
+    }
+
+    updateDashboardStats() {
+        if (!this.selectedFicha) return;
+        
+        const progId = this.selectedFicha.programa_prog_codigo || this.selectedFicha.programa_prog_id;
+        
+        // Competencias asignadas unicas
+        const assignedCompIds = [...new Set(this.allAsignaciones.map(a => a.competencia_comp_id))];
+        const totalProgramComps = this.allCompetenciasPrograma.length;
+        const pendingComps = Math.max(0, totalProgramComps - assignedCompIds.length);
+        
+        const elPending = document.getElementById('totalCompetenciasPendientes');
+        if (elPending) elPending.textContent = pendingComps;
+
+        // Instructores habilitados para este programa
+        const instructoresHabilitados = this.allHabilitaciones.filter(h => h.competxprograma_programa_prog_id == progId);
+        const uniqueInstructores = new Set(instructoresHabilitados.map(h => h.instructor_inst_id)).size;
+        
+        const elInst = document.getElementById('totalInstructoresDisp');
+        if (elInst) elInst.textContent = uniqueInstructores;
     }
 
     async loadAsignacionesFicha(fichId) {
@@ -406,6 +453,7 @@ class AsignacionManager {
 
         document.getElementById('dayEdit_hora_ini').value = this.formatTime(props.detasig_hora_ini);
         document.getElementById('dayEdit_hora_fin').value = this.formatTime(props.detasig_hora_fin);
+        document.getElementById('dayEdit_observaciones').value = props.observaciones || '';
 
         document.getElementById('dayEditTitle').textContent = 'Editar Horario del Día';
         document.getElementById('dayEditError').classList.add('hidden');
@@ -437,6 +485,7 @@ class AsignacionManager {
 
         document.getElementById('dayEdit_hora_ini').value = this.formatTime(d.detasig_hora_ini);
         document.getElementById('dayEdit_hora_fin').value = this.formatTime(d.detasig_hora_fin);
+        document.getElementById('dayEdit_observaciones').value = d.observaciones || '';
 
         document.getElementById('dayEditTitle').textContent = 'Editar Horario del Día';
         document.getElementById('dayEditError').classList.add('hidden');
@@ -453,6 +502,7 @@ class AsignacionManager {
         e.preventDefault();
         const horaIni = document.getElementById('dayEdit_hora_ini').value;
         const horaFin = document.getElementById('dayEdit_hora_fin').value;
+        const observaciones = document.getElementById('dayEdit_observaciones').value;
         const detId = document.getElementById('dayEdit_detasig_id').value;
         const asigId = document.getElementById('dayEdit_asig_id').value;
         const errorDiv = document.getElementById('dayEditError');
@@ -482,7 +532,8 @@ class AsignacionManager {
                     detasig_id: detId,
                     asignacion_asig_id: asigId,
                     detasig_hora_ini: horaIni,
-                    detasig_hora_fin: horaFin
+                    detasig_hora_fin: horaFin,
+                    observaciones: observaciones
                 })
             });
 
@@ -492,6 +543,7 @@ class AsignacionManager {
                 // Reload data from server then re-render calendar
                 await this.loadAllDetalles();
                 this.initCalendar();
+                this.updateDashboardStats();
             } else if (res.status === 409) {
                 const result = await res.json();
                 errorDiv.classList.remove('hidden');
@@ -576,9 +628,32 @@ class AsignacionManager {
             instructorSelect.disabled = true;
         }
 
+        const sedeSelect = document.getElementById('sede_id');
+        const ambienteSelect = document.getElementById('ambiente_id');
+
+        if (sedeSelect) {
+            sedeSelect.innerHTML = '<option value="">Seleccione sede...</option>';
+            this.sedes.forEach(s => {
+                const opt = document.createElement('option');
+                opt.value = s.sede_id;
+                opt.textContent = s.sede_nombre;
+                sedeSelect.appendChild(opt);
+            });
+        }
+
         if (asig) {
             if (modalTitle) modalTitle.textContent = 'Editar Asignación';
             if (asigIdInput) asigIdInput.value = asig.asig_id;
+            
+            // Pre-seleccionar Sede y Ambiente
+            if (sedeSelect && asig.ambiente_amb_id) {
+                const amb = this.ambientes.find(a => a.amb_id == asig.ambiente_amb_id);
+                if (amb) {
+                    sedeSelect.value = amb.sede_sede_id;
+                    this.handleSedeChange(asig.ambiente_amb_id);
+                }
+            }
+
             // Pre-select competencia and instructor for edit
             if (competenciaSelect) {
                 // Add current competencia if not already in the list
@@ -595,12 +670,10 @@ class AsignacionManager {
                     if (instructorSelect) instructorSelect.value = asig.instructor_inst_id;
                 }, 100);
             }
-            if (document.getElementById('ambiente_id')) {
-                document.getElementById('ambiente_id').value = asig.ambiente_amb_id;
-            }
         } else {
             if (modalTitle) modalTitle.textContent = 'Nueva Asignación';
             if (asigIdInput) asigIdInput.value = '';
+            if (ambienteSelect) ambienteSelect.innerHTML = '<option value="">Primero seleccione sede...</option>';
         }
 
         // Clear previous conflict alerts
@@ -656,6 +729,13 @@ class AsignacionManager {
 
         while (current <= end) {
             const dateISO = current.toISOString().split('T')[0];
+            
+            // Skip Sundays (Day 0)
+            if (current.getDay() === 0) {
+                current.setDate(current.getDate() + 1);
+                continue;
+            }
+
             const dateLabel = current.toLocaleDateString('es-CO', formatOptions);
             const isPast = dateISO < today;
 
@@ -889,12 +969,54 @@ class AsignacionManager {
             });
             const result = await res.json();
 
-            if (res.ok) {
+            if (res.status === 202 && result.warning === '80_percent_alert') {
+                NotificationService.showConfirm(result.message, async () => {
+                    data.confirm_80_percent = true;
+                    
+                    // Reenviar con confirmación
+                    const saveBtnRetry = document.getElementById('saveBtn');
+                    if (saveBtnRetry) {
+                        saveBtnRetry.disabled = true;
+                        saveBtnRetry.innerHTML = '<span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></span>Guardando...';
+                    }
+                    try {
+                        const resRetry = await fetch(`../../routing.php?controller=asignacion&action=${action}`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                            body: JSON.stringify(data)
+                        });
+                        const resultRetry = await resRetry.json();
+                        
+                        if (resRetry.ok) {
+                            NotificationService.showSuccess(id ? '¡Asignación actualizada!' : '¡Asignación registrada!');
+                            this.closeModal();
+                            await this.loadAsignacionesFicha(this.selectedFicha.fich_id);
+                            await this.loadAllDetalles();
+                            this.initCalendar();
+                            this.updateDashboardStats();
+                        } else {
+                            NotificationService.showError(resultRetry.error || 'Error al guardar.');
+                        }
+                    } catch (e) {
+                        NotificationService.showError('Error de conexión.');
+                    } finally {
+                        if (saveBtnRetry) {
+                            saveBtnRetry.disabled = false;
+                            saveBtnRetry.innerHTML = '<ion-icon src="../../assets/ionicons/save-outline.svg"></ion-icon> Guardar';
+                        }
+                    }
+                }, {
+                    title: 'Horas menores al 80%',
+                    confirmText: 'Sí, guardar',
+                    type: 'warning'
+                });
+            } else if (res.ok) {
                 NotificationService.showSuccess(id ? '¡Asignación actualizada!' : '¡Asignación registrada!');
                 this.closeModal();
                 await this.loadAsignacionesFicha(this.selectedFicha.fich_id);
                 await this.loadAllDetalles();
                 this.initCalendar();
+                this.updateDashboardStats();
             } else if (res.status === 409) {
                 this.showConflictAlert(result.details || [], result.error);
             } else {

@@ -1,5 +1,5 @@
 <!-- Global Notifications Container -->
-<div id="notification-overlay" class="modal hidden">
+<div id="notification-overlay" class="modal hidden" style="z-index: 9999999 !important;">
     <div id="notification-modal" class="modal-content scale-95 opacity-0 transition-all duration-300">
         <!-- Error Alert -->
         <div id="error-alert" class="hidden">
@@ -48,14 +48,14 @@
             </div>
         </div>
 
-        <!-- Confirm Alert (Danger Style like Sede) -->
+        <!-- Confirm Alert (Dynamic Style) -->
         <div id="confirm-alert" class="hidden">
             <div class="px-6 py-8">
-                <div class="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mb-6 mx-auto">
-                    <ion-icon src="../../assets/ionicons/alert-circle-outline.svg" class="text-4xl text-red-600 dark:text-red-400 animate-pulse"></ion-icon>
+                <div id="confirm-icon-bg" class="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mb-6 mx-auto transition-colors duration-300">
+                    <ion-icon id="confirm-icon" src="../../assets/ionicons/alert-circle-outline.svg" class="text-4xl text-red-600 dark:text-red-400 animate-pulse transition-colors duration-300"></ion-icon>
                 </div>
 
-                <h3 class="text-2xl font-bold text-slate-900 dark:text-white text-center mb-3">¿Confirmar Acción?</h3>
+                <h3 id="confirm-title" class="text-2xl font-bold text-slate-900 dark:text-white text-center mb-3">¿Confirmar Acción?</h3>
 
                 <div class="bg-slate-50 dark:bg-slate-800/50 rounded-2xl p-4 mb-6">
                     <p id="confirm-message-text" class="text-slate-600 dark:text-slate-400 text-center text-base leading-relaxed"></p>
@@ -66,7 +66,7 @@
                         No, cancelar
                     </button>
                     <button id="confirm-btn-primary" class="flex-1 px-6 py-3.5 rounded-xl bg-red-600 text-white font-bold text-sm hover:bg-red-700 shadow-lg shadow-red-200 dark:shadow-none transition-all active:scale-95">
-                        Sí, eliminar
+                        Sí, confirmar
                     </button>
                 </div>
             </div>

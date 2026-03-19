@@ -37,14 +37,19 @@ class InstruCompetenciaController
         $successCount = 0;
         foreach ($programas as $p) {
             $p_id = $p['PROGRAMA_prog_id'] ?? $p['prog_id'];
-            $model = new InstruCompetenciaModel(null, $inst_id, $p_id, $comp_id);
-            if ($model->create()) {
-                $successCount++;
+            
+            if (!InstruCompetenciaModel::isQualified($inst_id, $p_id, $comp_id)) {
+                $model = new InstruCompetenciaModel(null, $inst_id, $p_id, $comp_id);
+                if ($model->create()) {
+                    $successCount++;
+                }
             }
         }
 
         if ($successCount > 0) {
             return $this->sendResponse(['message' => "Habilitación creada en $successCount programas correctamente"]);
+        } else {
+            return $this->sendResponse(['message' => 'La habilitación ya existía para estos programas o no se crearon nuevos registros']);
         }
         return $this->sendResponse(['error' => 'Error al crear la habilitación'], 500);
     }

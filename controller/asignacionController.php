@@ -13,10 +13,21 @@ class AsignacionController
         if (session_status() === PHP_SESSION_NONE) {
             session_start();
         }
+        $rol     = $_SESSION['rol'] ?? null;
         $cent_id = $_SESSION['centro_id'] ?? null;
+        $user_id = $_SESSION['id'] ?? null;
+
+        $coord_id = null;
+        if ($rol === 'coordinador' && $user_id) {
+            $db = Conexion::getConnect();
+            $stmt = $db->prepare("SELECT coord_id FROM COORDINACION WHERE coordinador_actual = :uid AND estado = 1 LIMIT 1");
+            $stmt->execute([':uid' => $user_id]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            $coord_id = $row['coord_id'] ?? null;
+        }
 
         $model = new AsignacionModel(null, null, null, null, null, null, null);
-        $asignaciones = $model->readAll($cent_id);
+        $asignaciones = $model->readAll($cent_id, $coord_id);
         $this->sendResponse($asignaciones);
     }
 
@@ -132,6 +143,87 @@ class AsignacionController
         if (empty($diasSeleccionados)) {
             $this->sendResponse(['error' => 'Debe seleccionar al menos un día con su respectivo horario'], 400);
             return;
+        }
+
+        // --- VALIDACIONES DE FECHAS CLASES VS RANGO ---
+        $fechas = array_column($diasSeleccionados, 'fecha');
+        $maxFecha = max($fechas);
+        if ($data['asig_fecha_fin'] > $maxFecha) {
+            // Si las clases no cubren la fecha fin, ajustar la fecha fin según la última clase.
+            $data['asig_fecha_fin'] = $maxFecha; 
+        } else if ($data['asig_fecha_fin'] < $maxFecha) {
+            $this->sendResponse(['error' => "El rango de fechas es insuficiente para el número de clases. La última clase está programada para $maxFecha. Por favor, amplíe el rango."], 400);
+            return;
+        }
+
+        // --- VALIDAR VIGENCIA DE CERTIFICACIÓN ---
+        $db = Conexion::getConnect();
+        $stmtVigencia = $db->prepare("SELECT inscomp_vigencia FROM INSTRU_COMPETENCIA WHERE INSTRUCTOR_inst_id = ? AND COMPETxPROGRAMA_PROGRAMA_prog_id = ? AND COMPETxPROGRAMA_COMPETENCIA_comp_id = ?");
+        $stmtVigencia->execute([$data['instructor_inst_id'], $progId, $data['competencia_comp_id']]);
+        $vigenciaRes = $stmtVigencia->fetch(PDO::FETCH_ASSOC);
+        if ($vigenciaRes && !empty($vigenciaRes['inscomp_vigencia'])) {
+            if ($vigenciaRes['inscomp_vigencia'] < $data['asig_fecha_fin']) {
+                $this->sendResponse(['error' => "La certificación del instructor para esta competencia vence el {$vigenciaRes['inscomp_vigencia']}, no alcanza a cubrir hasta {$data['asig_fecha_fin']}"], 400);
+                return;
+            }
+        }
+
+        // --- CÁLCULO DE HORAS PROPUESTAS ---
+        $hoursByMonth = [];
+        foreach ($diasSeleccionados as $dia) {
+            if (!empty($dia['hora_ini']) && !empty($dia['hora_fin'])) {
+                $dateParts = explode('-', $dia['fecha']);
+                if (count($dateParts) >= 2) {
+                    $year = $dateParts[0];
+                    $month = $dateParts[1];
+                    $key = "$year-$month";
+
+                    $ini = strtotime($dia['hora_ini']);
+                    $fin = strtotime($dia['hora_fin']);
+                    $diff = ($fin - $ini) / 3600;
+                    
+                    if ($diff > 0) {
+                        if (!isset($hoursByMonth[$key])) $hoursByMonth[$key] = 0;
+                        $hoursByMonth[$key] += $diff;
+                    }
+                }
+            }
+        }
+
+        // --- VALIDACIÓN DE HORAS MENSUALES (MAX 160h) ---
+        $asigModelCheck = new AsignacionModel();
+        foreach ($hoursByMonth as $key => $hours) {
+            list($year, $month) = explode('-', $key);
+            $currentMonthlyHours = $asigModelCheck->getMonthlyHours($data['instructor_inst_id'], $month, $year, null);
+            if (($currentMonthlyHours + $hours) > 160) {
+                $this->sendResponse(['error' => "El instructor supera el límite de 160 horas en el mes $month/$year (Lleva: $currentMonthlyHours h, A asignar: $hours h)"], 400);
+                return;
+            }
+        }
+
+        // --- VALIDACIÓN DE HORAS DE COMPETENCIA ---
+        require_once dirname(__DIR__) . '/model/CompetenciaModel.php';
+        $compModel = new CompetenciaModel($data['competencia_comp_id']);
+        $compData = $compModel->read()[0] ?? null;
+        if ($compData) {
+            $compMaxHours = (float)$compData['comp_horas'];
+            $currentAssignedHours = $asigModelCheck->getCompetenceHoursAssigned($data['ficha_fich_id'], $data['competencia_comp_id'], null);
+            $totalProposedHours = array_sum($hoursByMonth);
+
+            if (($currentAssignedHours + $totalProposedHours) > $compMaxHours) {
+                $this->sendResponse(['error' => "Las horas asignadas superan las horas de la competencia ($compMaxHours h). Ya tiene asignadas $currentAssignedHours h e intentas asignar $totalProposedHours h."], 400);
+                return;
+            }
+
+            // Alerta 80% (Solo si no viene confirmado)
+            $percentage = ($compMaxHours > 0) ? (($currentAssignedHours + $totalProposedHours) / $compMaxHours) * 100 : 100;
+            if ($percentage < 80 && !isset($data['confirm_80_percent'])) {
+                $this->sendResponse([
+                    'warning' => '80_percent_alert',
+                    'message' => "El porcentaje de horas programadas (" . round($percentage, 2) . "%) es menor al recomendado (80%). ¿Deseas continuar con la asignación de todos modos?"
+                ], 202);
+                return;
+            }
         }
 
         // 3. Validar cada día (coherencia, jornada, fecha vigente)
@@ -266,6 +358,86 @@ class AsignacionController
         if (empty($diasSeleccionados)) {
             $this->sendResponse(['error' => 'Debe seleccionar al menos un día con su respectivo horario'], 400);
             return;
+        }
+
+        // --- VALIDACIONES DE FECHAS CLASES VS RANGO ---
+        $fechas = array_column($diasSeleccionados, 'fecha');
+        $maxFecha = max($fechas);
+        if ($data['asig_fecha_fin'] > $maxFecha) {
+            $data['asig_fecha_fin'] = $maxFecha;
+        } else if ($data['asig_fecha_fin'] < $maxFecha) {
+            $this->sendResponse(['error' => "El rango de fechas es insuficiente para el número de clases. La última clase está programada para $maxFecha. Por favor, amplíe el rango."], 400);
+            return;
+        }
+
+        // --- VALIDAR VIGENCIA DE CERTIFICACIÓN ---
+        $db = Conexion::getConnect();
+        $stmtVigencia = $db->prepare("SELECT inscomp_vigencia FROM INSTRU_COMPETENCIA WHERE INSTRUCTOR_inst_id = ? AND COMPETxPROGRAMA_PROGRAMA_prog_id = ? AND COMPETxPROGRAMA_COMPETENCIA_comp_id = ?");
+        $stmtVigencia->execute([$data['instructor_inst_id'], $progId, $data['competencia_comp_id']]);
+        $vigenciaRes = $stmtVigencia->fetch(PDO::FETCH_ASSOC);
+        if ($vigenciaRes && !empty($vigenciaRes['inscomp_vigencia'])) {
+            if ($vigenciaRes['inscomp_vigencia'] < $data['asig_fecha_fin']) {
+                $this->sendResponse(['error' => "La certificación del instructor para esta competencia vence el {$vigenciaRes['inscomp_vigencia']}, no alcanza a cubrir hasta {$data['asig_fecha_fin']}"], 400);
+                return;
+            }
+        }
+
+        // --- CÁLCULO DE HORAS PROPUESTAS ---
+        $hoursByMonth = [];
+        foreach ($diasSeleccionados as $dia) {
+            if (!empty($dia['hora_ini']) && !empty($dia['hora_fin'])) {
+                $dateParts = explode('-', $dia['fecha']);
+                if (count($dateParts) >= 2) {
+                    $year = $dateParts[0];
+                    $month = $dateParts[1];
+                    $key = "$year-$month";
+
+                    $ini = strtotime($dia['hora_ini']);
+                    $fin = strtotime($dia['hora_fin']);
+                    $diff = ($fin - $ini) / 3600;
+                    
+                    if ($diff > 0) {
+                        if (!isset($hoursByMonth[$key])) $hoursByMonth[$key] = 0;
+                        $hoursByMonth[$key] += $diff;
+                    }
+                }
+            }
+        }
+
+        // --- VALIDACIÓN DE HORAS MENSUALES (MAX 160h) ---
+        $asigModelCheck = new AsignacionModel();
+        foreach ($hoursByMonth as $key => $hours) {
+            list($year, $month) = explode('-', $key);
+            $currentMonthlyHours = $asigModelCheck->getMonthlyHours($data['instructor_inst_id'], $month, $year, $data['asig_id']);
+            if (($currentMonthlyHours + $hours) > 160) {
+                $this->sendResponse(['error' => "El instructor supera el límite de 160 horas en el mes $month/$year (Lleva: $currentMonthlyHours h, A asignar: $hours h)"], 400);
+                return;
+            }
+        }
+
+        // --- VALIDACIÓN DE HORAS DE COMPETENCIA ---
+        require_once dirname(__DIR__) . '/model/CompetenciaModel.php';
+        $compModel = new CompetenciaModel($data['competencia_comp_id']);
+        $compData = $compModel->read()[0] ?? null;
+        if ($compData) {
+            $compMaxHours = (float)$compData['comp_horas'];
+            $currentAssignedHours = $asigModelCheck->getCompetenceHoursAssigned($data['ficha_fich_id'], $data['competencia_comp_id'], $data['asig_id']);
+            $totalProposedHours = array_sum($hoursByMonth);
+
+            if (($currentAssignedHours + $totalProposedHours) > $compMaxHours) {
+                $this->sendResponse(['error' => "Las horas asignadas superan las horas de la competencia ($compMaxHours h). Ya tiene asignadas $currentAssignedHours h e intentas asignar $totalProposedHours h."], 400);
+                return;
+            }
+
+            // Alerta 80% (Solo si no viene confirmado)
+            $percentage = ($compMaxHours > 0) ? (($currentAssignedHours + $totalProposedHours) / $compMaxHours) * 100 : 100;
+            if ($percentage < 80 && !isset($data['confirm_80_percent'])) {
+                $this->sendResponse([
+                    'warning' => '80_percent_alert',
+                    'message' => "El porcentaje de horas programadas (" . round($percentage, 2) . "%) es menor al recomendado (80%). ¿Deseas continuar con la asignación de todos modos?"
+                ], 202);
+                return;
+            }
         }
 
         // Validar cada día

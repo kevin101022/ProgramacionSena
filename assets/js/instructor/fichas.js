@@ -1,3 +1,9 @@
+
+Fatal error
+: Uncaught PDOException: SQLSTATE[42703]: Undefined column: 7 ERROR: no existe la columna c.numero_documento LINE 9: ... JOIN COORDINACION c ON f.COORDINACION_coord_id = c.numero_d... ^ in C:\xampp\htdocs\ProgramacionSena\model\InstructorModel.php:269 Stack trace: #0 C:\xampp\htdocs\ProgramacionSena\model\InstructorModel.php(269): PDOStatement->execute(Array) #1 C:\xampp\htdocs\ProgramacionSena\views\instructor\mi_ficha.php(18): InstructorModel->getFichasLider() #2 {main} thrown in
+C:\xampp\htdocs\ProgramacionSena\model\InstructorModel.php
+on line
+269
 class MisFichasLider {
     constructor() {
         this.fichasInfo = [];
@@ -61,7 +67,9 @@ class MisFichasLider {
             <tr class="hover:bg-slate-50 transition-colors">
                 <td class="text-center font-medium text-slate-500">${index + 1}</td>
                 <td>
-                    <div class="font-bold text-[#00324D] text-lg">${ficha.fich_id || 'N/A'}</div>
+                    <a href="../ficha/ver.php?id=${ficha.fich_id}" class="font-bold text-[#00324D] text-lg hover:text-sena-green transition-colors decoration-none">
+                        ${ficha.fich_id || 'N/A'}
+                    </a>
                     <div class="text-xs text-slate-400">
                       ${this.formatDate(ficha.fich_fecha_ini_lectiva)} a ${this.formatDate(ficha.fich_fecha_fin_lectiva)}
                     </div>

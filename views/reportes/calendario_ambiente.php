@@ -126,10 +126,17 @@ require_once '../layouts/sidebar.php';
 
         <!-- Selector de ambiente -->
         <div class="action-bar flex-col md:flex-row gap-4">
-            <div class="w-full max-w-lg relative">
-                <ion-icon src="../../assets/ionicons/search-outline.svg" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10"></ion-icon>
-                <input type="text" id="ambienteSearch" autocomplete="off" placeholder="Buscar ambiente por ID o nombre..." class="search-input w-full pl-10" style="padding-left: 2.5rem !important; border-radius: 12px;">
-                <div id="ambienteDropdown" class="custom-dropdown-list"></div>
+            <div class="flex flex-col md:flex-row gap-4 w-full max-w-2xl">
+                <div class="w-full relative">
+                    <select id="sedeSelect" class="search-input w-full" style="border-radius: 12px; height: 45px; cursor: pointer;">
+                        <option value="">Seleccione Sede...</option>
+                    </select>
+                </div>
+                <div class="w-full relative">
+                    <select id="ambienteSelect" class="search-input w-full" style="border-radius: 12px; height: 45px; cursor: pointer;" disabled>
+                        <option value="">Seleccione Ambiente...</option>
+                    </select>
+                </div>
             </div>
             <div class="flex gap-3">
                 <button id="downloadPdfBtn" class="btn-primary whitespace-nowrap" disabled>
@@ -205,6 +212,16 @@ require_once '../layouts/sidebar.php';
                         <p id="dayDetailInstructor" class="text-sm font-bold text-gray-800">--</p>
                     </div>
                 </div>
+
+                <div class="flex items-start gap-3 hidden" id="dayDetailObsContainer">
+                    <div class="w-8 h-8 rounded-lg bg-amber-50 flex items-center justify-center flex-shrink-0">
+                        <ion-icon src="../../assets/ionicons/chatbubble-ellipses-outline.svg" class="text-amber-500"></ion-icon>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-xs text-gray-500 font-semibold uppercase">Observaciones</p>
+                        <p id="dayDetailObservaciones" class="text-sm font-medium text-gray-700 italic mt-1">--</p>
+                    </div>
+                </div>
             </div>
         </div>
         <div class="modal-footer" style="padding: 16px 24px;">
@@ -213,6 +230,11 @@ require_once '../layouts/sidebar.php';
     </div>
 </div>
 
+<script>
+    const USER_ROL = '<?php echo $_SESSION["rol"] ?? ""; ?>';
+    const USER_CENTRO_ID = '<?php echo $_SESSION["centro_id"] ?? ""; ?>';
+    const USER_ID = '<?php echo $_SESSION["id"] ?? ""; ?>';
+</script>
 <script src="../../assets/js/reportes/calendario_ambiente.js?v=<?php echo time(); ?>"></script>
 </body>
 </html>

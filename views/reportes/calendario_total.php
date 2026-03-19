@@ -1,5 +1,5 @@
 <?php
-$pageTitle = "Calendario de Ficha - SENA";
+$pageTitle = "Calendario Total - SENA";
 $activeNavItem = 'reportes';
 require_once '../layouts/head.php';
 require_once '../layouts/sidebar.php';
@@ -8,83 +8,24 @@ require_once '../layouts/sidebar.php';
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.js"></script>
 <style>
-    .fc {
-        font-family: 'Public Sans', sans-serif;
-    }
+    .fc { font-family: 'Public Sans', sans-serif; }
+    .fc .fc-toolbar-title { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; }
+    .fc .fc-button { background: #39a900; border-color: #39a900; font-size: 0.8rem; text-transform: capitalize; }
+    .fc .fc-button:hover { background: #2d8a00; border-color: #2d8a00; }
+    .fc .fc-button-active { background: #1e6b00 !important; border-color: #1e6b00 !important; }
+    .fc .fc-daygrid-day-number { font-weight: 600; color: #4a5568; }
+    .fc .fc-event { border-radius: 6px; padding: 2px 6px; font-size: 0.75rem; border: none; }
+    .fc .fc-daygrid-day.fc-day-today { background: #f0fdf4; }
 
-    .fc .fc-toolbar-title {
-        font-size: 1.1rem;
-        font-weight: 700;
-        color: #1a1a2e;
-    }
-
-    .fc .fc-button {
-        background: #39a900;
-        border-color: #39a900;
-        font-size: 0.8rem;
-        text-transform: capitalize;
-    }
-
-    .fc .fc-button:hover {
-        background: #2d8a00;
-        border-color: #2d8a00;
-    }
-
-    .fc .fc-button-active {
-        background: #1e6b00 !important;
-        border-color: #1e6b00 !important;
-    }
-
-    .fc .fc-daygrid-day-number {
-        font-weight: 600;
-        color: #4a5568;
-    }
-
-    .fc .fc-event {
-        border-radius: 6px;
-        padding: 2px 6px;
-        font-size: 0.75rem;
-        border: none;
-    }
-
-    .fc .fc-daygrid-day.fc-day-today {
-        background: #f0fdf4;
-    }
-
-    .custom-dropdown-list {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        background: white;
-        border: 1px solid #e5e7eb;
-        border-top: none;
-        border-bottom-left-radius: 12px;
-        border-bottom-right-radius: 12px;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
-        z-index: 50;
-        max-height: 300px;
-        overflow-y: auto;
-        display: none;
-        margin-top: -1px;
-    }
-
-    .custom-dropdown-item {
-        padding: 10px 16px;
-        cursor: pointer;
-        transition: all 0.2s;
-        border-bottom: 1px solid #f3f4f6;
-    }
-
-    .custom-dropdown-item:last-child {
-        border-bottom: none;
-    }
-
-    .custom-dropdown-item:hover {
-        background: #f0fdf4;
-        color: #39a900;
+    .legend-dot {
+        width: 12px; height: 12px; border-radius: 50%; display: inline-block; flex-shrink: 0;
     }
 </style>
+
+<!-- Inject session context for JS -->
+<script>
+    const USER_ROL = '<?php echo $_SESSION["rol"] ?? ""; ?>';
+</script>
 
 <main class="main-content">
     <header class="main-header">
@@ -92,9 +33,9 @@ require_once '../layouts/sidebar.php';
             <nav class="breadcrumb">
                 <a href="../reportes/index.php">Reportes</a>
                 <ion-icon src="../../assets/ionicons/chevron-forward-outline.svg"></ion-icon>
-                <span>Calendario de Ficha</span>
+                <span>Calendario Total</span>
             </nav>
-            <h1 class="page-title">Calendario de Ficha</h1>
+            <h1 class="page-title">Calendario Total</h1>
         </div>
     </header>
 
@@ -102,18 +43,18 @@ require_once '../layouts/sidebar.php';
         <div class="stats-grid">
             <div class="stat-card">
                 <div class="stat-card-bg-icon">
-                    <ion-icon src="../../assets/ionicons/layers-outline.svg"></ion-icon>
+                    <ion-icon src="../../assets/ionicons/calendar-number-outline.svg"></ion-icon>
                 </div>
                 <div class="stat-card-header">
-                    <span class="stat-card-label">ASIGNACIONES</span>
-                    <div class="stat-card-icon purple">
-                        <ion-icon src="../../assets/ionicons/calendar-outline.svg"></ion-icon>
+                    <span class="stat-card-label">TOTAL EVENTOS</span>
+                    <div class="stat-card-icon" style="background:#f0fdf4;">
+                        <ion-icon src="../../assets/ionicons/calendar-number-outline.svg" style="color:#39a900;"></ion-icon>
                     </div>
                 </div>
                 <div class="stat-card-body">
                     <span class="stat-card-number" id="totalAsignaciones">0</span>
-                    <span class="stat-card-desc">programadas para esta ficha</span>
-                    <p class="stat-card-context">Programación académica completa de la ficha seleccionada.</p>
+                    <span class="stat-card-desc" id="statDesc">programadas</span>
+                    <p class="stat-card-context" id="statContext">Cargando...</p>
                 </div>
                 <div class="stat-card-pill-container">
                     <div class="stat-pill">
@@ -124,15 +65,11 @@ require_once '../layouts/sidebar.php';
             </div>
         </div>
 
-        <!-- Selector de ficha -->
+        <!-- Action bar -->
         <div class="action-bar flex-col md:flex-row gap-4">
-            <div class="w-full max-w-lg relative">
-                <ion-icon src="../../assets/ionicons/search-outline.svg" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 z-10"></ion-icon>
-                <input type="text" id="fichaSearch" autocomplete="off" placeholder="Buscar ficha por número o programa..." class="search-input w-full pl-10" style="padding-left: 2.5rem !important; border-radius: 12px;">
-                <div id="fichaDropdown" class="custom-dropdown-list"></div>
-            </div>
-            <div class="flex gap-3">
-                <button id="downloadPdfBtn" class="btn-primary whitespace-nowrap" disabled>
+            <div id="legendContainer" class="flex flex-wrap gap-3 items-center"></div>
+            <div class="flex gap-3 ml-auto">
+                <button id="downloadPdfBtn" class="btn-primary whitespace-nowrap" style="display:none;">
                     <ion-icon src="../../assets/ionicons/download-outline.svg"></ion-icon>
                     Descargar PDF
                 </button>
@@ -143,30 +80,38 @@ require_once '../layouts/sidebar.php';
             </div>
         </div>
 
-        <!-- Calendar area -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mt-4">
-            <div id="calendarPlaceholder" class="calendar-placeholder" style="text-align: center; padding: 3rem;">
-                <ion-icon src="../../assets/ionicons/layers-outline.svg" style="font-size: 4rem; color: #e5e7eb; margin-bottom: 1rem;"></ion-icon>
-                <p class="text-lg font-semibold text-gray-700">Seleccione una ficha</p>
-                <p class="text-sm text-gray-500">El calendario mostrará todas las asignaciones de la ficha</p>
-            </div>
-            <div id="calendar" style="display: none;"></div>
+        <!-- Loading state -->
+        <div id="calendarLoading" class="bg-white rounded-xl shadow-sm border border-gray-100 p-12 mt-4 text-center">
+            <div class="w-8 h-8 border-2 border-sena-green border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+            <p class="text-gray-500 text-sm">Cargando asignaciones...</p>
+        </div>
+
+        <!-- Calendar -->
+        <div id="calendarWrapper" class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mt-4" style="display:none;">
+            <div id="calendar"></div>
+        </div>
+
+        <!-- Empty state -->
+        <div id="calendarEmpty" class="bg-white rounded-xl shadow-sm border border-gray-100 p-12 mt-4 text-center" style="display:none;">
+            <ion-icon src="../../assets/ionicons/calendar-outline.svg" style="font-size:4rem;color:#e5e7eb;margin-bottom:1rem;"></ion-icon>
+            <p class="text-lg font-semibold text-gray-700">Sin asignaciones</p>
+            <p class="text-sm text-gray-500">No hay asignaciones registradas para tu área.</p>
         </div>
     </div>
 </main>
 
-<!-- Modal de Detalle del Día -->
+<!-- Modal de Detalle -->
 <div id="dayDetailModal" class="modal">
-    <div class="modal-content" style="max-width: 500px;">
+    <div class="modal-content" style="max-width: 520px;">
         <div class="modal-header">
-            <h3 id="dayDetailTitle" style="font-size: 16px; font-weight: 600;">Detalle de Asignación</h3>
+            <h3 style="font-size: 16px; font-weight: 600;">Detalle de Asignación</h3>
             <button class="modal-close" id="closeDayDetail">
                 <ion-icon src="../../assets/ionicons/close-outline.svg"></ion-icon>
             </button>
         </div>
         <div class="modal-body" style="padding: 24px;">
-            <div class="flex items-center gap-3 mb-5 p-4 bg-purple-50 rounded-xl border border-purple-100">
-                <div class="w-12 h-12 rounded-lg bg-purple-500 flex items-center justify-center">
+            <div class="flex items-center gap-3 mb-5 p-4 bg-green-50 rounded-xl border border-green-100">
+                <div class="w-12 h-12 rounded-lg bg-sena-green flex items-center justify-center">
                     <ion-icon src="../../assets/ionicons/calendar-outline.svg" class="text-white text-2xl"></ion-icon>
                 </div>
                 <div class="flex-1">
@@ -174,41 +119,46 @@ require_once '../layouts/sidebar.php';
                     <p id="dayDetailTime" class="text-xs text-gray-500">--</p>
                 </div>
             </div>
-            
             <div class="space-y-3">
                 <div class="flex items-start gap-3">
                     <div class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
-                        <ion-icon src="../../assets/ionicons/layers-outline.svg" class="text-purple-500"></ion-icon>
+                        <ion-icon src="../../assets/ionicons/people-circle-outline.svg" class="text-sena-green"></ion-icon>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-xs text-gray-500 font-semibold uppercase">Coordinación</p>
+                        <p id="dayDetailCoord" class="text-sm font-bold text-gray-800">--</p>
+                    </div>
+                </div>
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                        <ion-icon src="../../assets/ionicons/layers-outline.svg" class="text-sena-green"></ion-icon>
                     </div>
                     <div class="flex-1">
                         <p class="text-xs text-gray-500 font-semibold uppercase">Ficha</p>
                         <p id="dayDetailFicha" class="text-sm font-bold text-gray-800">--</p>
                     </div>
                 </div>
-                
                 <div class="flex items-start gap-3">
                     <div class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
-                        <ion-icon src="../../assets/ionicons/bookmarks-outline.svg" class="text-purple-500"></ion-icon>
+                        <ion-icon src="../../assets/ionicons/bookmarks-outline.svg" class="text-sena-green"></ion-icon>
                     </div>
                     <div class="flex-1">
                         <p class="text-xs text-gray-500 font-semibold uppercase">Competencia</p>
                         <p id="dayDetailCompetencia" class="text-sm font-bold text-gray-800">--</p>
                     </div>
                 </div>
-                
                 <div class="flex items-start gap-3">
                     <div class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
-                        <ion-icon src="../../assets/ionicons/person-outline.svg" class="text-purple-500"></ion-icon>
+                        <ion-icon src="../../assets/ionicons/person-outline.svg" class="text-sena-green"></ion-icon>
                     </div>
                     <div class="flex-1">
                         <p class="text-xs text-gray-500 font-semibold uppercase">Instructor</p>
                         <p id="dayDetailInstructor" class="text-sm font-bold text-gray-800">--</p>
                     </div>
                 </div>
-                
                 <div class="flex items-start gap-3">
                     <div class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
-                        <ion-icon src="../../assets/ionicons/cube-outline.svg" class="text-purple-500"></ion-icon>
+                        <ion-icon src="../../assets/ionicons/cube-outline.svg" class="text-sena-green"></ion-icon>
                     </div>
                     <div class="flex-1">
                         <p class="text-xs text-gray-500 font-semibold uppercase">Ambiente</p>
@@ -233,11 +183,6 @@ require_once '../layouts/sidebar.php';
     </div>
 </div>
 
-<script>
-    const USER_ROL = '<?php echo $_SESSION["rol"] ?? ""; ?>';
-    const USER_CENTRO_ID = '<?php echo $_SESSION["centro_id"] ?? ""; ?>';
-    const USER_ID = '<?php echo $_SESSION["id"] ?? ""; ?>';
-</script>
-<script src="../../assets/js/reportes/calendario_ficha.js?v=<?php echo time(); ?>"></script>
+<script src="../../assets/js/reportes/calendario_total.js?v=<?php echo time(); ?>"></script>
 </body>
 </html>

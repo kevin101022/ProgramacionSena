@@ -55,7 +55,8 @@ class CalendarioFichaManager {
             const res = await fetch('../../routing.php?controller=ficha&action=index', {
                 headers: { 'Accept': 'application/json' }
             });
-            this.fichas = await res.json();
+            const data = await res.json();
+            this.fichas = Array.isArray(data) ? data : [];
         } catch (e) {
             console.error('Error cargando fichas:', e);
         }
@@ -122,6 +123,7 @@ class CalendarioFichaManager {
                 headers: { 'Accept': 'application/json' }
             });
             const data = await res.json();
+            // Filter by ficha; for coordinador the asignacion index is already scoped server-side via session
             this.allAsignaciones = (Array.isArray(data) ? data : []).filter(
                 a => a.ficha_fich_id == fichId || a.fich_id == fichId
             );
@@ -217,6 +219,18 @@ class CalendarioFichaManager {
         document.getElementById('dayDetailCompetencia').textContent = asig.comp_nombre_corto || 'N/A';
         document.getElementById('dayDetailInstructor').textContent = `${asig.inst_nombres || ''} ${asig.inst_apellidos || ''}`.trim() || 'N/A';
         document.getElementById('dayDetailAmbiente').textContent = `Ambiente ${asig.ambiente_amb_id || 'N/A'}`;
+
+        const obsEl = document.getElementById('dayDetailObservaciones');
+        const obsContainer = document.getElementById('dayDetailObsContainer');
+        if (obsEl && obsContainer) {
+            if (props.observaciones && props.observaciones.trim() !== '') {
+                obsEl.textContent = props.observaciones;
+                obsContainer.classList.remove('hidden');
+            } else {
+                obsEl.textContent = '--';
+                obsContainer.classList.add('hidden');
+            }
+        }
 
         // Show modal
         const modal = document.getElementById('dayDetailModal');
