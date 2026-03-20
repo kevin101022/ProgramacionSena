@@ -55,6 +55,10 @@ if ($rol === 'instructor') {
 
                         <div class="space-y-4 border-t border-gray-50 pt-6">
                             <div class="flex items-center gap-3 text-sm">
+                                <ion-icon src="../../assets/ionicons/finger-print-outline.svg" class="text-sena-green text-lg"></ion-icon>
+                                <span id="instDocumento" class="text-gray-600 font-bold">--</span>
+                            </div>
+                            <div class="flex items-center gap-3 text-sm">
                                 <ion-icon src="../../assets/ionicons/mail-outline.svg" class="text-sena-green text-lg"></ion-icon>
                                 <span id="instCorreo" class="text-gray-600">--</span>
                             </div>

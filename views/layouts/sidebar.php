@@ -100,6 +100,14 @@ $nombre_usuario = isset($_SESSION['nombre']) ? $_SESSION['nombre'] : 'Usuario';
                     <ion-icon src="../../assets/ionicons/analytics-outline.svg"></ion-icon>
                     Sincronizar Datos (CSV)
                 </a>
+                <a href="../../routing.php?controller=proyecto_formativo&action=index" class="nav-item <?php echo ($activeNavItem === 'proyecto_formativo') ? 'active' : ''; ?>">
+                    <ion-icon src="../../assets/ionicons/folder-open-outline.svg"></ion-icon>
+                    Proyectos Formativos
+                </a>
+                <a href="../../routing.php?controller=resultado_aprendizaje&action=index" class="nav-item <?php echo ($activeNavItem === 'resultado_aprendizaje') ? 'active' : ''; ?>">
+                    <ion-icon src="../../assets/ionicons/school-outline.svg"></ion-icon>
+                    Resultados de Aprendizaje
+                </a>
             <?php else: ?>
                 <div class="px-4 py-2 text-xs text-amber-600 font-medium bg-amber-50 rounded-lg mx-2 my-1 border border-amber-100 flex items-center gap-2">
                     <ion-icon src="../../assets/ionicons/warning-outline.svg" class="text-lg"></ion-icon>

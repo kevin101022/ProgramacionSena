@@ -1,0 +1,40 @@
+
+
+## Resumen de Datos (Volumen: 8 x Entidad)
+
+- **Globales** (Visibles para todos):
+    - **Sedes**: 8 en total (4 CEDRUM, 4 CIES).
+    - **Ambientes**: 8 en total (Sistemas, Gestión, Minería, Software, Diseño, Electrónica, Logística, Polivalente).
+    - **Programas**: 8 en total (ADSO, Gestión, Motores, Videojuegos, Animación 3D, IA, etc.).
+    - **Competencias**: 8 en total vinculadas a los programas principales.
+- **Locales** (Propios de cada centro):
+    - **Coordinaciones**: 4 para CEDRUM y 4 para CIES.
+    - **Coordinadores**: 4 por cada centro.
+    - **Instructores**: 8 por cada centro.
+    - **Fichas**: 4 por cada centro.
+
+## Tabla Maestra de Credenciales
+
+Todas las contraseñas han sido hasheadas con Bcrypt. Aquí tienes los accesos principales para cada centro:
+
+| Centro | Rol | Correo Ejemplo | Contraseña (Plana) |
+| :--- | :--- | :--- | :--- |
+| **CEDRUM** | Centro | `cedrum@sena.edu.co` | `sena123` |
+| **CEDRUM** | Coord 1 | `coord_cedrum1@sena.edu.co` | `Sena2026*` |
+| **CEDRUM** | Coord 2 | `coord_cedrum2@sena.edu.co` | `Sena123*` |
+| **CEDRUM** | Inst 1 | `inst_cedrum1@sena.edu.co` | `Sena2026*` |
+| **CEDRUM** | Inst 2 | `inst_cedrum2@sena.edu.co` | `Sena123*` |
+| **CIES** | Centro | `cies@sena.edu.co` | `sena123` |
+| **CIES** | Coord 1 | `coord_cies1@sena.edu.co` | `Sena2026*` |
+| **CIES** | Coord 2 | `coord_cies2@sena.edu.co` | `Sena123*` |
+| **CIES** | Inst 1 | `inst_cies1@sena.edu.co` | `Sena2026*` |
+| **CIES** | Inst 2 | `inst_cies2@sena.edu.co` | `Sena123*` |
+
+> [!TIP]
+> Los correos de los demás coordinadores e instructores siguen el patrón correlativo (ej. `coord_cedrum3`, `inst_cies8`) y usan la contraseña `Sena123*`.
+
+## Detalles de Implementación
+
+- **Seguridad**: Se verificó el hash de 60 caracteres para evitar fallos en el login.
+- **Limpieza**: Se eliminaron los scripts temporales de generación.
+- **Persistencia**: Los datos se han cargado usando `ON CONFLICT DO UPDATE` para asegurar que las contraseñas sean las correctas.

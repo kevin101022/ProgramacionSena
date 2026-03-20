@@ -31,7 +31,7 @@ if ($navItem) {
     if ($rol === 'centro') {
         $allowed = in_array($navItem, ['dashboard', 'sedes', 'ambientes', 'programas', 'titulos', 'instructores', 'competencias', 'coordinaciones', 'usuarios_coordinadores', 'reportes', 'auditoria_asignacion']);
     } elseif ($rol === 'coordinador') {
-        $allowed = in_array($navItem, ['dashboard', 'competencias', 'fichas', 'instruc_comp', 'asignaciones', 'reportes', 'auditoria_asignacion', 'setdata']);
+        $allowed = in_array($navItem, ['dashboard', 'competencias', 'fichas', 'instruc_comp', 'asignaciones', 'reportes', 'auditoria_asignacion', 'setdata', 'proyecto_formativo', 'resultado_aprendizaje']);
     } elseif ($rol === 'instructor') {
         $allowed = in_array($navItem, ['dashboard', 'asignaciones', 'mis_competencias', 'mi_ficha', 'mis_fichas', 'fichas']);
     }

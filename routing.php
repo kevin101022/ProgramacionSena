@@ -42,6 +42,9 @@ $controllers = array(
     'auditoria_asignacion' => ['index', 'show'],
     'usuario_coordinador' => ['index', 'show', 'store', 'update', 'toggle'],
     'setdata' => ['index', 'upload'],
+    'proyecto_formativo' => ['index', 'show', 'store', 'update', 'destroy', 'getFases', 'getByPrograma', 'asociarFicha', 'getProyectoByFicha'],
+    'resultado_aprendizaje' => ['index', 'show', 'store', 'update', 'destroy', 'getByCompetenciaPrograma', 'getByFase', 'getByFaseYPrograma', 'asignarAFase', 'desasignarDeFase'],
+    'competencia_horas_programa' => ['index', 'getByPrograma', 'store', 'destroy', 'getEstadoFicha'],
     // Agrega más controladores y acciones aquí si lo necesitas
 );
 
@@ -93,8 +96,8 @@ try {
         $isAjax = true; // routing.php maneja backend calls principalmente
 
         $allowedControllersByRole = [
-            'centro' => ['sede', 'ambiente', 'programa', 'titulo_programa', 'instructor', 'competencia', 'competencia_programa', 'coordinacion', 'usuario_coordinador', 'reporte', 'reporte_pdf', 'centro_formacion', 'auditoria_asignacion', 'detalle_asignacion'],
-            'coordinador' => ['competencia_programa', 'ficha', 'instru_competencia', 'asignacion', 'detalle_asignacion', 'reporte', 'reporte_pdf', 'auditoria_asignacion', 'coordinacion', 'setdata'],
+            'centro' => ['sede', 'ambiente', 'programa', 'titulo_programa', 'instructor', 'competencia', 'competencia_programa', 'coordinacion', 'usuario_coordinador', 'reporte', 'reporte_pdf', 'centro_formacion', 'auditoria_asignacion', 'detalle_asignacion', 'proyecto_formativo', 'resultado_aprendizaje', 'competencia_horas_programa'],
+            'coordinador' => ['competencia_programa', 'ficha', 'instru_competencia', 'asignacion', 'detalle_asignacion', 'reporte', 'reporte_pdf', 'auditoria_asignacion', 'coordinacion', 'setdata', 'proyecto_formativo', 'resultado_aprendizaje', 'competencia_horas_programa'],
             'instructor' => ['asignacion', 'instructor', 'ficha', 'reporte', 'reporte_pdf']
         ];
 
@@ -214,6 +217,18 @@ try {
         case 'setdata':
             require_once('model/SetdataModel.php');
             $controllerObj = new SetdataController();
+            break;
+        case 'proyecto_formativo':
+            require_once('model/ProyectoFormativoModel.php');
+            $controllerObj = new ProyectoFormativoController();
+            break;
+        case 'resultado_aprendizaje':
+            require_once('model/ResultadoAprendizajeModel.php');
+            $controllerObj = new ResultadoAprendizajeController();
+            break;
+        case 'competencia_horas_programa':
+            require_once('model/CompetenciaHorasProgramaModel.php');
+            $controllerObj = new CompetenciaHorasProgramaController();
             break;
         default:
             throw new Exception("Controlador no soportado: $controller");

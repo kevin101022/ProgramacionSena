@@ -42,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const populateBasicInfo = (inst) => {
         document.getElementById('instNombreCompleto').textContent = `${inst.inst_nombres} ${inst.inst_apellidos}`;
         document.getElementById('instIniciales').textContent = `${inst.inst_nombres[0]}${inst.inst_apellidos[0]}`;
+        document.getElementById('instDocumento').textContent = inst.inst_id || 'Sin documento';
         document.getElementById('instCorreo').textContent = inst.inst_correo || 'Sin correo';
         document.getElementById('instTelefono').textContent = inst.inst_telefono || 'Sin teléfono';
         document.getElementById('instCentro').textContent = inst.cent_nombre || 'Sin centro asignado';
