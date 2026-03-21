@@ -12,19 +12,20 @@ class CrearCompetencia {
 
     cacheDOM() {
         this.form = document.getElementById('crearCompetenciaForm');
-        this.programasList = document.getElementById('programasList');
-        this.progSearch = document.getElementById('progSearch');
+        this.programaSelect = document.getElementById('programa_prog_id');
     }
 
     bindEvents() {
-        this.form.addEventListener('submit', (e) => this.handleSubmit(e));
-        this.progSearch.addEventListener('input', () => this.filterProgramas());
+        if (this.form) {
+            this.form.addEventListener('submit', (e) => this.handleSubmit(e));
+        }
     }
 
     async loadProgramas() {
         try {
             const response = await fetch('../../routing.php?controller=programa&action=index');
-            this.programas = await response.json();
+            const data = await response.json();
+            this.programas = Array.isArray(data) ? data : [];
             this.renderProgramas();
         } catch (error) {
             console.error('Error loading programas:', error);
@@ -32,40 +33,18 @@ class CrearCompetencia {
     }
 
     renderProgramas() {
-        this.programasList.innerHTML = '';
+        if (!this.programaSelect) return;
+        
+        // Mantener la opción por defecto
+        const defaultOption = this.programaSelect.options[0];
+        this.programaSelect.innerHTML = '';
+        this.programaSelect.appendChild(defaultOption);
+
         this.programas.forEach(p => {
-            const div = document.createElement('div');
-            div.className = 'program-item flex items-center p-3 bg-white rounded-lg border border-gray-100 hover:border-green-200 transition-colors cursor-pointer group';
-            div.dataset.name = `${p.prog_denominacion} ${p.titpro_nombre}`.toLowerCase();
-
-            div.innerHTML = `
-                <label class="flex items-center gap-3 w-full cursor-pointer">
-                    <input type="checkbox" name="programas[]" value="${p.prog_codigo}" class="w-5 h-5 rounded border-gray-300 text-green-600 focus:ring-green-500 transition-all">
-                    <div class="flex-1 min-width-0">
-                        <div class="text-sm font-semibold text-gray-800 truncate">${p.prog_denominacion}</div>
-                        <div class="text-xs text-gray-500 truncate">${p.titpro_nombre}</div>
-                    </div>
-                </label>
-            `;
-
-            // Add click listener to the div as well for better UX
-            div.onclick = (e) => {
-                if (e.target.tagName !== 'INPUT') {
-                    const cb = div.querySelector('input');
-                    cb.checked = !cb.checked;
-                }
-            };
-
-            this.programasList.appendChild(div);
-        });
-    }
-
-    filterProgramas() {
-        const term = this.progSearch.value.toLowerCase();
-        const items = this.programasList.querySelectorAll('.program-item');
-        items.forEach(item => {
-            const visible = item.dataset.name.includes(term);
-            item.style.display = visible ? 'flex' : 'none';
+            const option = document.createElement('option');
+            option.value = p.prog_codigo;
+            option.textContent = `${p.prog_denominacion} (${p.titpro_nombre})`;
+            this.programaSelect.appendChild(option);
         });
     }
 

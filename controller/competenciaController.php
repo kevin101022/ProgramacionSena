@@ -39,8 +39,12 @@ class CompetenciaController
         }
 
         $competencia = $result[0];
-        $competencia['programas'] = $this->model->getProgramasByCompetencia();
+        $competencia['programas'] = ($prog = $this->model->getPrograma()) ? [$prog] : [];
         $competencia['instructores'] = $this->model->getInstructoresByCompetencia($cent_id);
+
+        require_once dirname(__DIR__) . '/model/ResultadoAprendizajeModel.php';
+        $rapModel = new ResultadoAprendizajeModel();
+        $competencia['raps'] = $rapModel->getByCompetencia($id);
 
         $this->sendResponse($competencia);
     }
@@ -51,7 +55,9 @@ class CompetenciaController
             $nombre_corto = $_POST['comp_nombre_corto'] ?? null;
             $horas = $_POST['comp_horas'] ?? null;
             $unidad = $_POST['comp_nombre_unidad_competencia'] ?? null;
-            $programas = $_POST['programas'] ?? []; // Array of program codes
+            $programa_prog_id = $_POST['programa_prog_id'] ?? null;
+            $requisitos = $_POST['requisitos_academicos'] ?? null;
+            $experiencia = $_POST['experiencia_laboral'] ?? null;
 
             if (!$nombre_corto || !$horas) {
                 $this->sendResponse(['error' => 'El nombre corto y las horas son campos obligatorios'], 400);
@@ -61,6 +67,9 @@ class CompetenciaController
             $this->model->setCompNombreCorto($nombre_corto);
             $this->model->setCompHoras($horas);
             $this->model->setCompNombreUnidadCompetencia($unidad);
+            $this->model->setProgramaProgId($programa_prog_id);
+            $this->model->setRequisitosAcademicos($requisitos);
+            $this->model->setExperienciaLaboral($experiencia);
 
             if (session_status() === PHP_SESSION_NONE) {
                 session_start();
@@ -70,8 +79,6 @@ class CompetenciaController
 
             $id = $this->model->create();
             if ($id) {
-                $this->model->setCompId($id);
-                $this->model->assignProgramas($programas);
                 $this->sendResponse(['message' => 'Competencia creada correctamente', 'id' => $id], 201);
             } else {
                 $this->sendResponse(['error' => 'No se pudo crear la competencia'], 500);
@@ -88,7 +95,9 @@ class CompetenciaController
             $nombre_corto = $_POST['comp_nombre_corto'] ?? null;
             $horas = $_POST['comp_horas'] ?? null;
             $unidad = $_POST['comp_nombre_unidad_competencia'] ?? null;
-            $programas = $_POST['programas'] ?? [];
+            $programa_prog_id = $_POST['programa_prog_id'] ?? null;
+            $requisitos = $_POST['requisitos_academicos'] ?? null;
+            $experiencia = $_POST['experiencia_laboral'] ?? null;
 
             if (!$id || !$nombre_corto || !$horas) {
                 $this->sendResponse(['error' => 'Faltan campos obligatorios'], 400);
@@ -99,6 +108,9 @@ class CompetenciaController
             $this->model->setCompNombreCorto($nombre_corto);
             $this->model->setCompHoras($horas);
             $this->model->setCompNombreUnidadCompetencia($unidad);
+            $this->model->setProgramaProgId($programa_prog_id);
+            $this->model->setRequisitosAcademicos($requisitos);
+            $this->model->setExperienciaLaboral($experiencia);
 
             if (session_status() === PHP_SESSION_NONE) {
                 session_start();
@@ -107,7 +119,6 @@ class CompetenciaController
             $this->model->setCentroFormacionId($cent_id);
 
             if ($this->model->update()) {
-                $this->model->assignProgramas($programas);
                 $this->sendResponse(['message' => 'Competencia actualizada correctamente']);
             } else {
                 $this->sendResponse(['error' => 'No se pudo actualizar la competencia'], 500);
@@ -116,6 +127,31 @@ class CompetenciaController
             file_put_contents(__DIR__ . '/../debug_error.log', "[" . date('Y-m-d H:i:s') . "] Error update competencia: " . $e->getMessage() . "\n" . $e->getTraceAsString() . "\n", FILE_APPEND);
             $this->sendResponse(['error' => 'Error: ' . $e->getMessage()], 500);
         }
+    }
+
+    public function getByPrograma()
+    {
+        $progId = $_GET['prog_id'] ?? null;
+        if (!$progId) {
+            $this->sendResponse(['error' => 'ID de programa requerido'], 400);
+            return;
+        }
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $cent_id = $_SESSION['centro_id'] ?? null;
+        $competencias = $this->model->getByPrograma($progId, $cent_id);
+        $this->sendResponse($competencias);
+    }
+
+    public function getProgramas()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        $cent_id = $_SESSION['centro_id'] ?? null;
+        $programas = $this->model->getProgramas($cent_id);
+        $this->sendResponse($programas);
     }
 
     public function destroy($id = null)

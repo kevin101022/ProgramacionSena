@@ -75,6 +75,14 @@ require_once '../layouts/sidebar.php';
                             <p class="text-base font-bold text-gray-900 mt-1" id="detTelefono">--</p>
                         </div>
                         <div class="p-4 bg-gray-50 rounded-xl border border-gray-100 md:col-span-1">
+                            <p class="text-xs font-bold text-gray-400 uppercase">Profesión</p>
+                            <p class="text-base font-bold text-gray-900 mt-1" id="detProfesion">--</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-xl border border-gray-100 md:col-span-1">
+                            <p class="text-xs font-bold text-gray-400 uppercase">Especialización</p>
+                            <p class="text-base font-bold text-gray-900 mt-1" id="detEspecializacion">--</p>
+                        </div>
+                        <div class="p-4 bg-gray-50 rounded-xl border border-gray-100 md:col-span-1">
                             <p class="text-xs font-bold text-gray-400 uppercase">Centro de Formación</p>
                             <p class="text-base font-bold text-gray-900 mt-1" id="detCentro">--</p>
                         </div>

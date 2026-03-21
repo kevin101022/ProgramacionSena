@@ -315,7 +315,7 @@ class AsignacionManager {
         if (elPending) elPending.textContent = pendingComps;
 
         // Instructores habilitados para este programa
-        const instructoresHabilitados = this.allHabilitaciones.filter(h => h.competxprograma_programa_prog_id == progId);
+        const instructoresHabilitados = this.allHabilitaciones.filter(h => h.programa_prog_id == progId);
         const uniqueInstructores = new Set(instructoresHabilitados.map(h => h.instructor_inst_id)).size;
         
         const elInst = document.getElementById('totalInstructoresDisp');
@@ -362,7 +362,7 @@ class AsignacionManager {
         if (!this.selectedFicha) return;
         const progId = this.selectedFicha.programa_prog_codigo || this.selectedFicha.programa_prog_id;
         try {
-            const res = await fetch(`../../routing.php?controller=competencia_programa&action=getByPrograma&prog_id=${progId}`, {
+            const res = await fetch(`../../routing.php?controller=competencia&action=getByPrograma&prog_id=${progId}`, {
                 headers: { 'Accept': 'application/json' }
             });
             const data = await res.json();
@@ -858,8 +858,8 @@ class AsignacionManager {
 
         const progId = this.selectedFicha.programa_prog_codigo || this.selectedFicha.programa_prog_id;
         const habilitados = this.allHabilitaciones.filter(h =>
-            h.competxprograma_competencia_comp_id == compId &&
-            h.competxprograma_programa_prog_id == progId
+            h.competencia_comp_id == compId &&
+            h.programa_prog_id == progId
         );
 
         instructorSelect.innerHTML = '<option value="">Seleccione instructor...</option>';

@@ -50,13 +50,12 @@ require_once '../layouts/sidebar.php';
                     </div>
 
                     <div class="form-group">
-                        <label for="prog_tipo" class="form-label required">Tipo de Programa</label>
+                        <label for="prog_tipo" class="form-label required">Modalidad</label>
                         <select id="prog_tipo" name="prog_tipo" class="form-input" required>
-                            <option value="" disabled selected>Seleccione tipo...</option>
-                            <option value="Tecnólogo">Tecnólogo</option>
-                            <option value="Técnico">Técnico</option>
-                            <option value="Especialización">Especialización</option>
-                            <option value="Curso Corto">Curso Corto</option>
+                            <option value="" disabled selected>Seleccione modalidad...</option>
+                            <option value="Presencial">Presencial</option>
+                            <option value="Virtual">Virtual</option>
+                            <option value="A distancia">A distancia</option>
                         </select>
                     </div>
 

@@ -14,7 +14,8 @@ class ResultadoAprendizajeController {
     public function index() {
         $model = new ResultadoAprendizajeModel();
         $centro_id = $_SESSION['centro_id'] ?? null;
-        $data = $model->getAll($centro_id);
+        $prog_id = $_GET['prog_id'] ?? null;
+        $data = $model->getAll($centro_id, $prog_id);
         
         if ($this->expectsJson()) {
             return $this->respondJson($data);
@@ -38,7 +39,7 @@ class ResultadoAprendizajeController {
         if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
         
         $data = $_POST;
-        if (empty($data['rap_codigo']) || empty($data['rap_descripcion']) || empty($data['competxprog_prog_id']) || empty($data['competxprog_comp_id'])) {
+        if (empty($data['rap_codigo']) || empty($data['rap_descripcion']) || empty($data['programa_prog_id']) || empty($data['competencia_comp_id'])) {
             return $this->respondJson(['error' => 'Faltan campos obligatorios'], 400);
         }
         
@@ -74,11 +75,16 @@ class ResultadoAprendizajeController {
     public function getByCompetenciaPrograma() {
         $prog_id = $_GET['prog_id'] ?? null;
         $comp_id = $_GET['comp_id'] ?? null;
+        $pf_id = $_GET['pf_id'] ?? null; // Added for project structure filtering
         
         if (!$prog_id || !$comp_id) return $this->respondJson([], 400);
         
         $model = new ResultadoAprendizajeModel();
-        $data = $model->getByCompetenciaPrograma($prog_id, $comp_id);
+        if ($pf_id) {
+            $data = $model->getAvailableByCompetencia($comp_id, $pf_id);
+        } else {
+            $data = $model->getByCompetenciaPrograma($prog_id, $comp_id);
+        }
         return $this->respondJson($data);
     }
 

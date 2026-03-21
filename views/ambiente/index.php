@@ -74,6 +74,7 @@ require_once '../layouts/sidebar.php';
                         <th>Nombre Ambiente</th>
                         <th class="w-20">Tipo</th>
                         <th class="w-20">Sede</th>
+                        <th class="text-right w-15">Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="ambientesTableBody">

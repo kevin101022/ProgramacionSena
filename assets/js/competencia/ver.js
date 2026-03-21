@@ -28,12 +28,17 @@ class DetalleCompetencia {
         this.compNombreDisplay = document.getElementById('compNombreDisplay');
         this.compHorasDisplay = document.getElementById('compHorasDisplay');
         this.compUnidadDisplay = document.getElementById('compUnidadDisplay');
+        this.compRequisitosDisplay = document.getElementById('compRequisitosDisplay');
+        this.compExperienciaDisplay = document.getElementById('compExperienciaDisplay');
 
         this.programasList = document.getElementById('associatedProgramasList');
         this.programCount = document.getElementById('programCount');
 
         this.instructoresList = document.getElementById('instructoresList');
         this.instructorCount = document.getElementById('instructorCount');
+
+        this.rapsList = document.getElementById('rapsList');
+        this.rapCount = document.getElementById('rapCount');
     }
 
     bindEvents() {
@@ -109,6 +114,7 @@ class DetalleCompetencia {
             this.renderCompetencia(data);
             this.renderProgramas(data.programas || []);
             this.renderInstructores(data.instructores || []);
+            this.renderRaps(data.raps || []);
 
             this.showDetails();
         } catch (error) {
@@ -145,6 +151,12 @@ class DetalleCompetencia {
         if (this.compHorasDisplay) this.compHorasDisplay.textContent = data.comp_horas + 'h';
         if (this.compUnidadDisplay) {
             this.compUnidadDisplay.textContent = data.comp_nombre_unidad_competencia || 'Sin descripción detallada.';
+        }
+        if (this.compRequisitosDisplay) {
+            this.compRequisitosDisplay.textContent = data.requisitos_academicos || 'No especificados.';
+        }
+        if (this.compExperienciaDisplay) {
+            this.compExperienciaDisplay.textContent = data.experiencia_laboral || 'No especificada.';
         }
     }
 
@@ -241,6 +253,44 @@ class DetalleCompetencia {
                 </div>
             `;
             this.instructoresList.appendChild(item);
+        });
+    }
+
+    renderRaps(raps) {
+        if (!this.rapsList) return;
+
+        this.rapsList.innerHTML = '';
+        if (this.rapCount) this.rapCount.textContent = `${raps.length} RAP${raps.length !== 1 ? 's' : ''}`;
+
+        if (raps.length === 0) {
+            this.rapsList.innerHTML = `
+                <div class="p-12 text-center">
+                    <div class="w-16 h-16 bg-gray-50 dark:bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 text-gray-300 dark:text-slate-600">
+                        <ion-icon src="../../assets/ionicons/ribbon-outline.svg" class="text-3xl"></ion-icon>
+                    </div>
+                    <p class="text-slate-500 dark:text-slate-400 font-medium">No hay Resultados de Aprendizaje asociados a esta competencia.</p>
+                </div>
+            `;
+            return;
+        }
+
+        raps.forEach(rap => {
+            const item = document.createElement('div');
+            item.className = 'p-6 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors flex items-start gap-4';
+
+            item.innerHTML = `
+                <div class="w-10 h-10 rounded-lg bg-orange-50 dark:bg-orange-900/20 flex items-center justify-center text-sena-orange shrink-0">
+                    <ion-icon src="../../assets/ionicons/ribbon-outline.svg"></ion-icon>
+                </div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between mb-1">
+                        <h4 class="font-bold text-slate-900 dark:text-white text-sm truncate">${rap.rap_codigo}</h4>
+                        <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400 uppercase tracking-wider">${rap.rap_horas} Horas</span>
+                    </div>
+                    <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">${rap.rap_descripcion}</p>
+                </div>
+            `;
+            this.rapsList.appendChild(item);
         });
     }
 

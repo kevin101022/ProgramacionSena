@@ -71,6 +71,14 @@ if ($rol === 'instructor') {
                                 <span id="instCentro" class="text-gray-600 font-semibold">--</span>
                             </div>
                             <div class="flex items-center gap-3 text-sm">
+                                <ion-icon src="../../assets/ionicons/briefcase-outline.svg" class="text-sena-green text-lg"></ion-icon>
+                                <span id="instProfesion" class="text-gray-600">--</span>
+                            </div>
+                            <div class="flex items-center gap-3 text-sm">
+                                <ion-icon src="../../assets/ionicons/school-outline.svg" class="text-sena-green text-lg"></ion-icon>
+                                <span id="instEspecializacion" class="text-gray-600">--</span>
+                            </div>
+                            <div class="flex items-center gap-3 text-sm">
                                 <ion-icon src="../../assets/ionicons/book-outline.svg" class="text-sena-green text-lg"></ion-icon>
                                 <span id="instEspecialidad" class="text-gray-600">--</span>
                             </div>

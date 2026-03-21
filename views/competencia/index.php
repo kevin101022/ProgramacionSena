@@ -84,14 +84,16 @@ require_once '../layouts/sidebar.php';
                     <tr>
                         <th class="w-10">N°</th>
                         <th>Nombre Corto</th>
+                        <th>Programa</th>
                         <th>Horas</th>
                         <th>Unidad de Competencia</th>
+                        <th class="text-right w-15">Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="competenciasBody">
                     <!-- Loaded via JavaScript -->
                     <tr>
-                        <td colspan="4" class="text-center">Cargando competencias...</td>
+                        <td colspan="5" class="text-center">Cargando competencias...</td>
                     </tr>
                 </tbody>
             </table>

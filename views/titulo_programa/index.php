@@ -70,6 +70,7 @@ require_once '../layouts/sidebar.php';
                     <tr>
                         <th class="w-10">N°</th>
                         <th>Nombre del Título</th>
+                        <th class="text-right w-20">Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="titulosTableBody">

@@ -124,6 +124,11 @@ class CompetenciaManager {
                         </div>
                     </td>
                     <td>
+                        <div class="text-xs font-medium text-gray-700 truncate max-w-[200px]" title="${c.prog_denominacion || 'Sin programa'}">
+                            ${c.prog_denominacion || '<span class="text-gray-400 italic">No asignado</span>'}
+                        </div>
+                    </td>
+                    <td>
                         <div class="badge-glass">
                             ${c.comp_horas} Horas
                         </div>

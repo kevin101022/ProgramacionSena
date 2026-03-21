@@ -90,9 +90,10 @@ require_once '../layouts/sidebar.php';
             <table class="data-table w-full text-left">
                 <thead>
                     <tr class="bg-slate-50/50">
-                        <th class="pl-6 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest w-[25%]">Documento / ID</th>
-                        <th class="py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest w-[45%]">Nombre del Coordinador</th>
-                        <th class="py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest w-[30%]">Contacto</th>
+                        <th class="pl-6 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest w-[20%]">Documento / ID</th>
+                        <th class="py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest w-[35%]">Nombre del Coordinador</th>
+                        <th class="py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest w-[25%]">Contacto</th>
+                        <th class="pr-6 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest w-[20%] text-right">Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="usuariosTableBody" class="divide-y divide-slate-50">

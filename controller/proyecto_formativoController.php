@@ -112,4 +112,99 @@ class ProyectoFormativoController {
         $data = $model->getProyectoByFicha($fich_id);
         return $this->respondJson($data);
     }
+
+    // --- ACTIVITY METHODS ---
+    public function storeActivity() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
+        $data = $_POST;
+        require_once 'model/ActividadProyectoModel.php';
+        $model = new ActividadProyectoModel();
+        $id = $model->create($data);
+        return $this->respondJson(['success' => true, 'act_id' => $id]);
+    }
+
+    public function updateActivity($id) {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
+        $data = $_POST;
+        require_once 'model/ActividadProyectoModel.php';
+        $model = new ActividadProyectoModel();
+        $success = $model->update($id, $data);
+        return $this->respondJson(['success' => $success]);
+    }
+
+    public function destroyActivity($id) {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' && $_SERVER['REQUEST_METHOD'] !== 'DELETE') return;
+        require_once 'model/ActividadProyectoModel.php';
+        $model = new ActividadProyectoModel();
+        $success = $model->delete($id);
+        return $this->respondJson(['success' => $success]);
+    }
+
+    public function assignRap() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
+        $rap_ids = $_POST['rap_id'] ?? null;
+        $act_id = $_POST['act_id'] ?? null;
+        
+        if (!$rap_ids || !$act_id) return $this->respondJson(['error' => 'Datos incompletos'], 400);
+
+        require_once 'model/ActividadProyectoModel.php';
+        $model = new ActividadProyectoModel();
+        
+        try {
+            if (is_array($rap_ids)) {
+                foreach ($rap_ids as $r_id) {
+                    $model->asignarRap($r_id, $act_id);
+                }
+            } else {
+                $model->asignarRap($rap_ids, $act_id);
+            }
+            return $this->respondJson(['success' => true]);
+        } catch (Exception $e) {
+            return $this->respondJson(['error' => $e->getMessage()], 400);
+        }
+    }
+
+    public function unassignRap() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
+        $rap_id = $_POST['rap_id'] ?? null;
+        $act_id = $_POST['act_id'] ?? null;
+        require_once 'model/ActividadProyectoModel.php';
+        $model = new ActividadProyectoModel();
+        $success = $model->desasignarRap($rap_id, $act_id);
+        return $this->respondJson(['success' => $success]);
+    }
+
+    // --- PHASE METHODS ---
+    public function getPhase($id) {
+        $model = new ProyectoFormativoModel();
+        $data = $model->getFaseById($id);
+        return $this->respondJson($data);
+    }
+
+    public function storePhase() {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
+        $data = $_POST;
+        $model = new ProyectoFormativoModel();
+        try {
+            $id = $model->createFase($data);
+            return $this->respondJson(['success' => true, 'fase_id' => $id]);
+        } catch (Exception $e) {
+            return $this->respondJson(['error' => $e->getMessage()], 500);
+        }
+    }
+
+    public function updatePhase($id) {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST') return;
+        $data = $_POST;
+        $model = new ProyectoFormativoModel();
+        $success = $model->updateFase($id, $data);
+        return $this->respondJson(['success' => $success]);
+    }
+
+    public function destroyPhase($id) {
+        if ($_SERVER['REQUEST_METHOD'] !== 'POST' && $_SERVER['REQUEST_METHOD'] !== 'DELETE') return;
+        $model = new ProyectoFormativoModel();
+        $success = $model->deleteFase($id);
+        return $this->respondJson(['success' => $success]);
+    }
 }

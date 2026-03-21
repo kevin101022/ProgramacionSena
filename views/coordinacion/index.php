@@ -75,6 +75,7 @@ require_once '../layouts/sidebar.php';
                             <th class="w-20 pl-6 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest">N°</th>
                             <th class="py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest min-w-[200px]">Nombre del Área</th>
                             <th class="py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest min-w-[200px]">Centro de Formación</th>
+                            <th class="pr-6 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">Acciones</th>
                         </tr>
                     </thead>
                     <tbody id="coordinacionTableBody">

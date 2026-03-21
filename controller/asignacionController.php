@@ -158,7 +158,7 @@ class AsignacionController
 
         // --- VALIDAR VIGENCIA DE CERTIFICACIÓN ---
         $db = Conexion::getConnect();
-        $stmtVigencia = $db->prepare("SELECT inscomp_vigencia FROM INSTRU_COMPETENCIA WHERE INSTRUCTOR_inst_id = ? AND COMPETxPROGRAMA_PROGRAMA_prog_id = ? AND COMPETxPROGRAMA_COMPETENCIA_comp_id = ?");
+        $stmtVigencia = $db->prepare("SELECT inscomp_vigencia FROM INSTRU_COMPETENCIA WHERE INSTRUCTOR_inst_id = ? AND programa_prog_id = ? AND competencia_comp_id = ?");
         $stmtVigencia->execute([$data['instructor_inst_id'], $progId, $data['competencia_comp_id']]);
         $vigenciaRes = $stmtVigencia->fetch(PDO::FETCH_ASSOC);
         if ($vigenciaRes && !empty($vigenciaRes['inscomp_vigencia'])) {
@@ -372,7 +372,7 @@ class AsignacionController
 
         // --- VALIDAR VIGENCIA DE CERTIFICACIÓN ---
         $db = Conexion::getConnect();
-        $stmtVigencia = $db->prepare("SELECT inscomp_vigencia FROM INSTRU_COMPETENCIA WHERE INSTRUCTOR_inst_id = ? AND COMPETxPROGRAMA_PROGRAMA_prog_id = ? AND COMPETxPROGRAMA_COMPETENCIA_comp_id = ?");
+        $stmtVigencia = $db->prepare("SELECT inscomp_vigencia FROM INSTRU_COMPETENCIA WHERE INSTRUCTOR_inst_id = ? AND programa_prog_id = ? AND competencia_comp_id = ?");
         $stmtVigencia->execute([$data['instructor_inst_id'], $progId, $data['competencia_comp_id']]);
         $vigenciaRes = $stmtVigencia->fetch(PDO::FETCH_ASSOC);
         if ($vigenciaRes && !empty($vigenciaRes['inscomp_vigencia'])) {

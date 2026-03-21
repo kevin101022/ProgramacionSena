@@ -30,8 +30,7 @@ $controllers = array(
     'ambiente' => ['index', 'show', 'store', 'update', 'destroy', 'getProgramacion'],
     'programa' => ['index', 'show', 'store', 'update', 'destroy', 'getTitulos'],
     'ficha' => ['index', 'show', 'store', 'update', 'destroy', 'getDetalleCompetencias'],
-    'competencia' => ['index', 'show', 'store', 'update', 'destroy'],
-    'competencia_programa' => ['index', 'sync', 'getByPrograma', 'getAllPairs'],
+    'competencia' => ['index', 'show', 'store', 'update', 'destroy', 'getByPrograma', 'getProgramas'],
     'titulo_programa' => ['index', 'show', 'store', 'update', 'destroy'],
     'centro_formacion' => ['index', 'show', 'store', 'update', 'destroy', 'getInstructores', 'getCoordinaciones'],
     'instructor' => ['index', 'show', 'showByCentro', 'store', 'update', 'destroy', 'getCentros', 'getAsignaciones', 'getCompetencias', 'getFichasLider'],
@@ -42,7 +41,7 @@ $controllers = array(
     'auditoria_asignacion' => ['index', 'show'],
     'usuario_coordinador' => ['index', 'show', 'store', 'update', 'toggle'],
     'setdata' => ['index', 'upload'],
-    'proyecto_formativo' => ['index', 'show', 'store', 'update', 'destroy', 'getFases', 'getByPrograma', 'asociarFicha', 'getProyectoByFicha'],
+    'proyecto_formativo' => ['index', 'show', 'store', 'update', 'destroy', 'getFases', 'getByPrograma', 'asociarFicha', 'getProyectoByFicha', 'storeActivity', 'updateActivity', 'destroyActivity', 'assignRap', 'unassignRap'],
     'resultado_aprendizaje' => ['index', 'show', 'store', 'update', 'destroy', 'getByCompetenciaPrograma', 'getByFase', 'getByFaseYPrograma', 'asignarAFase', 'desasignarDeFase'],
     'competencia_horas_programa' => ['index', 'getByPrograma', 'store', 'destroy', 'getEstadoFicha'],
     // Agrega más controladores y acciones aquí si lo necesitas
@@ -96,8 +95,8 @@ try {
         $isAjax = true; // routing.php maneja backend calls principalmente
 
         $allowedControllersByRole = [
-            'centro' => ['sede', 'ambiente', 'programa', 'titulo_programa', 'instructor', 'competencia', 'competencia_programa', 'coordinacion', 'usuario_coordinador', 'reporte', 'reporte_pdf', 'centro_formacion', 'auditoria_asignacion', 'detalle_asignacion', 'proyecto_formativo', 'resultado_aprendizaje', 'competencia_horas_programa'],
-            'coordinador' => ['competencia_programa', 'ficha', 'instru_competencia', 'asignacion', 'detalle_asignacion', 'reporte', 'reporte_pdf', 'auditoria_asignacion', 'coordinacion', 'setdata', 'proyecto_formativo', 'resultado_aprendizaje', 'competencia_horas_programa'],
+            'centro' => ['sede', 'ambiente', 'programa', 'titulo_programa', 'instructor', 'competencia', 'coordinacion', 'usuario_coordinador', 'reporte', 'reporte_pdf', 'centro_formacion', 'auditoria_asignacion', 'detalle_asignacion', 'proyecto_formativo', 'resultado_aprendizaje', 'competencia_horas_programa'],
+            'coordinador' => ['ficha', 'instru_competencia', 'asignacion', 'detalle_asignacion', 'reporte', 'reporte_pdf', 'auditoria_asignacion', 'coordinacion', 'setdata', 'proyecto_formativo', 'resultado_aprendizaje', 'competencia_horas_programa'],
             'instructor' => ['asignacion', 'instructor', 'ficha', 'reporte', 'reporte_pdf']
         ];
 
@@ -112,13 +111,13 @@ try {
         }
 
         // Reglas de lectura adicionales para roles cruzados (Usado por Dashboard y Dropdowns)
-        if ($rol === 'coordinador' && in_array($controller, ['programa', 'instructor', 'ambiente', 'competencia', 'centro_formacion', 'sede']) && in_array($action, ['index', 'show'])) {
-            // Permitido para cargar selects, stats en dashboard y consultas de solo lectura
-        } else if ($rol === 'coordinador' && in_array($controller, ['programa', 'instructor', 'ambiente', 'centro_formacion'])) {
+        if ($rol === 'coordinador' && in_array($controller, ['programa', 'instructor', 'ambiente', 'competencia', 'centro_formacion', 'sede']) && in_array($action, ['index', 'show', 'getByPrograma', 'getProgramas'])) {
+            // Permitido para cargar selects, dashboard y consultas de solo lectura
+        } else if ($rol === 'coordinador' && in_array($controller, ['programa', 'instructor', 'ambiente', 'centro_formacion', 'competencia'])) {
             // Permitido para cargar acciones misceláneas de selects
-        } else if ($rol === 'coordinador' && $controller === 'competencia' && !in_array($action, ['index', 'show'])) {
+        } else if ($rol === 'coordinador' && $controller === 'competencia' && !in_array($action, ['index', 'show', 'getByPrograma', 'getProgramas'])) {
             http_response_code(403);
-            throw new Exception("Acceso denegado: Los coordinadores solo pueden consultar competencias, no modificarlas.");
+            throw new Exception("Acceso denegado: Los coordinadores solo pueden consultar competencias (incluyendo auxiliares de select), no modificarlas.");
         } else if ($rol === 'centro' && in_array($controller, ['ficha', 'asignacion']) && $action === 'index') {
             // Permitido a centro para cargar estadísticas del dashboard
         } else if (!in_array($controller, $allowedControllersByRole[$rol] ?? [])) {
@@ -186,10 +185,6 @@ try {
         case 'competencia':
             require_once('model/CompetenciaModel.php');
             $controllerObj = new CompetenciaController();
-            break;
-        case 'competencia_programa':
-            require_once('model/CompetenciaProgramaModel.php');
-            $controllerObj = new CompetenciaProgramaController();
             break;
         case 'instructor':
             require_once('model/InstructorModel.php');

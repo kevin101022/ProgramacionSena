@@ -89,7 +89,7 @@ $id = $_GET['id'] ?? null;
                                     </div>
                                 </div>
                                 <div class="flex justify-between items-center py-2">
-                                    <span class="text-slate-500 dark:text-slate-400 text-sm">Tipo de Programa</span>
+                                    <span class="text-slate-500 dark:text-slate-400 text-sm">Modalidad</span>
                                     <span id="viewProgTipo" class="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400 px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider">-</span>
                                 </div>
                             </div>

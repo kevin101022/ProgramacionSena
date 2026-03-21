@@ -66,7 +66,7 @@ class FichaModel
                        i.inst_apellidos, 
                        c.coord_descripcion as coord_nombre,
                        s.sede_nombre,
-                       (SELECT COUNT(*) FROM competxprograma cp WHERE cp.programa_prog_id = f.programa_prog_id) as total_comps,
+                       (SELECT COUNT(*) FROM competencia cp WHERE cp.programa_prog_id = f.programa_prog_id) as total_comps,
                        (SELECT COUNT(DISTINCT a_sub.competencia_comp_id) FROM asignacion a_sub WHERE a_sub.ficha_fich_id = f.fich_id) as assigned_comps,
                        (SELECT STRING_AGG(DISTINCT sub_i.inst_nombres || ' ' || sub_i.inst_apellidos, ', ') 
                         FROM asignacion a_sub 
@@ -110,7 +110,7 @@ class FichaModel
                        i.inst_apellidos, 
                        c.coord_descripcion as coord_nombre,
                        s.sede_nombre,
-                       (SELECT COUNT(*) FROM competxprograma cp WHERE cp.programa_prog_id = f.programa_prog_id) as total_comps,
+                       (SELECT COUNT(*) FROM competencia cp WHERE cp.programa_prog_id = f.programa_prog_id) as total_comps,
                        (SELECT COUNT(DISTINCT a_sub.competencia_comp_id) FROM asignacion a_sub WHERE a_sub.ficha_fich_id = f.fich_id) as assigned_comps,
                        (SELECT STRING_AGG(DISTINCT sub_i.inst_nombres || ' ' || sub_i.inst_apellidos, ', ') 
                         FROM asignacion a_sub 
@@ -210,9 +210,8 @@ class FichaModel
                     c.comp_nombre_unidad_competencia as comp_nombre,
                     c.comp_nombre_corto,
                     c.comp_horas as comp_num_horas
-                  FROM competxprograma cp
-                  INNER JOIN competencia c ON cp.competencia_comp_id = c.comp_id
-                  WHERE cp.programa_prog_id = (SELECT programa_prog_id FROM ficha WHERE fich_id = :fich_id)
+                  FROM competencia c
+                  WHERE c.programa_prog_id = (SELECT programa_prog_id FROM ficha WHERE fich_id = :fich_id)
                   AND c.comp_id NOT IN (
                       SELECT competencia_comp_id FROM asignacion WHERE ficha_fich_id = :fich_id
                   )

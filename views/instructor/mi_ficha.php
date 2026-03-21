@@ -11,14 +11,12 @@ if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'instructor') {
 
 require_once dirname(__DIR__, 2) . '/model/InstructorModel.php';
 require_once dirname(__DIR__, 2) . '/model/AsignacionModel.php';
-require_once dirname(__DIR__, 2) . '/model/CompetenciaProgramaModel.php';
 
 $instructorId = $_SESSION['id'];
 $instructorModel = new InstructorModel($instructorId);
 $fichasLider = $instructorModel->getFichasLider();
 
 $asignacionModel = new AsignacionModel();
-$cpModel = new CompetenciaProgramaModel();
 
 ?>
 
@@ -68,7 +66,7 @@ $cpModel = new CompetenciaProgramaModel();
                         // We need the program ID. Wait, $ficha['prog_codigo']? It was not selected in getFichasLider.
                         // Let's use the DB directly for total competencies count.
                         $db = Conexion::getConnect();
-                        $stmtCount = $db->prepare("SELECT COUNT(*) FROM COMPETxPROGRAMA cp INNER JOIN FICHA f ON cp.PROGRAMA_prog_id = f.PROGRAMA_prog_id WHERE f.fich_id = :fich_id");
+                        $stmtCount = $db->prepare("SELECT COUNT(*) FROM COMPETENCIA c INNER JOIN FICHA f ON c.programa_prog_id = f.PROGRAMA_prog_id WHERE f.fich_id = :fich_id");
                         $stmtCount->execute([':fich_id' => $ficha['fich_id']]);
                         $totalComps = $stmtCount->fetchColumn();
                         

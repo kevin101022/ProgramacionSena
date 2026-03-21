@@ -71,10 +71,10 @@ require_once '../layouts/sidebar.php';
                 <thead>
                     <tr>
                         <th class="w-10">N°</th>
-                        <th class="w-15">Código</th>
-                        <th>Denominación</th>
-                        <th>Título</th>
-                        <th class="w-15">Tipo</th>
+                        <th>Programa</th>
+                        <th>Título Académico</th>
+                        <th class="w-15">Modalidad</th>
+                        <th class="text-right w-15">Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="programasTableBody">

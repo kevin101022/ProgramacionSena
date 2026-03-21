@@ -18,10 +18,17 @@
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">Competencia <span class="text-red-500">*</span></label>
-                    <select id="competencia_id" name="competxprograma_competencia_comp_id" required class="search-input" style="padding-left: 12px !important;" disabled>
-                        <option value="">Primero seleccione un programa...</option>
+                    <label class="form-label">Programa <span class="text-red-500">*</span></label>
+                    <select id="programa_id" name="programa_prog_id" required class="search-input" style="padding-left: 12px !important;">
+                        <option value="">Seleccione programa...</option>
                     </select>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Competencias <span class="text-red-500">*</span></label>
+                    <div id="competencias_container" class="space-y-2 max-h-48 overflow-y-auto p-4 border border-slate-200 rounded-xl bg-slate-50/50">
+                        <p class="text-xs text-slate-400">Primero seleccione un programa para ver sus competencias...</p>
+                    </div>
                 </div>
             </div>
             <div class="modal-footer">

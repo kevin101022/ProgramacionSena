@@ -66,6 +66,16 @@ require_once '../layouts/sidebar.php';
                         </div>
 
                         <div class="form-group">
+                            <label class="form-label">Profesión</label>
+                            <input type="text" id="profesion" name="profesion" class="search-input" style="padding-left: 12px !important;" placeholder="Ej: Ingeniero de Sistemas">
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Especialización</label>
+                            <input type="text" id="especializacion" name="especializacion" class="search-input" style="padding-left: 12px !important;" placeholder="Ej: Desarrollo Web">
+                        </div>
+
+                        <div class="form-group">
                             <label class="form-label">Contraseña <span class="text-red-500">*</span></label>
                             <input type="text" id="inst_password" name="inst_password" required class="search-input" style="padding-left: 12px !important;" placeholder="Ej: Sena123*" value="Sena123*">
                         </div>
@@ -76,16 +86,28 @@ require_once '../layouts/sidebar.php';
                             <p class="text-sm text-gray-500 mb-4">Seleccione las competencias que dictará este instructor.</p>
                         </div>
 
+                        <!-- Paso 1: Seleccionar Programa -->
+                        <div class="form-group md:col-span-1">
+                            <label class="form-label text-sena-green font-bold text-xs uppercase tracking-wider">1. Seleccione Programa de Formación</label>
+                            <select id="programa_id" class="search-input w-full" style="padding-left: 12px !important;">
+                                <option value="">Cargando programas...</option>
+                            </select>
+                        </div>
+
+                        <!-- Paso 2: Seleccionar Competencias -->
                         <div class="form-group md:col-span-2" id="programasChecklistContainer">
-                            <label class="form-label">Buscador de Competencias</label>
+                            <label class="form-label text-sena-green font-bold text-xs uppercase tracking-wider">2. Seleccione Competencias a Habilitar</label>
                             <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
                                 <div class="relative mb-3">
                                     <ion-icon src="../../assets/ionicons/search-outline.svg" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></ion-icon>
-                                    <input type="text" id="compSearch" class="w-full pl-10 pr-4 py-2 text-sm rounded-lg border border-gray-300 outline-none" placeholder="Buscar por nombre...">
+                                    <input type="text" id="compSearch" class="w-full pl-10 pr-4 py-2 text-sm rounded-lg border border-gray-300 outline-none" placeholder="Filtrar competencias del programa...">
                                 </div>
-                                <div id="competenciasContainer" class="flex flex-col gap-2 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
-                                    <p id="emptyAviso" class="text-gray-400 text-sm italic text-center py-4">Cargando competencias disponibles...</p>
+                                <div id="competenciasContainer" class="flex flex-col gap-2 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+                                    <p id="emptyAviso" class="text-gray-400 text-sm italic text-center py-4">Primero seleccione un programa...</p>
                                 </div>
+                            </div>
+                            <div id="selectionSummary" class="mt-3 text-[10px] text-gray-400 uppercase font-bold text-right hidden">
+                                <span id="selectedCount">0</span> competencias seleccionadas en total
                             </div>
                         </div>
                     </div>

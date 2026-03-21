@@ -48,6 +48,8 @@ class instructorController
         $cent_id = $_SESSION['centro_id'] ?? null;
         $rawPassword = $_POST['inst_password'] ?? 'Sena123*';
         $password = password_hash($rawPassword, PASSWORD_BCRYPT);
+        $profesion = $_POST['profesion'] ?? null;
+        $especializacion = $_POST['especializacion'] ?? null;
 
         if (!$numero_documento || !$nombres || !$apellidos || !$correo || !$cent_id) {
             return $this->sendResponse(['error' => 'Datos obligatorios faltantes'], 400);
@@ -60,7 +62,9 @@ class instructorController
             $correo,
             $telefono,
             $cent_id,
-            $password
+            $password,
+            $profesion,
+            $especializacion
         );
 
         try {
@@ -74,8 +78,8 @@ class instructorController
 
             if (!empty($competencias)) {
                 require_once dirname(__DIR__) . '/model/InstruCompetenciaModel.php';
-                require_once dirname(__DIR__) . '/model/CompetenciaProgramaModel.php';
-                $cpModel = new CompetenciaProgramaModel();
+                require_once dirname(__DIR__) . '/model/CompetenciaModel.php';
+                $compModel = new CompetenciaModel();
 
                 foreach ($competencias as $compData) {
                     try {
@@ -85,19 +89,16 @@ class instructorController
                             $instruCompModel->create();
                         } else {
                             $compId = $compData;
-                            $programas = $cpModel->getProgramasByCompetencia($compId);
-                            if (!empty($programas)) {
-                                foreach ($programas as $prog) {
-                                    try {
-                                        $instruCompModel = new InstruCompetenciaModel(null, $id, $prog['prog_codigo'], $compId);
-                                        $instruCompModel->create();
-                                    } catch (PDOException $innerEx) {
-                                        // Duplicado u otro error individual, continuar con el siguiente
-                                        error_log("Habilitación duplicada o error: " . $innerEx->getMessage());
-                                    }
+                            $compRow = $compModel->readById($compId);
+                            if ($compRow && !empty($compRow['programa_prog_id'])) {
+                                try {
+                                    $instruCompModel = new InstruCompetenciaModel(null, $id, $compRow['programa_prog_id'], $compId);
+                                    $instruCompModel->create();
+                                } catch (PDOException $innerEx) {
+                                    error_log("Habilitación duplicada o error: " . $innerEx->getMessage());
                                 }
                             } else {
-                                error_log("Competencia $compId no tiene programas asociados en COMPETxPROGRAMA, no se puede habilitar aún.");
+                                error_log("Competencia $compId no tiene programa asociado, no se puede habilitar aún.");
                             }
                         }
                     } catch (PDOException $ex) {
@@ -143,6 +144,8 @@ class instructorController
             $rawPassword = $_POST['inst_password'] ?? null;
             // Solo hashear si el usuario envió una contraseña nueva
             $password = !empty($rawPassword) ? password_hash($rawPassword, PASSWORD_BCRYPT) : null;
+            $profesion = $_POST['profesion'] ?? null;
+            $especializacion = $_POST['especializacion'] ?? null;
 
             if (!$id || !$nombres || !$apellidos || !$correo || !$cent_id) {
                 return $this->sendResponse(['error' => 'Datos incompletos'], 400);
@@ -155,7 +158,9 @@ class instructorController
                 $correo,
                 $telefono,
                 $cent_id,
-                $password
+                $password,
+                $profesion,
+                $especializacion
             );
 
             if ($model->update()) {
@@ -163,9 +168,9 @@ class instructorController
                 $competencias = $_POST['competencias'] ?? [];
 
                 require_once dirname(__DIR__) . '/model/InstruCompetenciaModel.php';
-                require_once dirname(__DIR__) . '/model/CompetenciaProgramaModel.php';
+                require_once dirname(__DIR__) . '/model/CompetenciaModel.php';
                 $instruCompModel = new InstruCompetenciaModel();
-                $cpModel = new CompetenciaProgramaModel();
+                $compModel = new CompetenciaModel();
 
                 // Limpiar habilitaciones previas antes de insertar las nuevas
                 $instruCompModel->deleteByInstructor($id);
@@ -179,18 +184,16 @@ class instructorController
                                 $newModel->create();
                             } else {
                                 $compId = $compData;
-                                $programas = $cpModel->getProgramasByCompetencia($compId);
-                                if (!empty($programas)) {
-                                    foreach ($programas as $prog) {
-                                        try {
-                                            $newModel = new InstruCompetenciaModel(null, $id, $prog['prog_codigo'], $compId);
-                                            $newModel->create();
-                                        } catch (PDOException $innerEx) {
-                                            error_log("Habilitación duplicada o error: " . $innerEx->getMessage());
-                                        }
+                                $compRow = $compModel->readById($compId);
+                                if ($compRow && !empty($compRow['programa_prog_id'])) {
+                                    try {
+                                        $newModel = new InstruCompetenciaModel(null, $id, $compRow['programa_prog_id'], $compId);
+                                        $newModel->create();
+                                    } catch (PDOException $innerEx) {
+                                        error_log("Habilitación duplicada o error: " . $innerEx->getMessage());
                                     }
                                 } else {
-                                    error_log("Competencia $compId no tiene programas en COMPETxPROGRAMA, no se puede habilitar.");
+                                    error_log("Competencia $compId no tiene programa asociado, no se puede habilitar.");
                                 }
                             }
                         } catch (PDOException $ex) {

@@ -5,17 +5,17 @@ class InstruCompetenciaModel
 {
     private $inscomp_id;
     private $instructor_inst_id;
-    private $competxprograma_programa_prog_id;
-    private $competxprograma_competencia_comp_id;
+    private $programa_prog_id;
+    private $competencia_comp_id;
     private $inscomp_vigencia;
     private $db;
 
-    public function __construct($inscomp_id = null, $instructor_inst_id = null, $competxprograma_programa_prog_id = null, $competxprograma_competencia_comp_id = null, $inscomp_vigencia = null)
+    public function __construct($inscomp_id = null, $instructor_inst_id = null, $programa_prog_id = null, $competencia_comp_id = null, $inscomp_vigencia = null)
     {
         $this->inscomp_id = $inscomp_id;
         $this->instructor_inst_id = $instructor_inst_id;
-        $this->competxprograma_programa_prog_id = $competxprograma_programa_prog_id;
-        $this->competxprograma_competencia_comp_id = $competxprograma_competencia_comp_id;
+        $this->programa_prog_id = $programa_prog_id;
+        $this->competencia_comp_id = $competencia_comp_id;
         $this->inscomp_vigencia = $inscomp_vigencia ?: date('Y-12-31'); // Por defecto fin de año
         $this->db = Conexion::getConnect();
     }
@@ -29,13 +29,13 @@ class InstruCompetenciaModel
     {
         return $this->instructor_inst_id;
     }
-    public function getCompetxprogramaProgramaProgId()
+    public function getProgramaProgId()
     {
-        return $this->competxprograma_programa_prog_id;
+        return $this->programa_prog_id;
     }
-    public function getCompetxprogramaCompetenciaCompId()
+    public function getCompetenciaCompId()
     {
-        return $this->competxprograma_competencia_comp_id;
+        return $this->competencia_comp_id;
     }
 
 
@@ -43,12 +43,12 @@ class InstruCompetenciaModel
     public function create()
     {
         try {
-            $query = "INSERT INTO INSTRU_COMPETENCIA (INSTRUCTOR_inst_id, COMPETxPROGRAMA_PROGRAMA_prog_id, COMPETxPROGRAMA_COMPETENCIA_comp_id, inscomp_vigencia) 
+            $query = "INSERT INTO INSTRU_COMPETENCIA (INSTRUCTOR_inst_id, programa_prog_id, competencia_comp_id, inscomp_vigencia) 
                       VALUES (:inst_id, :prog_id, :comp_id, :vigencia)";
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':inst_id', $this->instructor_inst_id);
-            $stmt->bindParam(':prog_id', $this->competxprograma_programa_prog_id);
-            $stmt->bindParam(':comp_id', $this->competxprograma_competencia_comp_id);
+            $stmt->bindParam(':prog_id', $this->programa_prog_id);
+            $stmt->bindParam(':comp_id', $this->competencia_comp_id);
             $stmt->bindParam(':vigencia', $this->inscomp_vigencia);
             $stmt->execute();
             return $this->db->lastInsertId();
@@ -61,14 +61,15 @@ class InstruCompetenciaModel
     public function read()
     {
         $sql = "SELECT ic.inscomp_id, ic.INSTRUCTOR_inst_id as instructor_inst_id, 
-                       ic.COMPETxPROGRAMA_PROGRAMA_prog_id as competxprograma_programa_prog_id, 
-                       ic.COMPETxPROGRAMA_COMPETENCIA_comp_id as competxprograma_competencia_comp_id, 
+                       ic.programa_prog_id, 
+                       ic.competencia_comp_id, 
                        i.inst_nombres, i.inst_apellidos, i.inst_correo, i.inst_telefono,
+                       i.profesion, i.especializacion,
                        p.prog_denominacion, c.comp_nombre_corto, cf.cent_nombre
                 FROM INSTRU_COMPETENCIA ic
                 INNER JOIN INSTRUCTOR i ON ic.INSTRUCTOR_inst_id = i.numero_documento
-                INNER JOIN PROGRAMA p ON ic.COMPETxPROGRAMA_PROGRAMA_prog_id = p.prog_codigo
-                INNER JOIN COMPETENCIA c ON ic.COMPETxPROGRAMA_COMPETENCIA_comp_id = c.comp_id
+                INNER JOIN COMPETENCIA c ON ic.competencia_comp_id = c.comp_id
+                INNER JOIN PROGRAMA p ON c.programa_prog_id = p.prog_codigo
                 LEFT JOIN CENTRO_FORMACION cf ON i.CENTRO_FORMACION_cent_id = cf.cent_id
                 WHERE ic.inscomp_id = :id";
         $stmt = $this->db->prepare($sql);
@@ -79,12 +80,13 @@ class InstruCompetenciaModel
     public function readAll($centro_id = null)
     {
         $sql = "SELECT ic.inscomp_id, ic.INSTRUCTOR_inst_id as instructor_inst_id, 
-                       ic.COMPETxPROGRAMA_PROGRAMA_prog_id as competxprograma_programa_prog_id, 
-                       ic.COMPETxPROGRAMA_COMPETENCIA_comp_id as competxprograma_competencia_comp_id, 
-                       i.inst_nombres, i.inst_apellidos, c.comp_nombre_corto 
+                       ic.programa_prog_id, 
+                       ic.competencia_comp_id, 
+                       i.inst_nombres, i.inst_apellidos, c.comp_nombre_corto, p.prog_denominacion 
                 FROM INSTRU_COMPETENCIA ic
                 INNER JOIN INSTRUCTOR i ON ic.INSTRUCTOR_inst_id = i.numero_documento
-                INNER JOIN COMPETENCIA c ON ic.COMPETxPROGRAMA_COMPETENCIA_comp_id = c.comp_id
+                INNER JOIN COMPETENCIA c ON ic.competencia_comp_id = c.comp_id
+                INNER JOIN PROGRAMA p ON c.programa_prog_id = p.prog_codigo
                 WHERE 1=1";
 
         $params = [];
@@ -105,14 +107,14 @@ class InstruCompetenciaModel
         try {
             $query = "UPDATE INSTRU_COMPETENCIA 
                       SET INSTRUCTOR_inst_id = :inst_id, 
-                          COMPETxPROGRAMA_PROGRAMA_prog_id = :prog_id, 
-                          COMPETxPROGRAMA_COMPETENCIA_comp_id = :comp_id,
+                          programa_prog_id = :prog_id, 
+                          competencia_comp_id = :comp_id,
                           inscomp_vigencia = :vigencia
                       WHERE inscomp_id = :id";
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':inst_id', $this->instructor_inst_id);
-            $stmt->bindParam(':prog_id', $this->competxprograma_programa_prog_id);
-            $stmt->bindParam(':comp_id', $this->competxprograma_competencia_comp_id);
+            $stmt->bindParam(':prog_id', $this->programa_prog_id);
+            $stmt->bindParam(':comp_id', $this->competencia_comp_id);
             $stmt->bindParam(':vigencia', $this->inscomp_vigencia);
             $stmt->bindParam(':id', $this->inscomp_id);
             return $stmt->execute();
@@ -135,8 +137,8 @@ class InstruCompetenciaModel
         $db = Conexion::getConnect();
         $sql = "SELECT COUNT(*) FROM INSTRU_COMPETENCIA 
                 WHERE INSTRUCTOR_inst_id = :inst_id 
-                AND COMPETxPROGRAMA_PROGRAMA_prog_id = :prog_id 
-                AND COMPETxPROGRAMA_COMPETENCIA_comp_id = :comp_id";
+                AND programa_prog_id = :prog_id 
+                AND competencia_comp_id = :comp_id";
         $stmt = $db->prepare($sql);
         $stmt->execute([
             ':inst_id' => $inst_id,

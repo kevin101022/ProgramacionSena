@@ -88,10 +88,10 @@ if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'instructor') {
             data.forEach(comp => {
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
-                <td><strong>${comp.comp_codigo}</strong></td>
-                <td>${comp.comp_descripcion}</td>
-                <td>${comp.comp_horas}</td>
-                <td><span class="badge ${comp.prog_nombre ? 'badge-primary' : 'badge-secondary'}">${comp.prog_nombre || 'N/A'}</span></td>
+                <td><strong>${comp.comp_id}</strong></td>
+                <td><strong>${comp.comp_nombre}</strong><br><small>${comp.comp_descripcion || ''}</small></td>
+                <td>${comp.comp_horas || 'N/A'}</td>
+                <td><span class="badge ${comp.prog_denominacion ? 'badge-primary' : 'badge-secondary'}">${comp.prog_denominacion || 'N/A'}</span></td>
             `;
                 tbody.appendChild(tr);
             });
@@ -113,9 +113,9 @@ if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'instructor') {
         document.getElementById('searchTerm').addEventListener('input', function(e) {
             const term = e.target.value.toLowerCase();
             const filtered = allCompetencias.filter(comp =>
-                (comp.comp_codigo && comp.comp_codigo.toLowerCase().includes(term)) ||
-                (comp.comp_descripcion && comp.comp_descripcion.toLowerCase().includes(term)) ||
-                (comp.prog_nombre && comp.prog_nombre.toLowerCase().includes(term))
+                (String(comp.comp_id).includes(term)) ||
+                (comp.comp_nombre && comp.comp_nombre.toLowerCase().includes(term)) ||
+                (comp.prog_denominacion && comp.prog_denominacion.toLowerCase().includes(term))
             );
             renderTable(filtered);
         });

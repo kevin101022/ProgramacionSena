@@ -24,6 +24,14 @@ class ProyectoFormativoModel {
         
         if ($proyecto) {
             $proyecto['fases'] = $this->getFasesByProyecto($pf_id);
+            require_once 'ActividadProyectoModel.php';
+            $actModel = new ActividadProyectoModel();
+            foreach ($proyecto['fases'] as &$fase) {
+                $fase['actividades'] = $actModel->getAllByFase($fase['fase_id']);
+                foreach ($fase['actividades'] as &$act) {
+                    $act['raps'] = $actModel->getRapsByActividad($act['act_id']);
+                }
+            }
         }
         return $proyecto;
     }
@@ -84,9 +92,14 @@ class ProyectoFormativoModel {
     }
 
     public function update($pf_id, $data) {
-        $stmt = $this->db->prepare("UPDATE proyecto_formativo SET pf_codigo = :pf_codigo, pf_nombre = :pf_nombre, pf_descripcion = :pf_descripcion, programa_prog_codigo = :programa_prog_codigo, centro_formacion_cent_id = :centro_formacion_cent_id WHERE pf_id = :pf_id");
-        $data['pf_id'] = $pf_id;
-        return $stmt->execute($data);
+        $stmt = $this->db->prepare("UPDATE proyecto_formativo SET pf_codigo = :codigo, pf_nombre = :nombre, pf_descripcion = :descripcion, programa_prog_codigo = :programa WHERE pf_id = :id");
+        return $stmt->execute([
+            'codigo' => $data['pf_codigo'],
+            'nombre' => $data['pf_nombre'],
+            'descripcion' => $data['pf_descripcion'],
+            'programa' => $data['programa_prog_codigo'],
+            'id' => $pf_id
+        ]);
     }
 
     public function delete($pf_id) {
@@ -119,5 +132,34 @@ class ProyectoFormativoModel {
             $proyecto['fases'] = $this->getFasesByProyecto($proyecto['pf_id']);
         }
         return $proyecto;
+    }
+
+    public function getFaseById($fase_id) {
+        $stmt = $this->db->prepare("SELECT * FROM fase_proyecto WHERE fase_id = :fase_id");
+        $stmt->execute(['fase_id' => $fase_id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
+    public function updateFase($fase_id, $data) {
+        $stmt = $this->db->prepare("
+            UPDATE fase_proyecto 
+            SET fase_nombre = :fase_nombre, 
+                fase_orden = :fase_orden, 
+                fase_fecha_ini = :fase_fecha_ini, 
+                fase_fecha_fin = :fase_fecha_fin 
+            WHERE fase_id = :fase_id
+        ");
+        return $stmt->execute([
+            'fase_nombre' => $data['fase_nombre'],
+            'fase_orden' => $data['fase_orden'],
+            'fase_fecha_ini' => $data['fase_fecha_ini'],
+            'fase_fecha_fin' => $data['fase_fecha_fin'],
+            'fase_id' => $fase_id
+        ]);
+    }
+
+    public function deleteFase($fase_id) {
+        $stmt = $this->db->prepare("DELETE FROM fase_proyecto WHERE fase_id = :fase_id");
+        return $stmt->execute(['fase_id' => $fase_id]);
     }
 }

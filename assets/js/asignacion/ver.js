@@ -61,7 +61,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 const ficha = fichas.find(f => f.fich_id == (currentAsig.ficha_fich_id || currentAsig.fich_id));
                 if (ficha) {
                     const progId = ficha.programa_prog_codigo || ficha.programa_prog_id;
-                    const compRes = await fetch(`../../routing.php?controller=competencia_programa&action=getByPrograma&prog_id=${progId}`, { headers });
+                    const compRes = await fetch(`../../routing.php?controller=competencia&action=getByPrograma&prog_id=${progId}`, { headers });
                     allCompetencias = await compRes.json();
                 }
             }
@@ -406,8 +406,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const progId = ficha?.programa_prog_codigo || ficha?.programa_prog_id;
 
             const habilitados = allHabilitaciones.filter(h =>
-                h.competxprograma_competencia_comp_id == compId &&
-                h.competxprograma_programa_prog_id == progId
+                h.competencia_comp_id == compId &&
+                h.programa_prog_id == progId
             );
 
             instSelect.innerHTML = '<option value="">Seleccione instructor...</option>';

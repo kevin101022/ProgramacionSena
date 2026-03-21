@@ -11,9 +11,11 @@ class InstructorModel
     private $inst_telefono;
     private $cent_id;
     private $inst_password;
+    private $profesion;
+    private $especializacion;
     private $db;
 
-    public function __construct($numero_documento = null, $inst_nombres = null, $inst_apellidos = null, $inst_correo = null, $inst_telefono = null, $cent_id = null, $inst_password = null)
+    public function __construct($numero_documento = null, $inst_nombres = null, $inst_apellidos = null, $inst_correo = null, $inst_telefono = null, $cent_id = null, $inst_password = null, $profesion = null, $especializacion = null)
     {
         $this->numero_documento = $numero_documento;
         $this->inst_nombres = $inst_nombres;
@@ -22,6 +24,8 @@ class InstructorModel
         $this->inst_telefono = $inst_telefono;
         $this->inst_password = $inst_password;
         $this->cent_id = $cent_id;
+        $this->profesion = $profesion;
+        $this->especializacion = $especializacion;
         $this->db = Conexion::getConnect();
     }
 
@@ -54,6 +58,14 @@ class InstructorModel
     {
         return $this->cent_id;
     }
+    public function getProfesion()
+    {
+        return $this->profesion;
+    }
+    public function getEspecializacion()
+    {
+        return $this->especializacion;
+    }
 
     // Setters
     public function setNumeroDocumento($numero_documento)
@@ -84,12 +96,20 @@ class InstructorModel
     {
         $this->cent_id = $cent_id;
     }
+    public function setProfesion($profesion)
+    {
+        $this->profesion = $profesion;
+    }
+    public function setEspecializacion($especializacion)
+    {
+        $this->especializacion = $especializacion;
+    }
 
     // CRUD
     public function create()
     {
-        $query = "INSERT INTO INSTRUCTOR (numero_documento, inst_nombres, inst_apellidos, inst_correo, inst_telefono, inst_password, CENTRO_FORMACION_cent_id, estado) 
-        VALUES (:numero_documento, :inst_nombres, :inst_apellidos, :inst_correo, :inst_telefono, :inst_password, :cent_id, 1)";
+        $query = "INSERT INTO INSTRUCTOR (numero_documento, inst_nombres, inst_apellidos, inst_correo, inst_telefono, inst_password, CENTRO_FORMACION_cent_id, profesion, especializacion, estado) 
+        VALUES (:numero_documento, :inst_nombres, :inst_apellidos, :inst_correo, :inst_telefono, :inst_password, :cent_id, :profesion, :especializacion, 1)";
 
         $stmt = $this->db->prepare($query);
 
@@ -105,6 +125,9 @@ class InstructorModel
         $centId = !empty($this->cent_id) ? $this->cent_id : null;
         $stmt->bindParam(':cent_id', $centId);
 
+        $stmt->bindParam(':profesion', $this->profesion);
+        $stmt->bindParam(':especializacion', $this->especializacion);
+
         $stmt->execute();
         return $this->numero_documento;
     }
@@ -112,7 +135,7 @@ class InstructorModel
     public function read()
     {
         $sql = "SELECT i.numero_documento as inst_id, i.inst_nombres, i.inst_apellidos, i.inst_correo, i.inst_telefono, 
-                       i.CENTRO_FORMACION_cent_id as cent_id, i.inst_password,
+                       i.CENTRO_FORMACION_cent_id as cent_id, i.inst_password, i.profesion, i.especializacion,
                        c.cent_nombre 
                 FROM INSTRUCTOR i 
                 LEFT JOIN CENTRO_FORMACION c ON i.CENTRO_FORMACION_cent_id = c.cent_id 
@@ -126,7 +149,7 @@ class InstructorModel
     public function readById($numero_documento)
     {
         $sql = "SELECT i.numero_documento as inst_id, i.inst_nombres, i.inst_apellidos, i.inst_correo, i.inst_telefono,
-                       i.CENTRO_FORMACION_cent_id as cent_id,
+                       i.CENTRO_FORMACION_cent_id as cent_id, i.profesion, i.especializacion,
                        c.cent_nombre
                 FROM INSTRUCTOR i
                 LEFT JOIN CENTRO_FORMACION c ON i.CENTRO_FORMACION_cent_id = c.cent_id
@@ -140,7 +163,7 @@ class InstructorModel
     public function readAll()
     {
         $sql = "SELECT i.numero_documento as inst_id, i.inst_nombres, i.inst_apellidos, i.inst_correo, i.inst_telefono, 
-                       i.CENTRO_FORMACION_cent_id as cent_id, i.inst_password,
+                       i.CENTRO_FORMACION_cent_id as cent_id, i.inst_password, i.profesion, i.especializacion,
                        c.cent_nombre 
                 FROM INSTRUCTOR i 
                 LEFT JOIN CENTRO_FORMACION c ON i.CENTRO_FORMACION_cent_id = c.cent_id 
@@ -154,7 +177,7 @@ class InstructorModel
     public function readByCentro($cent_id)
     {
         $sql = "SELECT i.numero_documento as inst_id, i.inst_nombres, i.inst_apellidos, i.inst_correo, i.inst_telefono, 
-                       i.CENTRO_FORMACION_cent_id as cent_id, i.inst_password,
+                       i.CENTRO_FORMACION_cent_id as cent_id, i.inst_password, i.profesion, i.especializacion,
                        c.cent_nombre 
                 FROM INSTRUCTOR i 
                 LEFT JOIN CENTRO_FORMACION c ON i.CENTRO_FORMACION_cent_id = c.cent_id 
@@ -174,6 +197,8 @@ class InstructorModel
                           inst_correo = :inst_correo, 
                           inst_telefono = :inst_telefono, 
                           inst_password = :inst_password,
+                          profesion = :profesion,
+                          especializacion = :especializacion,
                           CENTRO_FORMACION_cent_id = :cent_id 
                       WHERE numero_documento = :numero_documento";
 
@@ -188,6 +213,9 @@ class InstructorModel
 
             $centId = !empty($this->cent_id) ? $this->cent_id : null;
             $stmt->bindParam(':cent_id', $centId);
+
+            $stmt->bindParam(':profesion', $this->profesion);
+            $stmt->bindParam(':especializacion', $this->especializacion);
 
             $stmt->bindParam(':numero_documento', $this->numero_documento);
             return $stmt->execute();
@@ -234,8 +262,8 @@ class InstructorModel
                        comp.comp_id, comp.comp_nombre_corto as comp_nombre, comp.comp_nombre_unidad_competencia as comp_descripcion,
                        p.prog_codigo, p.prog_denominacion
                 FROM INSTRU_COMPETENCIA ic
-                LEFT JOIN COMPETENCIA comp ON ic.COMPETxPROGRAMA_COMPETENCIA_comp_id = comp.comp_id
-                LEFT JOIN PROGRAMA p ON ic.COMPETxPROGRAMA_PROGRAMA_prog_id = p.prog_codigo
+                LEFT JOIN COMPETENCIA comp ON ic.competencia_comp_id = comp.comp_id
+                LEFT JOIN PROGRAMA p ON ic.programa_prog_id = p.prog_codigo
                 WHERE ic.INSTRUCTOR_inst_id = :numero_documento
                 ORDER BY comp.comp_nombre_corto ASC";
         $stmt = $this->db->prepare($sql);

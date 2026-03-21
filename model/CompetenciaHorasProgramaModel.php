@@ -63,10 +63,9 @@ class CompetenciaHorasProgramaModel {
                 COALESCE(chp.horas_requeridas, 0) as horas_requeridas,
                 COALESCE(chp.aplica, true) as aplica,
                 0 as horas_ejecutadas
-            FROM competxprograma cxp
-            JOIN competencia c ON cxp.competencia_comp_id = c.comp_id
-            LEFT JOIN competencia_horas_programa chp ON cxp.programa_prog_id = chp.prog_codigo AND cxp.competencia_comp_id = chp.comp_id
-            WHERE cxp.programa_prog_id = :prog_codigo
+            FROM competencia c
+            LEFT JOIN competencia_horas_programa chp ON c.programa_prog_id = chp.prog_codigo AND c.comp_id = chp.comp_id
+            WHERE c.programa_prog_id = :prog_codigo
         ");
         
         $stmt->execute(['fich_id' => $fich_id, 'prog_codigo' => $prog_codigo]);

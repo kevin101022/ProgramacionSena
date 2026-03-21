@@ -46,6 +46,8 @@ document.addEventListener('DOMContentLoaded', () => {
         document.getElementById('instCorreo').textContent = inst.inst_correo || 'Sin correo';
         document.getElementById('instTelefono').textContent = inst.inst_telefono || 'Sin teléfono';
         document.getElementById('instCentro').textContent = inst.cent_nombre || 'Sin centro asignado';
+        if (document.getElementById('instProfesion')) document.getElementById('instProfesion').textContent = inst.profesion || 'Sin profesión';
+        if (document.getElementById('instEspecializacion')) document.getElementById('instEspecializacion').textContent = inst.especializacion || 'Sin especialización';
 
         const editBtn = document.getElementById('editBtn');
         const deleteBtn = document.getElementById('deleteBtn');
@@ -189,7 +191,7 @@ document.addEventListener('DOMContentLoaded', () => {
             // Agrupar por competencia (puede venir duplicada por programa)
             const uniqueComps = {};
             competencias.forEach(c => {
-                const key = c.comp_id || c.competxprograma_competencia_comp_id;
+                const key = c.comp_id || c.competencia_comp_id;
                 if (!uniqueComps[key]) {
                     uniqueComps[key] = c;
                 }

@@ -16,40 +16,35 @@ class InstruCompetenciaController
     public function store()
     {
         $data = json_decode(file_get_contents('php://input'), true);
-        if (!$data || !isset($data['instructor_inst_id']) || !isset($data['competxprograma_competencia_comp_id'])) {
+        if (!$data || !isset($data['instructor_inst_id']) || !isset($data['competencia_comp_id'])) {
             return $this->sendResponse(['error' => 'Datos insuficientes'], 400);
         }
 
         $inst_id = $data['instructor_inst_id'];
-        $comp_id = $data['competxprograma_competencia_comp_id'];
-        $prog_id = $data['competxprograma_programa_prog_id'] ?? null;
-
-        require_once dirname(__DIR__) . '/model/CompetenciaProgramaModel.php';
-        $cpModel = new CompetenciaProgramaModel();
-
-        // Si no viene programa, buscamos todos los programas asociados a esa competencia
-        $programas = $prog_id ? [['PROGRAMA_prog_id' => $prog_id]] : $cpModel->getProgramasByCompetencia($comp_id);
-
-        if (empty($programas)) {
-            return $this->sendResponse(['error' => 'La competencia no está asociada a ningún programa'], 400);
+        $comp_id = $data['competencia_comp_id'];
+        
+        // En la nueva lógica (1:N), una competencia solo tiene un programa
+        require_once dirname(__DIR__) . '/model/CompetenciaModel.php';
+        $compModel = new CompetenciaModel($comp_id);
+        $competencia = $compModel->read();
+        
+        if (empty($competencia)) {
+            return $this->sendResponse(['error' => 'Competencia no encontrada'], 404);
+        }
+        
+        $p_id = $competencia[0]['programa_prog_id'];
+        
+        if (!$p_id) {
+            return $this->sendResponse(['error' => 'La competencia no tiene un programa asociado'], 400);
         }
 
-        $successCount = 0;
-        foreach ($programas as $p) {
-            $p_id = $p['PROGRAMA_prog_id'] ?? $p['prog_id'];
-            
-            if (!InstruCompetenciaModel::isQualified($inst_id, $p_id, $comp_id)) {
-                $model = new InstruCompetenciaModel(null, $inst_id, $p_id, $comp_id);
-                if ($model->create()) {
-                    $successCount++;
-                }
+        if (!InstruCompetenciaModel::isQualified($inst_id, $p_id, $comp_id)) {
+            $model = new InstruCompetenciaModel(null, $inst_id, $p_id, $comp_id);
+            if ($model->create()) {
+                return $this->sendResponse(['message' => "Habilitación creada correctamente"]);
             }
-        }
-
-        if ($successCount > 0) {
-            return $this->sendResponse(['message' => "Habilitación creada en $successCount programas correctamente"]);
         } else {
-            return $this->sendResponse(['message' => 'La habilitación ya existía para estos programas o no se crearon nuevos registros']);
+            return $this->sendResponse(['message' => 'La habilitación ya existe']);
         }
         return $this->sendResponse(['error' => 'Error al crear la habilitación'], 500);
     }
@@ -77,8 +72,6 @@ class InstruCompetenciaController
             return $this->sendResponse(['error' => 'Datos incompletos'], 400);
         }
 
-        // Para simplificar, si se edita, eliminamos las habilitaciones previas para ese instructor/competencia 
-        // y recreamos según la nueva lógica (auto-resolviendo programas)
         $id = $data['inscomp_id'];
         $modelOld = new InstruCompetenciaModel($id);
         $oldData = $modelOld->read();
@@ -88,24 +81,19 @@ class InstruCompetenciaController
         }
 
         $inst_id = $data['instructor_inst_id'] ?? $oldData[0]['instructor_inst_id'];
-        $comp_id = $data['competxprograma_competencia_comp_id'] ?? $oldData[0]['competxprograma_competencia_comp_id'];
+        $comp_id = $data['competencia_comp_id'] ?? $oldData[0]['competencia_comp_id'];
 
         // Eliminamos el registro actual
         $modelOld->delete();
 
-        // Reutilizamos la lógica de store para crear los nuevos registros
-        require_once dirname(__DIR__) . '/model/CompetenciaProgramaModel.php';
-        $cpModel = new CompetenciaProgramaModel();
-        $programas = $cpModel->getProgramasByCompetencia($comp_id);
+        // Reutilizamos la lógica directa
+        require_once dirname(__DIR__) . '/model/CompetenciaModel.php';
+        $compModel = new CompetenciaModel($comp_id);
+        $competencia = $compModel->read();
+        $p_id = $competencia[0]['programa_prog_id'];
 
-        $successCount = 0;
-        foreach ($programas as $p) {
-            $p_id = $p['PROGRAMA_prog_id'] ?? $p['prog_id'];
-            $model = new InstruCompetenciaModel(null, $inst_id, $p_id, $comp_id);
-            if ($model->create()) {
-                $successCount++;
-            }
-        }
+        $model = new InstruCompetenciaModel(null, $inst_id, $p_id, $comp_id);
+        $model->create();
 
         return $this->sendResponse(['message' => 'Habilitación actualizada correctamente']);
     }
@@ -117,7 +105,6 @@ class InstruCompetenciaController
             return $this->sendResponse(['error' => 'ID no proporcionado'], 400);
         }
 
-        // Primero obtenemos los datos de la habilitación para saber qué instructor y competencia borrar globalmente
         $model = new InstruCompetenciaModel($id);
         $dato = $model->read();
 
@@ -126,13 +113,12 @@ class InstruCompetenciaController
         }
 
         $inst_id = $dato[0]['instructor_inst_id'];
-        $comp_id = $dato[0]['competxprograma_competencia_comp_id'];
+        $comp_id = $dato[0]['competencia_comp_id'];
 
-        // Usamos un nuevo método (o lógica manual) para borrar todos los programas de ese par
         $db = Conexion::getConnect();
         $sql = "DELETE FROM INSTRU_COMPETENCIA 
                 WHERE INSTRUCTOR_inst_id = :inst_id 
-                AND COMPETxPROGRAMA_COMPETENCIA_comp_id = :comp_id";
+                AND competencia_comp_id = :comp_id";
         $stmt = $db->prepare($sql);
         $success = $stmt->execute([
             ':inst_id' => $inst_id,

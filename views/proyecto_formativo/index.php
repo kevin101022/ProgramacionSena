@@ -53,7 +53,7 @@ require_once '../layouts/sidebar.php';
 <div id="modalProyecto" class="modal">
     <div class="modal-content" style="max-width: 800px;">
         <div class="modal-header">
-            <h3>Registrar Proyecto Formativo</h3>
+            <h3 id="modalTitleText">Registrar Proyecto Formativo</h3>
             <button class="modal-close" onclick="cerrarModal()">
                 <ion-icon src="../../assets/ionicons/close-outline.svg"></ion-icon>
             </button>
@@ -85,19 +85,20 @@ require_once '../layouts/sidebar.php';
                     </div>
                 </div>
 
-                <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem; margin-bottom: 1rem;">
-                    <h4 style="font-size: 0.85rem; font-weight: bold; color: #6b7280; text-transform: uppercase; margin: 0;">Fases del Proyecto (Mín 4, Máx 6)</h4>
-                    <div style="display: flex; gap: 0.5rem;">
-                        <button type="button" onclick="quitarFase()" id="btnQuitarFase" class="btn-danger-soft" style="padding: 0.25rem 0.75rem; font-size: 0.75rem; display: flex; align-items: center; gap: 0.25rem;">
-                            <ion-icon src="../../assets/ionicons/remove-outline.svg"></ion-icon> Quitar
-                        </button>
-                        <button type="button" onclick="agregarFase()" id="btnAgregarFase" class="btn-primary" style="padding: 0.25rem 0.75rem; font-size: 0.75rem; background: #d1fae5; color: #059669; display: flex; align-items: center; gap: 0.25rem;">
-                            <ion-icon src="../../assets/ionicons/add-outline.svg"></ion-icon> Agregar
-                        </button>
+                <div id="fasesSection">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-end; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.5rem; margin-bottom: 1rem;">
+                        <h4 style="font-size: 0.85rem; font-weight: bold; color: #6b7280; text-transform: uppercase; margin: 0;">Fases del Proyecto (Mín 4, Máx 6)</h4>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <button type="button" onclick="quitarFase()" id="btnQuitarFase" class="btn-danger-soft" style="padding: 0.25rem 0.75rem; font-size: 0.75rem; display: flex; align-items: center; gap: 0.25rem;">
+                                <ion-icon src="../../assets/ionicons/remove-outline.svg"></ion-icon> Quitar
+                            </button>
+                            <button type="button" onclick="agregarFase()" id="btnAgregarFase" class="btn-primary" style="padding: 0.25rem 0.75rem; font-size: 0.75rem; background: #d1fae5; color: #059669; display: flex; align-items: center; gap: 0.25rem;">
+                                <ion-icon src="../../assets/ionicons/add-outline.svg"></ion-icon> Agregar
+                            </button>
+                        </div>
                     </div>
+                    <div id="fasesContainer" style="display: flex; flex-direction: column; gap: 0.75rem;"></div>
                 </div>
-                
-                <div id="fasesContainer" style="display: flex; flex-direction: column; gap: 0.75rem;"></div>
 
             </div>
             <div class="modal-footer">
@@ -153,9 +154,17 @@ require_once '../layouts/sidebar.php';
                             </span>
                         </td>
                         <td style="text-align: right;">
-                            <a href="../proyecto_formativo/show.php?id=${p.pf_id}" style="color: #9ca3af; padding: 4px; display: inline-block;">
-                                <ion-icon src="../../assets/ionicons/eye-outline.svg" style="font-size: 1.25rem;"></ion-icon>
-                            </a>
+                            <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
+                                <a href="../proyecto_formativo/show.php?id=${p.pf_id}" title="Ver Estructura" style="color: #6b7280; padding: 4px; border-radius: 4px; transition: background 0.2s;">
+                                    <ion-icon src="../../assets/ionicons/eye-outline.svg" style="font-size: 1.25rem;"></ion-icon>
+                                </a>
+                                <button onclick='abrirModalEditar(${JSON.stringify(p)})' title="Editar Proyecto" style="color: #2563eb; background: none; border: none; cursor: pointer; padding: 4px; border-radius: 4px; transition: background 0.2s;">
+                                    <ion-icon src="../../assets/ionicons/create-outline.svg" style="font-size: 1.25rem;"></ion-icon>
+                                </button>
+                                <button onclick="confirmarEliminar(${p.pf_id})" title="Eliminar Proyecto" style="color: #dc2626; background: none; border: none; cursor: pointer; padding: 4px; border-radius: 4px; transition: background 0.2s;">
+                                    <ion-icon src="../../assets/ionicons/trash-outline.svg" style="font-size: 1.25rem;"></ion-icon>
+                                </button>
+                            </div>
                         </td>
                     </tr>
                 `;
@@ -196,10 +205,38 @@ require_once '../layouts/sidebar.php';
     function agregarFase() { if (numFases < 6) { numFases++; renderFases(); } }
     function quitarFase() { if (numFases > 4) { numFases--; renderFases(); } }
 
+    let currentEditingId = null;
+
     function abrirModal() {
+        currentEditingId = null;
         document.getElementById('formProyecto').reset();
+        document.getElementById('modalTitleText').textContent = 'Registrar Proyecto Formativo';
+        
+        const phasesSection = document.getElementById('fasesSection');
+        phasesSection.style.display = 'block';
+        phasesSection.querySelectorAll('input').forEach(input => input.disabled = false);
+        
         numFases = 4;
         renderFases();
+        document.getElementById('modalError').classList.add('hidden');
+        document.getElementById('modalProyecto').classList.add('show');
+    }
+
+    function abrirModalEditar(p) {
+        currentEditingId = p.pf_id;
+        document.getElementById('modalTitleText').textContent = 'Editar Proyecto Formativo';
+        
+        const phasesSection = document.getElementById('fasesSection');
+        phasesSection.style.display = 'none';
+        // Disable all recursive inputs in the hidden section to avoid "non-focusable" validation errors
+        phasesSection.querySelectorAll('input').forEach(input => input.disabled = true);
+        
+        const form = document.getElementById('formProyecto');
+        form.pf_codigo.value = p.pf_codigo;
+        form.pf_nombre.value = p.pf_nombre;
+        form.pf_descripcion.value = p.pf_descripcion;
+        form.programa_prog_codigo.value = p.programa_prog_codigo;
+        
         document.getElementById('modalError').classList.add('hidden');
         document.getElementById('modalProyecto').classList.add('show');
     }
@@ -219,20 +256,30 @@ require_once '../layouts/sidebar.php';
         btn.innerHTML = 'Guardando...';
 
         const formData = new URLSearchParams();
-        formData.append('proyecto[pf_codigo]', form.pf_codigo.value);
-        formData.append('proyecto[pf_nombre]', form.pf_nombre.value);
-        formData.append('proyecto[pf_descripcion]', form.pf_descripcion.value);
-        formData.append('proyecto[programa_prog_codigo]', form.programa_prog_codigo.value);
+        formData.append('pf_codigo', form.pf_codigo.value);
+        formData.append('pf_nombre', form.pf_nombre.value);
+        formData.append('pf_descripcion', form.pf_descripcion.value);
+        formData.append('programa_prog_codigo', form.programa_prog_codigo.value);
 
-        for(let i=0; i<numFases; i++) {
-            formData.append(`fases[${i}][fase_nombre]`, form[`fases[${i}][fase_nombre]`].value);
-            formData.append(`fases[${i}][fase_orden]`, form[`fases[${i}][fase_orden]`].value);
-            formData.append(`fases[${i}][fase_fecha_ini]`, form[`fases[${i}][fase_fecha_ini]`].value);
-            formData.append(`fases[${i}][fase_fecha_fin]`, form[`fases[${i}][fase_fecha_fin]`].value);
+        const action = currentEditingId ? `update&id=${currentEditingId}` : 'store';
+        
+        // If creating, add nested project fields for store method compatibility
+        if (!currentEditingId) {
+            formData.set('proyecto[pf_codigo]', form.pf_codigo.value);
+            formData.set('proyecto[pf_nombre]', form.pf_nombre.value);
+            formData.set('proyecto[pf_descripcion]', form.pf_descripcion.value);
+            formData.set('proyecto[programa_prog_codigo]', form.programa_prog_codigo.value);
+
+            for(let i=0; i<numFases; i++) {
+                formData.append(`fases[${i}][fase_nombre]`, form[`fases[${i}][fase_nombre]`].value);
+                formData.append(`fases[${i}][fase_orden]`, form[`fases[${i}][fase_orden]`].value);
+                formData.append(`fases[${i}][fase_fecha_ini]`, form[`fases[${i}][fase_fecha_ini]`].value);
+                formData.append(`fases[${i}][fase_fecha_fin]`, form[`fases[${i}][fase_fecha_fin]`].value);
+            }
         }
 
         try {
-            const res = await fetch(`${API_URL}&action=store`, {
+            const res = await fetch(`${API_URL}&action=${action}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
                 body: formData.toString()
@@ -245,9 +292,11 @@ require_once '../layouts/sidebar.php';
                 errorDiv.style.display = 'block';
             } else {
                 cerrarModal();
+                NotificationService.showSuccess(currentEditingId ? 'Proyecto actualizado con éxito' : 'Proyecto creado con éxito');
                 cargarProyectos();
             }
         } catch (error) {
+            console.error(error);
             errorDiv.innerHTML = `<ion-icon src="../../assets/ionicons/warning-outline.svg" style="vertical-align: middle;"></ion-icon> Problema de red o servidor no responde`;
             errorDiv.classList.remove('hidden');
             errorDiv.style.display = 'block';
@@ -255,6 +304,23 @@ require_once '../layouts/sidebar.php';
             btn.disabled = false;
             btn.innerHTML = `<ion-icon src="../../assets/ionicons/save-outline.svg"></ion-icon> Guardar Proyecto`;
         }
+    }
+
+    function confirmarEliminar(id) {
+        NotificationService.showConfirm('¿Está seguro de eliminar este proyecto? Esta acción eliminará permanentemente todas sus fases, actividades y asociaciones de RAP.', async () => {
+            try {
+                const res = await fetch(`${API_URL}&action=destroy&id=${id}`, { method: 'POST' });
+                const data = await res.json();
+                if (data.success) {
+                    NotificationService.showSuccess('Proyecto eliminado correctamente');
+                    cargarProyectos();
+                } else {
+                    NotificationService.showError('No se pudo eliminar el proyecto');
+                }
+            } catch (error) {
+                NotificationService.showError('Error de red al intentar eliminar');
+            }
+        }, { title: 'Eliminar Proyecto', confirmText: 'Sí, eliminar', type: 'danger' });
     }
 </script>
 </body>

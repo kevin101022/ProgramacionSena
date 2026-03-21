@@ -30,6 +30,8 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('detInstructorFull').textContent = `${data.inst_nombres || ''} ${data.inst_apellidos || ''}`;
             document.getElementById('detCorreo').textContent = data.inst_correo || 'N/A';
             document.getElementById('detTelefono').textContent = data.inst_telefono || 'N/A';
+            document.getElementById('detProfesion').textContent = data.profesion || 'No registrada';
+            document.getElementById('detEspecializacion').textContent = data.especializacion || 'No registrada';
             document.getElementById('detCentro').textContent = data.cent_nombre || 'N/A';
             document.getElementById('detCompetencia').textContent = data.comp_nombre_corto || 'N/A';
 

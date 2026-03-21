@@ -54,7 +54,7 @@ require_once '../layouts/sidebar.php';
                 </div>
                 <div>
                     <span style="display: block; font-size: 0.75rem; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Competencia Asociada</span>
-                    <p style="color: #374151; margin: 0; font-size: 0.95rem; font-weight: 500;"><?php echo htmlspecialchars($rap['comp_nombre_corto'] ?? $rap['competxprog_comp_id']); ?></p>
+                    <p style="color: #374151; margin: 0; font-size: 0.95rem; font-weight: 500;"><?php echo htmlspecialchars($rap['comp_nombre_corto'] ?? $rap['competencia_comp_id']); ?></p>
                 </div>
                 <div>
                     <span style="display: block; font-size: 0.75rem; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Unidad de Competencia</span>
@@ -62,7 +62,7 @@ require_once '../layouts/sidebar.php';
                 </div>
                 <div>
                     <span style="display: block; font-size: 0.75rem; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Programa</span>
-                    <p style="color: #374151; margin: 0; font-size: 0.95rem; font-weight: 500;"><?php echo htmlspecialchars($rap['prog_denominacion'] ?? $rap['competxprog_prog_id']); ?></p>
+                    <p style="color: #374151; margin: 0; font-size: 0.95rem; font-weight: 500;"><?php echo htmlspecialchars($rap['prog_denominacion'] ?? $rap['programa_prog_id']); ?></p>
                 </div>
                 <div>
                     <span style="display: block; font-size: 0.75rem; font-weight: 700; color: #6b7280; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Horas Asignadas</span>

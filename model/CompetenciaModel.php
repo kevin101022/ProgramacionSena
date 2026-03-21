@@ -9,15 +9,21 @@ class CompetenciaModel
     private $comp_horas;
     private $comp_nombre_unidad_competencia;
     private $centro_formacion_cent_id;
+    private $programa_prog_id;
+    private $requisitos_academicos;
+    private $experiencia_laboral;
     private $db;
 
-    public function __construct($comp_id = null, $comp_nombre_corto = null, $comp_horas = null, $comp_nombre_unidad_competencia = null, $centro_formacion_cent_id = null)
+    public function __construct($comp_id = null, $comp_nombre_corto = null, $comp_horas = null, $comp_nombre_unidad_competencia = null, $centro_formacion_cent_id = null, $programa_prog_id = null, $requisitos_academicos = null, $experiencia_laboral = null)
     {
         $this->setCompId($comp_id);
         $this->setCompNombreCorto($comp_nombre_corto);
         $this->setCompHoras($comp_horas);
         $this->setCompNombreUnidadCompetencia($comp_nombre_unidad_competencia);
         $this->setCentroFormacionId($centro_formacion_cent_id);
+        $this->setProgramaProgId($programa_prog_id);
+        $this->setRequisitosAcademicos($requisitos_academicos);
+        $this->setExperienciaLaboral($experiencia_laboral);
         $this->db = Conexion::getConnect();
     }
 
@@ -37,6 +43,18 @@ class CompetenciaModel
     public function getCompNombreUnidadCompetencia()
     {
         return $this->comp_nombre_unidad_competencia;
+    }
+    public function getProgramaProgId()
+    {
+        return $this->programa_prog_id;
+    }
+    public function getRequisitosAcademicos()
+    {
+        return $this->requisitos_academicos;
+    }
+    public function getExperienciaLaboral()
+    {
+        return $this->experiencia_laboral;
     }
 
     // Setters
@@ -64,6 +82,18 @@ class CompetenciaModel
     {
         $this->centro_formacion_cent_id = $id;
     }
+    public function setProgramaProgId($id)
+    {
+        $this->programa_prog_id = $id;
+    }
+    public function setRequisitosAcademicos($texto)
+    {
+        $this->requisitos_academicos = $texto;
+    }
+    public function setExperienciaLaboral($texto)
+    {
+        $this->experiencia_laboral = $texto;
+    }
 
     // CRUD
     public function getNextId()
@@ -79,14 +109,17 @@ class CompetenciaModel
         if (!$this->comp_id) {
             $this->comp_id = $this->getNextId();
         }
-        $query = "INSERT INTO COMPETENCIA (comp_id, comp_nombre_corto, comp_horas, comp_nombre_unidad_competencia, centro_formacion_cent_id) 
-                  VALUES (:id, :corto, :horas, :unidad, :centro_formacion_cent_id)";
+        $query = "INSERT INTO COMPETENCIA (comp_id, comp_nombre_corto, comp_horas, comp_nombre_unidad_competencia, centro_formacion_cent_id, programa_prog_id, requisitos_academicos, experiencia_laboral) 
+                  VALUES (:id, :corto, :horas, :unidad, :centro_formacion_cent_id, :prog_id, :requisitos, :experiencia)";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':id', $this->comp_id);
         $stmt->bindParam(':corto', $this->comp_nombre_corto);
         $stmt->bindParam(':horas', $this->comp_horas);
         $stmt->bindParam(':unidad', $this->comp_nombre_unidad_competencia);
         $stmt->bindParam(':centro_formacion_cent_id', $this->centro_formacion_cent_id);
+        $stmt->bindParam(':prog_id', $this->programa_prog_id);
+        $stmt->bindParam(':requisitos', $this->requisitos_academicos);
+        $stmt->bindParam(':experiencia', $this->experiencia_laboral);
         if ($stmt->execute()) {
             return $this->comp_id;
         }
@@ -95,21 +128,37 @@ class CompetenciaModel
 
     public function read()
     {
-        $sql = "SELECT * FROM COMPETENCIA WHERE comp_id = :comp_id";
+        $sql = "SELECT c.*, p.prog_denominacion 
+                FROM COMPETENCIA c
+                LEFT JOIN PROGRAMA p ON c.programa_prog_id = p.prog_codigo
+                WHERE c.comp_id = :comp_id";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([':comp_id' => $this->comp_id]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 
+    public function readById($id)
+    {
+        $sql = "SELECT c.*, p.prog_denominacion 
+                FROM COMPETENCIA c
+                LEFT JOIN PROGRAMA p ON c.programa_prog_id = p.prog_codigo
+                WHERE c.comp_id = :comp_id";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':comp_id' => $id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
+    }
+
     public function readAll($cent_id = null)
     {
-        $sql = "SELECT * FROM COMPETENCIA";
+        $sql = "SELECT c.*, p.prog_denominacion 
+                FROM COMPETENCIA c
+                LEFT JOIN PROGRAMA p ON c.programa_prog_id = p.prog_codigo";
         $params = [];
         if ($cent_id) {
-            $sql .= " WHERE centro_formacion_cent_id = :cent_id OR centro_formacion_cent_id IS NULL";
+            $sql .= " WHERE c.centro_formacion_cent_id = :cent_id OR c.centro_formacion_cent_id IS NULL";
             $params[':cent_id'] = $cent_id;
         }
-        $sql .= " ORDER BY comp_nombre_corto ASC";
+        $sql .= " ORDER BY c.comp_nombre_corto ASC";
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -121,13 +170,19 @@ class CompetenciaModel
                   SET comp_nombre_corto = :comp_nombre_corto, 
                       comp_horas = :comp_horas, 
                       comp_nombre_unidad_competencia = :comp_nombre_unidad_competencia,
-                      centro_formacion_cent_id = :centro_formacion_cent_id
+                      centro_formacion_cent_id = :centro_formacion_cent_id,
+                      programa_prog_id = :prog_id,
+                      requisitos_academicos = :requisitos,
+                      experiencia_laboral = :experiencia
                   WHERE comp_id = :comp_id";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':comp_nombre_corto', $this->comp_nombre_corto);
         $stmt->bindParam(':comp_horas', $this->comp_horas);
         $stmt->bindParam(':comp_nombre_unidad_competencia', $this->comp_nombre_unidad_competencia);
         $stmt->bindParam(':centro_formacion_cent_id', $this->centro_formacion_cent_id);
+        $stmt->bindParam(':prog_id', $this->programa_prog_id);
+        $stmt->bindParam(':requisitos', $this->requisitos_academicos);
+        $stmt->bindParam(':experiencia', $this->experiencia_laboral);
         $stmt->bindParam(':comp_id', $this->comp_id);
         return $stmt->execute();
     }
@@ -138,9 +193,8 @@ class CompetenciaModel
             $this->db->beginTransaction();
 
             // 1. Eliminar asociaciones con programas (Refactorizado)
-            require_once __DIR__ . '/CompetenciaProgramaModel.php';
-            $assocModel = new CompetenciaProgramaModel();
-            $assocModel->deleteAllByCompetencia($this->comp_id);
+            // 1. Ya no se necesita eliminar asociaciones en tabla de unión
+            // Las claves foráneas en la base de datos manejarán la integridad
 
             // 2. Eliminar la competencia
             $queryComp = "DELETE FROM COMPETENCIA WHERE comp_id = :comp_id";
@@ -158,19 +212,15 @@ class CompetenciaModel
         }
     }
 
-    // Association with Programs (competxprograma) - Refactored to use CompetenciaProgramaModel
-    public function getProgramasByCompetencia()
+    // Association with Programs - Refactored to one-to-many
+    public function getPrograma()
     {
-        require_once __DIR__ . '/CompetenciaProgramaModel.php';
-        $assocModel = new CompetenciaProgramaModel();
-        return $assocModel->getProgramasByCompetencia($this->comp_id);
-    }
-
-    public function assignProgramas($programaIds)
-    {
-        require_once __DIR__ . '/CompetenciaProgramaModel.php';
-        $assocModel = new CompetenciaProgramaModel();
-        return $assocModel->syncProgramas($this->comp_id, $programaIds);
+        $sql = "SELECT p.* FROM PROGRAMA p 
+                INNER JOIN COMPETENCIA c ON p.prog_codigo = c.programa_prog_id 
+                WHERE c.comp_id = :id";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':id' => $this->comp_id]);
+        return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
     /**
@@ -182,16 +232,57 @@ class CompetenciaModel
                        i.inst_correo, p.prog_codigo, p.prog_denominacion
                 FROM INSTRU_COMPETENCIA ic
                 INNER JOIN INSTRUCTOR i ON ic.INSTRUCTOR_inst_id = i.numero_documento
-                INNER JOIN PROGRAMA p ON ic.COMPETxPROGRAMA_PROGRAMA_prog_id = p.prog_codigo
-                WHERE ic.COMPETxPROGRAMA_COMPETENCIA_comp_id = :comp_id";
-        
+                INNER JOIN PROGRAMA p ON ic.programa_prog_id = p.prog_codigo
+                WHERE ic.competencia_comp_id = :comp_id";
+
         $params = [':comp_id' => $this->comp_id];
         if ($cent_id) {
             $sql .= " AND i.CENTRO_FORMACION_cent_id = :cent_id";
             $params[':cent_id'] = $cent_id;
         }
-        
+
         $sql .= " ORDER BY i.inst_apellidos, i.inst_nombres";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Obtiene las competencias por programa
+     */
+    public function getByPrograma($prog_id, $cent_id = null)
+    {
+        $sql = "SELECT c.*, p.prog_denominacion 
+                FROM COMPETENCIA c
+                LEFT JOIN PROGRAMA p ON c.programa_prog_id = p.prog_codigo
+                WHERE c.programa_prog_id = :prog_id";
+        $params = [':prog_id' => $prog_id];
+        if ($cent_id) {
+            $sql .= " AND (c.centro_formacion_cent_id = :cent_id OR c.centro_formacion_cent_id IS NULL)";
+            $params[':cent_id'] = $cent_id;
+        }
+        $sql .= " ORDER BY c.comp_nombre_corto ASC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+
+    /**
+     * Obtiene todos los programas que tienen competencias asociadas
+     */
+    public function getProgramas($cent_id = null)
+    {
+        $sql = "SELECT DISTINCT p.prog_codigo, p.prog_denominacion 
+                FROM PROGRAMA p
+                INNER JOIN COMPETENCIA c ON p.prog_codigo = c.programa_prog_id";
+        
+        $params = [];
+        if ($cent_id) {
+            $sql .= " WHERE (c.centro_formacion_cent_id = :cent_id OR c.centro_formacion_cent_id IS NULL)";
+            $params[':cent_id'] = $cent_id;
+        }
+        
+        $sql .= " ORDER BY p.prog_denominacion ASC";
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);

@@ -217,9 +217,8 @@ class ReporteController
     {
         $sql = "SELECT p.prog_codigo, p.prog_denominacion, p.prog_tipo,
                        c.comp_id, c.comp_nombre_corto, c.comp_horas, c.comp_nombre_unidad_competencia
-                FROM competxprograma cp
-                INNER JOIN programa p ON cp.programa_prog_id = p.prog_codigo
-                INNER JOIN competencia c ON cp.competencia_comp_id = c.comp_id
+                FROM competencia c
+                INNER JOIN programa p ON c.programa_prog_id = p.prog_codigo
                 ORDER BY p.prog_denominacion, c.comp_nombre_corto";
         $stmt = $this->db->prepare($sql);
         $stmt->execute();

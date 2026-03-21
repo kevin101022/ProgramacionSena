@@ -151,8 +151,9 @@ class ProgramaModel
 
     public function getCompetenciasByPrograma()
     {
-        require_once __DIR__ . '/CompetenciaProgramaModel.php';
-        $assocModel = new CompetenciaProgramaModel();
-        return $assocModel->getCompetenciasByPrograma($this->prog_codigo);
+        $sql = "SELECT * FROM COMPETENCIA WHERE programa_prog_id = :prog_id ORDER BY comp_nombre_corto ASC";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([':prog_id' => $this->prog_codigo]);
+        return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }

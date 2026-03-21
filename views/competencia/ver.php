@@ -77,9 +77,17 @@ require_once '../layouts/sidebar.php';
                                     <p class="text-slate-500 dark:text-slate-400 text-xs uppercase mb-1">Total Horas</p>
                                     <span class="inline-flex px-3 py-1 rounded-full bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 font-bold text-sm" id="compHorasDisplay">---h</span>
                                 </div>
-                                <div class="py-2">
+                                <div class="py-2 border-b border-slate-100 dark:border-slate-700">
                                     <p class="text-slate-500 dark:text-slate-400 text-xs uppercase mb-1">Unidad de Competencia</p>
                                     <p id="compUnidadDisplay" class="text-slate-900 dark:text-white text-sm leading-relaxed">Sin descripción disponible.</p>
+                                </div>
+                                <div class="py-2 border-b border-slate-100 dark:border-slate-700">
+                                    <p class="text-slate-500 dark:text-slate-400 text-xs uppercase mb-1">Requisitos Académicos</p>
+                                    <p id="compRequisitosDisplay" class="text-slate-900 dark:text-white text-sm leading-relaxed italic">---</p>
+                                </div>
+                                <div class="py-2">
+                                    <p class="text-slate-500 dark:text-slate-400 text-xs uppercase mb-1">Experiencia Laboral Requerida</p>
+                                    <p id="compExperienciaDisplay" class="text-slate-900 dark:text-white text-sm leading-relaxed italic">---</p>
                                 </div>
                             </div>
                         </div>
@@ -88,20 +96,20 @@ require_once '../layouts/sidebar.php';
 
                 <!-- Right Column -->
                 <div class="lg:col-span-2 space-y-6">
-                    <!-- Programas Asociados -->
+                    <!-- Programa Asociado -->
                     <div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
                         <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center">
                             <div>
                                 <h3 class="font-bold text-slate-900 dark:text-white flex items-center gap-2">
                                     <ion-icon src="../../assets/ionicons/layers-outline.svg" class="text-slate-400"></ion-icon>
-                                    Programas de Formación
+                                    Programa de Formación
                                 </h3>
-                                <p class="text-sm text-slate-500 dark:text-slate-400">Programas que incluyen esta competencia</p>
+                                <p class="text-sm text-slate-500 dark:text-slate-400">Programa al que pertenece esta competencia</p>
                             </div>
-                            <span class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-1.5 rounded-lg text-sm font-bold text-slate-700 dark:text-slate-300" id="programCount">0 asociados</span>
+                            <span class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-1.5 rounded-lg text-sm font-bold text-slate-700 dark:text-slate-300" id="programCount">Asociado</span>
                         </div>
                         <div id="associatedProgramasList" class="divide-y divide-slate-100 dark:divide-slate-700 max-h-[500px] overflow-y-auto">
-                            <div class="p-8 text-center text-slate-400 dark:text-slate-500 italic">Cargando programas asociados...</div>
+                            <div class="p-8 text-center text-slate-400 dark:text-slate-500 italic">Cargando programa...</div>
                         </div>
                     </div>
 
@@ -119,6 +127,23 @@ require_once '../layouts/sidebar.php';
                         </div>
                         <div id="instructoresList" class="divide-y divide-slate-100 dark:divide-slate-700 max-h-[400px] overflow-y-auto">
                             <div class="p-8 text-center text-slate-400 dark:text-slate-500 italic">Cargando instructores...</div>
+                        </div>
+                    </div>
+
+                    <!-- Resultados de Aprendizaje (RAP) -->
+                    <div class="bg-surface-light dark:bg-surface-dark rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+                        <div class="px-6 py-4 border-b border-slate-200 dark:border-slate-700 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
+                            <div>
+                                <h3 class="font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                    <ion-icon src="../../assets/ionicons/ribbon-outline.svg" class="text-sena-orange"></ion-icon>
+                                    Resultados de Aprendizaje (RAP)
+                                </h3>
+                                <p class="text-sm text-slate-500 dark:text-slate-400">Resultados asociados a esta competencia</p>
+                            </div>
+                            <span class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-4 py-1.5 rounded-lg text-sm font-bold text-slate-700 dark:text-slate-300" id="rapCount">0 RAPs</span>
+                        </div>
+                        <div id="rapsList" class="divide-y divide-slate-100 dark:divide-slate-700 max-h-[500px] overflow-y-auto">
+                            <div class="p-8 text-center text-slate-400 dark:text-slate-500 italic">Cargando resultados...</div>
                         </div>
                     </div>
                 </div>
