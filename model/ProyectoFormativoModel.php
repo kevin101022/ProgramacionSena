@@ -49,7 +49,7 @@ class ProyectoFormativoModel {
     }
 
     public function create($data) {
-        $stmt = $this->db->prepare("INSERT INTO proyecto_formativo (pf_codigo, pf_nombre, pf_descripcion, programa_prog_codigo, centro_formacion_cent_id) VALUES (:pf_codigo, :pf_nombre, :pf_descripcion, :programa_prog_codigo, :centro_formacion_cent_id) RETURNING pf_id");
+        $stmt = $this->db->prepare("INSERT INTO proyecto_formativo (pf_codigo, pf_nombre, pf_descripcion, programa_prog_codigo, centro_formacion_cent_id) VALUES (:pf_codigo, :pf_nombre, :pf_descripcion, :programa_prog_codigo, :centro_formacion_cent_id)");
         $stmt->execute([
             'pf_codigo' => $data['pf_codigo'],
             'pf_nombre' => $data['pf_nombre'],
@@ -57,11 +57,11 @@ class ProyectoFormativoModel {
             'programa_prog_codigo' => $data['programa_prog_codigo'],
             'centro_formacion_cent_id' => $data['centro_formacion_cent_id']
         ]);
-        return $stmt->fetchColumn();
+        return $this->db->lastInsertId();
     }
 
     public function createFase($data) {
-        $stmt = $this->db->prepare("INSERT INTO fase_proyecto (fase_nombre, fase_orden, fase_fecha_ini, fase_fecha_fin, pf_pf_id) VALUES (:fase_nombre, :fase_orden, :fase_fecha_ini, :fase_fecha_fin, :pf_pf_id) RETURNING fase_id");
+        $stmt = $this->db->prepare("INSERT INTO fase_proyecto (fase_nombre, fase_orden, fase_fecha_ini, fase_fecha_fin, pf_pf_id) VALUES (:fase_nombre, :fase_orden, :fase_fecha_ini, :fase_fecha_fin, :pf_pf_id)");
         $stmt->execute([
             'fase_nombre' => $data['fase_nombre'],
             'fase_orden' => $data['fase_orden'],
@@ -69,7 +69,7 @@ class ProyectoFormativoModel {
             'fase_fecha_fin' => $data['fase_fecha_fin'],
             'pf_pf_id' => $data['pf_pf_id']
         ]);
-        return $stmt->fetchColumn();
+        return $this->db->lastInsertId();
     }
 
     public function createConFases($proyecto, $fases) {

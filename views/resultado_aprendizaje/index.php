@@ -44,7 +44,6 @@ require_once '../layouts/sidebar.php';
                         <th>Competencia / Descripción</th>
                         <th style="text-align: center; width: 100px;">Horas</th>
                         <th>Programa</th>
-                        <th style="text-align: right; width: 80px;">Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="rapsTable">
@@ -110,11 +109,16 @@ require_once '../layouts/sidebar.php';
                 </div>
             </div>
             
-            <div class="modal-footer">
-                <button type="button" class="btn-secondary" onclick="cerrarModal()">Cancelar</button>
-                <button type="submit" id="btnGuardar" class="btn-primary">
-                    <ion-icon src="../../assets/ionicons/save-outline.svg"></ion-icon> Registrar RAP
+            <div class="modal-footer" style="display: flex; justify-content: space-between; align-items: center;">
+                <button type="button" id="btnEliminarModal" class="btn-icon" style="color: #dc2626; background: #fef2f2; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; display: none; align-items: center; gap: 4px;" onclick="eliminarRapDesdeModal()">
+                    <ion-icon src="../../assets/ionicons/trash-outline.svg"></ion-icon> Eliminar
                 </button>
+                <div style="display: flex; gap: 0.5rem; margin-left: auto;">
+                    <button type="button" class="btn-secondary" onclick="cerrarModal()">Cancelar</button>
+                    <button type="submit" id="btnGuardar" class="btn-primary">
+                        <ion-icon src="../../assets/ionicons/save-outline.svg"></ion-icon> Registrar RAP
+                    </button>
+                </div>
             </div>
         </form>
     </div>
@@ -167,7 +171,7 @@ require_once '../layouts/sidebar.php';
 
         data.forEach(r => {
             tbody.innerHTML += `
-                <tr>
+                <tr onclick="abrirModal(${r.rap_id})" style="cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='transparent'">
                     <td><strong>${r.rap_codigo}</strong></td>
                     <td>
                         <div style="font-weight: 600; color: #059669; font-size: 0.85rem; margin-bottom: 2px;">${r.comp_nombre_corto || r.comp_denominacion || 'Competencia'}</div>
@@ -179,16 +183,6 @@ require_once '../layouts/sidebar.php';
                         </span>
                     </td>
                     <td style="font-size: 0.8rem; color: #4b5563;">${r.prog_denominacion}</td>
-                    <td style="text-align: right;">
-                        <div style="display: flex; gap: 4px; justify-content: flex-end;">
-                            <button onclick="abrirModal(${r.rap_id})" class="btn-icon" style="color: #2563eb; background: #eff6ff; border: none; padding: 6px; border-radius: 4px; cursor: pointer;" title="Editar">
-                                <ion-icon src="../../assets/ionicons/create-outline.svg"></ion-icon>
-                            </button>
-                            <button onclick="eliminarRap(${r.rap_id})" class="btn-icon" style="color: #dc2626; background: #fef2f2; border: none; padding: 6px; border-radius: 4px; cursor: pointer;" title="Eliminar">
-                                <ion-icon src="../../assets/ionicons/trash-outline.svg"></ion-icon>
-                            </button>
-                        </div>
-                    </td>
                 </tr>
             `;
         });
@@ -330,9 +324,12 @@ require_once '../layouts/sidebar.php';
         document.getElementById('faseSelect').disabled = true;
         document.getElementById('faseSelect').style.opacity = '0.5';
 
+        const btnEliminar = document.getElementById('btnEliminarModal');
+
         if (id) {
             title.textContent = 'Editar Resultado de Aprendizaje';
             btn.innerHTML = `<ion-icon src="../../assets/ionicons/save-outline.svg"></ion-icon> Actualizar RAP`;
+            btnEliminar.style.display = 'flex';
             
             try {
                 const res = await fetch(`${API_URL}&action=show&id=${id}`, { headers: { 'Accept': 'application/json' }});
@@ -355,6 +352,7 @@ require_once '../layouts/sidebar.php';
         } else {
             title.textContent = 'Registrar Resultado de Aprendizaje';
             btn.innerHTML = `<ion-icon src="../../assets/ionicons/save-outline.svg"></ion-icon> Registrar RAP`;
+            btnEliminar.style.display = 'none';
         }
 
         document.getElementById('modalRap').classList.add('show');
@@ -364,9 +362,24 @@ require_once '../layouts/sidebar.php';
         document.getElementById('modalRap').classList.remove('show');
     }
 
-    async function eliminarRap(id) {
-        if (!confirm('¿Está seguro de eliminar este RAP? Esta acción no se puede deshacer.')) return;
+    function eliminarRapDesdeModal() {
+        const id = document.getElementById('rapIdInput').value;
+        if (!id) return;
+        eliminarRap(id);
+    }
 
+    function eliminarRap(id) {
+        if (window.NotificationService) {
+            NotificationService.showConfirm('¿Está seguro de eliminar este RAP? Esta acción no se puede deshacer.', async () => {
+                await ejecutarEliminarRap(id);
+            }, { title: 'Eliminar Resultado de Aprendizaje', confirmText: 'Sí, eliminar', type: 'danger' });
+        } else {
+            if (!confirm('¿Está seguro de eliminar este RAP? Esta acción no se puede deshacer.')) return;
+            ejecutarEliminarRap(id);
+        }
+    }
+
+    async function ejecutarEliminarRap(id) {
         try {
             const res = await fetch(`${API_URL}&action=destroy&id=${id}`, {
                 method: 'POST',
@@ -378,6 +391,7 @@ require_once '../layouts/sidebar.php';
                 if (window.NotificationService) {
                     NotificationService.showSuccess('Resultado de Aprendizaje eliminado correctamente');
                 }
+                cerrarModal();
                 cargarRaps();
             } else {
                 if (window.NotificationService) {

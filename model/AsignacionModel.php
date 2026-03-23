@@ -27,8 +27,7 @@ class AsignacionModel
     {
         try {
             $query = "INSERT INTO ASIGNACION (INSTRUCTOR_inst_id, asig_fecha_ini, asig_fecha_fin, FICHA_fich_id, AMBIENTE_amb_id, COMPETENCIA_comp_id) 
-                      VALUES (:inst_id, :fecha_ini, :fecha_fin, :ficha_id, :amb_id, :comp_id)
-                      RETURNING ASIG_ID";
+                      VALUES (:inst_id, :fecha_ini, :fecha_fin, :ficha_id, :amb_id, :comp_id)";
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':inst_id', $this->instructor_inst_id);
             $stmt->bindParam(':fecha_ini', $this->asig_fecha_ini);
@@ -37,8 +36,7 @@ class AsignacionModel
             $stmt->bindParam(':amb_id', $this->ambiente_amb_id);
             $stmt->bindParam(':comp_id', $this->competencia_comp_id);
             $stmt->execute();
-            $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            return $row['asig_id'] ?? $this->db->lastInsertId();
+            return $this->db->lastInsertId();
         } catch (PDOException $e) {
             error_log("Error en AsignacionModel::create: " . $e->getMessage());
             throw $e;
@@ -175,12 +173,12 @@ class AsignacionModel
      */
     public function getMonthlyHours($inst_id, $month, $year, $exclude_asig_id = null)
     {
-        $sql = "SELECT SUM(EXTRACT(EPOCH FROM (d.detasig_hora_fin - d.detasig_hora_ini))/3600) as total_horas
+        $sql = "SELECT SUM(TIMESTAMPDIFF(SECOND, d.detasig_hora_ini, d.detasig_hora_fin)/3600) as total_horas
                 FROM DETALLExASIGNACION d
                 INNER JOIN ASIGNACION a ON d.ASIGNACION_asig_id = a.ASIG_ID
                 WHERE a.INSTRUCTOR_inst_id = :inst_id
-                AND EXTRACT(MONTH FROM d.detasig_fecha) = :month
-                AND EXTRACT(YEAR FROM d.detasig_fecha) = :year";
+                AND MONTH(d.detasig_fecha) = :month
+                AND YEAR(d.detasig_fecha) = :year";
 
         $params = [
             ':inst_id' => $inst_id,
@@ -206,7 +204,7 @@ class AsignacionModel
      */
     public function getCompetenceHoursAssigned($fich_id, $comp_id, $exclude_asig_id = null)
     {
-        $sql = "SELECT SUM(EXTRACT(EPOCH FROM (d.detasig_hora_fin - d.detasig_hora_ini))/3600) as total_horas
+        $sql = "SELECT SUM(TIMESTAMPDIFF(SECOND, d.detasig_hora_ini, d.detasig_hora_fin)/3600) as total_horas
                 FROM DETALLExASIGNACION d
                 INNER JOIN ASIGNACION a ON d.ASIGNACION_asig_id = a.ASIG_ID
                 WHERE a.FICHA_fich_id = :fich_id
@@ -235,7 +233,7 @@ class AsignacionModel
     public function readByFicha($fich_id)
     {
         $sql = "SELECT a.*, 
-                       (SELECT COALESCE(SUM(EXTRACT(EPOCH FROM (da.detasig_hora_fin - da.detasig_hora_ini))/3600), 0)
+                       (SELECT COALESCE(SUM(TIMESTAMPDIFF(SECOND, da.detasig_hora_ini, da.detasig_hora_fin)/3600), 0)
                         FROM DETALLExASIGNACION da 
                         WHERE da.ASIGNACION_asig_id = a.asig_id) as total_horas
                 FROM ASIGNACION a

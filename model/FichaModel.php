@@ -68,7 +68,7 @@ class FichaModel
                        s.sede_nombre,
                        (SELECT COUNT(*) FROM competencia cp WHERE cp.programa_prog_id = f.programa_prog_id) as total_comps,
                        (SELECT COUNT(DISTINCT a_sub.competencia_comp_id) FROM asignacion a_sub WHERE a_sub.ficha_fich_id = f.fich_id) as assigned_comps,
-                       (SELECT STRING_AGG(DISTINCT sub_i.inst_nombres || ' ' || sub_i.inst_apellidos, ', ') 
+                       (SELECT GROUP_CONCAT(DISTINCT CONCAT(sub_i.inst_nombres, ' ', sub_i.inst_apellidos) SEPARATOR ', ') 
                         FROM asignacion a_sub 
                         JOIN instructor sub_i ON a_sub.instructor_inst_id = sub_i.numero_documento 
                         WHERE a_sub.ficha_fich_id = f.fich_id) as instructores_historial
@@ -112,7 +112,7 @@ class FichaModel
                        s.sede_nombre,
                        (SELECT COUNT(*) FROM competencia cp WHERE cp.programa_prog_id = f.programa_prog_id) as total_comps,
                        (SELECT COUNT(DISTINCT a_sub.competencia_comp_id) FROM asignacion a_sub WHERE a_sub.ficha_fich_id = f.fich_id) as assigned_comps,
-                       (SELECT STRING_AGG(DISTINCT sub_i.inst_nombres || ' ' || sub_i.inst_apellidos, ', ') 
+                       (SELECT GROUP_CONCAT(DISTINCT CONCAT(sub_i.inst_nombres, ' ', sub_i.inst_apellidos) SEPARATOR ', ') 
                         FROM asignacion a_sub 
                         JOIN instructor sub_i ON a_sub.instructor_inst_id = sub_i.numero_documento 
                         WHERE a_sub.ficha_fich_id = f.fich_id) as instructores_historial
@@ -189,7 +189,7 @@ class FichaModel
                     c.comp_horas as horas_totales,
                     i.inst_nombres, 
                     i.inst_apellidos,
-                    COALESCE(SUM(EXTRACT(EPOCH FROM (da.detasig_hora_fin - da.detasig_hora_ini))/3600)::INTEGER, 0) as horas_asignadas
+                    COALESCE(CAST(SUM(TIMESTAMPDIFF(SECOND, da.detasig_hora_ini, da.detasig_hora_fin)/3600) AS UNSIGNED), 0) as horas_asignadas
                   FROM asignacion a
                   INNER JOIN competencia c ON a.competencia_comp_id = c.comp_id
                   INNER JOIN instructor i ON a.instructor_inst_id = i.numero_documento

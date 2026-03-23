@@ -58,12 +58,7 @@ class AmbienteModel
     // CRUD
     public function getNextId()
     {
-        $driver = Conexion::getDriver();
-        if ($driver === 'pgsql') {
-            $query = "SELECT COALESCE(MAX(CASE WHEN amb_id ~ '^[0-9]+$' THEN CAST(amb_id AS INTEGER) ELSE 0 END), 0) + 1 FROM AMBIENTE";
-        } else {
-            $query = "SELECT COALESCE(MAX(CASE WHEN amb_id REGEXP '^[0-9]+$' THEN CAST(amb_id AS UNSIGNED) ELSE 0 END), 0) + 1 FROM AMBIENTE";
-        }
+        $query = "SELECT COALESCE(MAX(CASE WHEN amb_id REGEXP '^[0-9]+$' THEN CAST(amb_id AS UNSIGNED) ELSE 0 END), 0) + 1 FROM AMBIENTE";
         $stmt = $this->db->prepare($query);
         $stmt->execute();
         return (string)$stmt->fetchColumn();

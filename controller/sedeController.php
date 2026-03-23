@@ -133,9 +133,9 @@ class SedeController
                 $this->sendResponse(['error' => 'No se pudo eliminar la sede'], 500);
             }
         } catch (Exception $e) {
-            // Error común en pgsql: 23503 es violación de llave foránea
+            // Error común en MySQL: 23000 es violación de llave foránea
             $message = 'No se puede eliminar la sede porque tiene ambientes o datos asociados.';
-            if (method_exists($e, 'getCode') && $e->getCode() != '23503') {
+            if (method_exists($e, 'getCode') && $e->getCode() != '23000') {
                 $message = 'Error al eliminar la sede: ' . $e->getMessage();
             }
             $this->sendResponse(['error' => $message], 500);

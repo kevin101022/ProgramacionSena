@@ -106,7 +106,7 @@ class ResultadoAprendizajeModel {
     }
 
     public function create($data) {
-        $stmt = $this->db->prepare("INSERT INTO resultado_aprendizaje (rap_codigo, rap_descripcion, rap_horas, programa_prog_id, competencia_comp_id) VALUES (:rap_codigo, :rap_descripcion, :rap_horas, :programa_prog_id, :competencia_comp_id) RETURNING rap_id");
+        $stmt = $this->db->prepare("INSERT INTO resultado_aprendizaje (rap_codigo, rap_descripcion, rap_horas, programa_prog_id, competencia_comp_id) VALUES (:rap_codigo, :rap_descripcion, :rap_horas, :programa_prog_id, :competencia_comp_id)");
         $stmt->execute([
             'rap_codigo' => $data['rap_codigo'],
             'rap_descripcion' => $data['rap_descripcion'],
@@ -114,7 +114,7 @@ class ResultadoAprendizajeModel {
             'programa_prog_id' => $data['programa_prog_id'],
             'competencia_comp_id' => $data['competencia_comp_id']
         ]);
-        return $stmt->fetchColumn();
+        return $this->db->lastInsertId();
     }
 
     public function update($rap_id, $data) {

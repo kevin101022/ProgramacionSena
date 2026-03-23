@@ -81,7 +81,9 @@ try {
     // Inyectar variables de auditoría si hay sesión activa
     if (isset($_SESSION['id']) && isset($_SESSION['correo']) && isset($_SESSION['nombre'])) {
         require_once __DIR__ . '/Conexion.php';
-        Conexion::setAuditVars($_SESSION['id'], $_SESSION['correo'], $_SESSION['nombre']);
+        if (method_exists('Conexion', 'setAuditVars')) {
+            Conexion::setAuditVars($_SESSION['id'], $_SESSION['correo'], $_SESSION['nombre']);
+        }
     }
 
     // Si no es el controlador de login, verificamos permisos

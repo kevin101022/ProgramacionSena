@@ -38,7 +38,6 @@ require_once '../layouts/sidebar.php';
                         <th>Nombre del Proyecto</th>
                         <th>Programa</th>
                         <th>Fases</th>
-                        <th style="text-align: right;">Acciones</th>
                     </tr>
                 </thead>
                 <tbody id="proyectosTable">
@@ -144,7 +143,7 @@ require_once '../layouts/sidebar.php';
 
             data.forEach(p => {
                 tbody.innerHTML += `
-                    <tr>
+                    <tr onclick="window.location.href='show.php?id=${p.pf_id}'" style="cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='#f9fafb'" onmouseout="this.style.background='transparent'">
                         <td><strong>${p.pf_codigo}</strong></td>
                         <td>${p.pf_nombre}</td>
                         <td style="font-size: 0.8rem; color: #6b7280;">${p.prog_denominacion || p.programa_prog_codigo}</td>
@@ -152,19 +151,6 @@ require_once '../layouts/sidebar.php';
                             <span style="background: #d1fae5; color: #047857; padding: 2px 8px; border-radius: 999px; font-size: 0.75rem; font-weight: bold;">
                                 ${p.fases ? p.fases.length : 'N/A'}
                             </span>
-                        </td>
-                        <td style="text-align: right;">
-                            <div style="display: flex; justify-content: flex-end; gap: 0.5rem;">
-                                <a href="../proyecto_formativo/show.php?id=${p.pf_id}" title="Ver Estructura" style="color: #6b7280; padding: 4px; border-radius: 4px; transition: background 0.2s;">
-                                    <ion-icon src="../../assets/ionicons/eye-outline.svg" style="font-size: 1.25rem;"></ion-icon>
-                                </a>
-                                <button onclick='abrirModalEditar(${JSON.stringify(p)})' title="Editar Proyecto" style="color: #2563eb; background: none; border: none; cursor: pointer; padding: 4px; border-radius: 4px; transition: background 0.2s;">
-                                    <ion-icon src="../../assets/ionicons/create-outline.svg" style="font-size: 1.25rem;"></ion-icon>
-                                </button>
-                                <button onclick="confirmarEliminar(${p.pf_id})" title="Eliminar Proyecto" style="color: #dc2626; background: none; border: none; cursor: pointer; padding: 4px; border-radius: 4px; transition: background 0.2s;">
-                                    <ion-icon src="../../assets/ionicons/trash-outline.svg" style="font-size: 1.25rem;"></ion-icon>
-                                </button>
-                            </div>
                         </td>
                     </tr>
                 `;

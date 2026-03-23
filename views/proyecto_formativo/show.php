@@ -36,11 +36,17 @@ require_once '../layouts/sidebar.php';
             </nav>
             <h1 class="page-title">Estructura del Proyecto Formativo</h1>
         </div>
-        <div class="header-actions">
+        <div class="header-actions" style="display: flex; gap: 0.5rem; align-items: center;">
             <a href="index.php" class="btn-secondary" style="display: flex; align-items: center; gap: 0.5rem; text-decoration: none;">
                 <ion-icon src="../../assets/ionicons/arrow-back-outline.svg"></ion-icon>
-                Volver a la Lista
+                Volver
             </a>
+            <button onclick='abrirModalEditarProyecto(<?php echo htmlspecialchars(json_encode($proyecto), ENT_QUOTES); ?>)' class="btn-secondary" style="display: flex; align-items: center; gap: 0.5rem; background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe;">
+                <ion-icon src="../../assets/ionicons/create-outline.svg"></ion-icon> Editar Proyecto
+            </button>
+            <button onclick="confirmarEliminarProyecto(<?php echo $proyecto['pf_id']; ?>)" class="btn-secondary" style="display: flex; align-items: center; gap: 0.5rem; background: #fef2f2; color: #dc2626; border: 1px solid #fecaca;">
+                <ion-icon src="../../assets/ionicons/trash-outline.svg"></ion-icon> Eliminar 
+            </button>
         </div>
     </header>
 
@@ -654,5 +660,138 @@ require_once '../layouts/sidebar.php';
     @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 </style>
+<!-- Modal Editar Proyecto Base -->
+<div id="modalEditProyecto" class="modal">
+    <div class="modal-content" style="max-width: 700px;">
+        <div class="modal-header">
+            <h3>Editar Proyecto Formativo</h3>
+            <button class="modal-close" onclick="cerrarModalEditarProyecto()">
+                <ion-icon src="../../assets/ionicons/close-outline.svg"></ion-icon>
+            </button>
+        </div>
+        <form id="formEditProyecto" onsubmit="guardarEdicionProyecto(event)">
+            <div class="modal-body" style="max-height: 60vh; overflow-y: auto;">
+                <div id="modalErrorEditProyecto" class="hidden" style="margin-bottom: 1rem; padding: 0.75rem; background-color: #fef2f2; color: #dc2626; border-radius: 0.5rem; text-align: center; font-size: 0.875rem;"></div>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+                    <div>
+                        <label class="form-label" style="font-size: 0.8rem;">Código del Proyecto</label>
+                        <input type="text" name="pf_codigo" required class="form-input w-full" style="padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; width: 100%;">
+                    </div>
+                    <div>
+                        <label class="form-label" style="font-size: 0.8rem;">Programa de Formación</label>
+                        <!-- Disable to avoid modifying program since it's loaded only here simply -->
+                        <input type="text" readonly value="<?php echo htmlspecialchars($proyecto['programa_prog_codigo']); ?>" class="form-input w-full" style="padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; width: 100%; background: #f3f4f6;">
+                        <input type="hidden" name="programa_prog_codigo" value="<?php echo htmlspecialchars($proyecto['programa_prog_codigo']); ?>">
+                    </div>
+                    <div style="grid-column: span 2;">
+                        <label class="form-label" style="font-size: 0.8rem;">Nombre del Proyecto</label>
+                        <input type="text" name="pf_nombre" required class="form-input w-full" style="padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; width: 100%;">
+                    </div>
+                    <div style="grid-column: span 2;">
+                        <label class="form-label" style="font-size: 0.8rem;">Descripción</label>
+                        <textarea name="pf_descripcion" rows="3" class="form-input w-full" style="padding: 0.5rem; border: 1px solid #d1d5db; border-radius: 0.375rem; width: 100%;"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn-secondary" onclick="cerrarModalEditarProyecto()">Cancelar</button>
+                <button type="submit" id="btnGuardarEditProyecto" class="btn-primary">
+                    <ion-icon src="../../assets/ionicons/save-outline.svg"></ion-icon> Guardar Cambios
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function confirmarEliminarProyecto(id) {
+        if (window.NotificationService) {
+            NotificationService.showConfirm('¿Está seguro de eliminar este proyecto? Esta acción eliminará permanentemente todas sus fases, actividades y asociaciones.', async () => {
+                await ejecutarEliminarProyecto(id);
+            }, { title: 'Eliminar Proyecto', confirmText: 'Sí, eliminar', type: 'danger' });
+        } else {
+            if (!confirm('¿Está seguro de eliminar este proyecto?')) return;
+            ejecutarEliminarProyecto(id);
+        }
+    }
+
+    async function ejecutarEliminarProyecto(id) {
+        try {
+            const res = await fetch(`${API_URL}&action=destroy&id=${id}`, { method: 'POST' });
+            const data = await res.json();
+            if (data.success) {
+                if (window.NotificationService) {
+                    NotificationService.showSuccess('Proyecto eliminado correctamente');
+                }
+                setTimeout(() => {
+                    window.location.href = 'index.php';
+                }, 1000);
+            } else {
+                if (window.NotificationService) NotificationService.showError('No se pudo eliminar el proyecto');
+            }
+        } catch (error) {
+            if (window.NotificationService) NotificationService.showError('Error de red al intentar eliminar');
+        }
+    }
+
+    function abrirModalEditarProyecto(p) {
+        const form = document.getElementById('formEditProyecto');
+        form.pf_codigo.value = p.pf_codigo;
+        form.pf_nombre.value = p.pf_nombre;
+        form.pf_descripcion.value = p.pf_descripcion;
+        
+        document.getElementById('modalErrorEditProyecto').classList.add('hidden');
+        document.getElementById('modalEditProyecto').classList.add('show');
+    }
+
+    function cerrarModalEditarProyecto() {
+        document.getElementById('modalEditProyecto').classList.remove('show');
+    }
+
+    async function guardarEdicionProyecto(e) {
+        e.preventDefault();
+        const form = e.target;
+        const btn = document.getElementById('btnGuardarEditProyecto');
+        const errorDiv = document.getElementById('modalErrorEditProyecto');
+        
+        errorDiv.classList.add('hidden');
+        btn.disabled = true;
+        btn.innerHTML = 'Guardando...';
+
+        const formData = new URLSearchParams();
+        formData.append('pf_codigo', form.pf_codigo.value);
+        formData.append('pf_nombre', form.pf_nombre.value);
+        formData.append('pf_descripcion', form.pf_descripcion.value);
+        formData.append('programa_prog_codigo', form.programa_prog_codigo.value);
+
+        try {
+            const res = await fetch(`${API_URL}&action=update&id=${PF_ID}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded', 'Accept': 'application/json' },
+                body: formData.toString()
+            });
+            const data = await res.json();
+            
+            if (!res.ok || data.error) {
+                errorDiv.innerHTML = `<ion-icon src="../../assets/ionicons/warning-outline.svg" style="vertical-align: middle;"></ion-icon> ${data.error || 'Error de servidor'}`;
+                errorDiv.classList.remove('hidden');
+                errorDiv.style.display = 'block';
+            } else {
+                cerrarModalEditarProyecto();
+                if (window.NotificationService) NotificationService.showSuccess('Proyecto actualizado con éxito');
+                setTimeout(() => location.reload(), 800);
+            }
+        } catch (error) {
+            errorDiv.innerHTML = `<ion-icon src="../../assets/ionicons/warning-outline.svg" style="vertical-align: middle;"></ion-icon> Problema de red o servidor no responde`;
+            errorDiv.classList.remove('hidden');
+            errorDiv.style.display = 'block';
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = `<ion-icon src="../../assets/ionicons/save-outline.svg"></ion-icon> Guardar Cambios`;
+        }
+    }
+</script>
+
 </body>
 </html>

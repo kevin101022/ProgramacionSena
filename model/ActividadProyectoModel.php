@@ -13,12 +13,12 @@ class ActividadProyectoModel {
     }
 
     public function create($data) {
-        $stmt = $this->db->prepare("INSERT INTO actividad_proyecto (act_nombre, fase_id) VALUES (:act_nombre, :fase_id) RETURNING act_id");
+        $stmt = $this->db->prepare("INSERT INTO actividad_proyecto (act_nombre, fase_id) VALUES (:act_nombre, :fase_id)");
         $stmt->execute([
             'act_nombre' => $data['act_nombre'],
             'fase_id' => $data['fase_id']
         ]);
-        return $stmt->fetchColumn();
+        return $this->db->lastInsertId();
     }
 
     public function update($act_id, $data) {
@@ -63,7 +63,7 @@ class ActividadProyectoModel {
             }
         }
 
-        $stmt = $this->db->prepare("INSERT INTO rap_actividad (rap_id, act_id) VALUES (:rap_id, :act_id) ON CONFLICT DO NOTHING");
+        $stmt = $this->db->prepare("INSERT IGNORE INTO rap_actividad (rap_id, act_id) VALUES (:rap_id, :act_id)");
         return $stmt->execute(['rap_id' => $rap_id, 'act_id' => $act_id]);
     }
 

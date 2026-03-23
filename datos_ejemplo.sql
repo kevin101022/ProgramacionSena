@@ -32,8 +32,8 @@ RESTART IDENTITY CASCADE;
 -- 2. CENTROS DE FORMACIÓN (Bcrypt: password)
 -- ============================================================
 INSERT INTO public.centro_formacion (cent_id, cent_nombre, cent_correo, cent_password) VALUES 
-(1, 'CIES - Centro de Industria, Empresa y Servicios',   'cies@sena.edu.co',   'password'),
-(2, 'CEDRUM - Centro de Desarrollo Agroempresarial',     'cedrum@sena.edu.co', 'password');
+(1, 'CIES - Centro de Industria, Empresa y Servicios',   'cies@sena.edu.co',   '$2y$12$dgxXUnHj4BOOOJylw0OmoOoVpouY9ZLVrH97zaKqrXUGBcFmR.P8G'),
+(2, 'CEDRUM - Centro de Desarrollo Agroempresarial',     'cedrum@sena.edu.co', '$2y$12$dgxXUnHj4BOOOJylw0OmoOoVpouY9ZLVrH97zaKqrXUGBcFmR.P8G');
 
 -- ============================================================
 -- 3. SEDES (Norte de Santander)
@@ -110,12 +110,12 @@ INSERT INTO public.programa (prog_codigo, prog_denominacion, tit_programa_titpro
 -- 7. USUARIOS COORDINADORES
 -- ============================================================
 INSERT INTO public.usuario_coordinador (numero_documento, coord_nombre_coordinador, coord_correo, coord_password, estado, centro_formacion_id) VALUES 
-(1090001, 'Laura Milena Díaz Rojas', 'coord.tic@cies.sena.edu.co',       'password', 1, 1),
-(1090002, 'Hernán Darío Prada Cáceres', 'coord.industria@cies.sena.edu.co', 'password', 1, 1),
-(1090003, 'Yolanda Suárez Contreras',   'coord.gestion@cies.sena.edu.co',   'password', 1, 1),
-(1090004, 'Fabio Enrique Mora Quintero', 'coord.agro@cedrum.sena.edu.co',    'password', 1, 2),
-(1090005, 'Claudia Inés Vargas',        'coord.ambiental@cedrum.sena.edu.co','password', 1, 2),
-(1090006, 'Jorge Armando Rueda Téllez', 'coord.rural@cedrum.sena.edu.co',   'password', 1, 2);
+(1090001, 'Laura Milena Díaz Rojas', 'coord.tic@cies.sena.edu.co',       '$2y$12$dgxXUnHj4BOOOJylw0OmoOoVpouY9ZLVrH97zaKqrXUGBcFmR.P8G', 1, 1),
+(1090002, 'Hernán Darío Prada Cáceres', 'coord.industria@cies.sena.edu.co', '$2y$12$dgxXUnHj4BOOOJylw0OmoOoVpouY9ZLVrH97zaKqrXUGBcFmR.P8G', 1, 1),
+(1090003, 'Yolanda Suárez Contreras',   'coord.gestion@cies.sena.edu.co',   '$2y$12$dgxXUnHj4BOOOJylw0OmoOoVpouY9ZLVrH97zaKqrXUGBcFmR.P8G', 1, 1),
+(1090004, 'Fabio Enrique Mora Quintero', 'coord.agro@cedrum.sena.edu.co',    '$2y$12$dgxXUnHj4BOOOJylw0OmoOoVpouY9ZLVrH97zaKqrXUGBcFmR.P8G', 1, 2),
+(1090005, 'Claudia Inés Vargas',        'coord.ambiental@cedrum.sena.edu.co','$2y$12$dgxXUnHj4BOOOJylw0OmoOoVpouY9ZLVrH97zaKqrXUGBcFmR.P8G', 1, 2),
+(1090006, 'Jorge Armando Rueda Téllez', 'coord.rural@cedrum.sena.edu.co',   '$2y$12$dgxXUnHj4BOOOJylw0OmoOoVpouY9ZLVrH97zaKqrXUGBcFmR.P8G', 1, 2);
 
 -- ============================================================
 -- 8. COORDINACIONES
@@ -133,22 +133,22 @@ INSERT INTO public.coordinacion (coord_id, coord_descripcion, centro_formacion_c
 -- ============================================================
 INSERT INTO public.instructor (numero_documento, inst_nombres, inst_apellidos, inst_correo, inst_telefono, centro_formacion_cent_id, inst_password, profesion, especializacion) VALUES 
 -- CIES (1)
-(101, 'Carlos Andrés',  'Peña Villamizar',    'carlos.pena@cies.sena.edu.co',      3175001001, 1, 'password', 'Ingeniero de Sistemas', 'Desarrollo Web'),
-(102, 'Diana Marcela',  'Cáceres Ortiz',      'diana.caceres@cies.sena.edu.co',    3175001002, 1, 'password', 'Ingeniera de Sistemas', 'Redes y Seguridad'),
-(103, 'Jhon Fredy',     'Rangel Sepúlveda',   'jhon.rangel@cies.sena.edu.co',      3175001003, 1, 'password', 'Ingeniero de Sistemas', 'Gestión de Proyectos'),
-(104, 'Adriana',        'Suárez Maldonado',   'adriana.suarez@cies.sena.edu.co',   3175001004, 1, 'password', 'Ingeniera Industrial', 'Procesos'),
-(105, 'Mauricio',       'Delgado Contreras',  'mauricio.delgado@cies.sena.edu.co', 3175001005, 1, 'password', 'Ingeniero Mecánico', 'Automotriz'),
-(106, 'Paola Fernanda', 'Niño Guerrero',      'paola.nino@cies.sena.edu.co',       3175001006, 1, 'password', 'Contadora Pública', 'Finanzas'),
-(107, 'Rodrigo',        'Hernández Jaimes',   'rodrigo.hernandez@cies.sena.edu.co',3175001007, 1, 'password', 'Ingeniero Eléctrico', 'Electrónica'),
-(108, 'Sonia Milena',   'Rueda Castellanos',  'sonia.rueda@cies.sena.edu.co',      3175001008, 1, 'password', 'Licenciada en Inglés', 'Bilingüismo'),
+(101, 'Carlos Andrés',  'Peña Villamizar',    'carlos.pena@cies.sena.edu.co',      3175001001, 1, '$2y$12$dgxXUnHj4BOOOJylw0OmoOoVpouY9ZLVrH97zaKqrXUGBcFmR.P8G', 'Ingeniero de Sistemas', 'Desarrollo Web'),
+(102, 'Diana Marcela',  'Cáceres Ortiz',      'diana.caceres@cies.sena.edu.co',    3175001002, 1, '$2y$12$dgxXUnHj4BOOOJylw0OmoOoVpouY9ZLVrH97zaKqrXUGBcFmR.P8G', 'Ingeniera de Sistemas', 'Redes y Seguridad'),
+(103, 'Jhon Fredy',     'Rangel Sepúlveda',   'jhon.rangel@cies.sena.edu.co',      3175001003, 1, '$2y$12$dgxXUnHj4BOOOJylw0OmoOoVpouY9ZLVrH97zaKqrXUGBcFmR.P8G', 'Ingeniero de Sistemas', 'Gestión de Proyectos'),
+(104, 'Adriana',        'Suárez Maldonado',   'adriana.suarez@cies.sena.edu.co',   3175001004, 1, '$2y$12$dgxXUnHj4BOOOJylw0OmoOoVpouY9ZLVrH97zaKqrXUGBcFmR.P8G', 'Ingeniera Industrial', 'Procesos'),
+(105, 'Mauricio',       'Delgado Contreras',  'mauricio.delgado@cies.sena.edu.co', 3175001005, 1, '$2y$12$dgxXUnHj4BOOOJylw0OmoOoVpouY9ZLVrH97zaKqrXUGBcFmR.P8G', 'Ingeniero Mecánico', 'Automotriz'),
+(106, 'Paola Fernanda', 'Niño Guerrero',      'paola.nino@cies.sena.edu.co',       3175001006, 1, '$2y$12$dgxXUnHj4BOOOJylw0OmoOoVpouY9ZLVrH97zaKqrXUGBcFmR.P8G', 'Contadora Pública', 'Finanzas'),
+(107, 'Rodrigo',        'Hernández Jaimes',   'rodrigo.hernandez@cies.sena.edu.co',3175001007, 1, '$2y$12$dgxXUnHj4BOOOJylw0OmoOoVpouY9ZLVrH97zaKqrXUGBcFmR.P8G', 'Ingeniero Eléctrico', 'Electrónica'),
+(108, 'Sonia Milena',   'Rueda Castellanos',  'sonia.rueda@cies.sena.edu.co',      3175001008, 1, '$2y$12$dgxXUnHj4BOOOJylw0OmoOoVpouY9ZLVrH97zaKqrXUGBcFmR.P8G', 'Licenciada en Inglés', 'Bilingüismo'),
 -- CEDRUM (2)
-(201, 'Fabián',         'Mora Angarita',      'fabian.mora@cedrum.sena.edu.co',    3175002001, 2, 'password', 'Ingeniero Agrónomo', 'Producción Limpia'),
-(202, 'Luz Dary',       'Quintero Pabón',     'luz.quintero@cedrum.sena.edu.co',   3175002002, 2, 'password', 'Ingeniera Ambiental', 'Tratamiento de Aguas'),
-(203, 'Néstor Iván',    'Cárdenas Flórez',    'nestor.cardenas@cedrum.sena.edu.co',3175002003, 2, 'password', 'Ingeniero Civil', 'Estructuras'),
-(204, 'Yenny Paola',    'Serrano Duarte',     'yenny.serrano@cedrum.sena.edu.co',  3175002004, 2, 'password', 'Administradora de Empresas', 'Emprendimiento'),
-(205, 'Álvaro',         'Chaparro Medina',    'alvaro.chaparro@cedrum.sena.edu.co',3175002005, 2, 'password', 'Veterinario', 'Zootecnia'),
-(206, 'Marcela',        'Torrado Becerra',    'marcela.torrado@cedrum.sena.edu.co',3175002006, 2, 'password', 'Ingeniera Química', 'Procesos Rurales'),
-(207, 'Gustavo',        'Patiño Valderrama',  'gustavo.patino@cedrum.sena.edu.co', 3175002007, 2, 'password', 'Arquitecto', 'Diseño Sostenible');
+(201, 'Fabián',         'Mora Angarita',      'fabian.mora@cedrum.sena.edu.co',    3175002001, 2, '$2y$12$dgxXUnHj4BOOOJylw0OmoOoVpouY9ZLVrH97zaKqrXUGBcFmR.P8G', 'Ingeniero Agrónomo', 'Producción Limpia'),
+(202, 'Luz Dary',       'Quintero Pabón',     'luz.quintero@cedrum.sena.edu.co',   3175002002, 2, '$2y$12$dgxXUnHj4BOOOJylw0OmoOoVpouY9ZLVrH97zaKqrXUGBcFmR.P8G', 'Ingeniera Ambiental', 'Tratamiento de Aguas'),
+(203, 'Néstor Iván',    'Cárdenas Flórez',    'nestor.cardenas@cedrum.sena.edu.co',3175002003, 2, '$2y$12$dgxXUnHj4BOOOJylw0OmoOoVpouY9ZLVrH97zaKqrXUGBcFmR.P8G', 'Ingeniero Civil', 'Estructuras'),
+(204, 'Yenny Paola',    'Serrano Duarte',     'yenny.serrano@cedrum.sena.edu.co',  3175002004, 2, '$2y$12$dgxXUnHj4BOOOJylw0OmoOoVpouY9ZLVrH97zaKqrXUGBcFmR.P8G', 'Administradora de Empresas', 'Emprendimiento'),
+(205, 'Álvaro',         'Chaparro Medina',    'alvaro.chaparro@cedrum.sena.edu.co',3175002005, 2, '$2y$12$dgxXUnHj4BOOOJylw0OmoOoVpouY9ZLVrH97zaKqrXUGBcFmR.P8G', 'Veterinario', 'Zootecnia'),
+(206, 'Marcela',        'Torrado Becerra',    'marcela.torrado@cedrum.sena.edu.co',3175002006, 2, '$2y$12$dgxXUnHj4BOOOJylw0OmoOoVpouY9ZLVrH97zaKqrXUGBcFmR.P8G', 'Ingeniera Química', 'Procesos Rurales'),
+(207, 'Gustavo',        'Patiño Valderrama',  'gustavo.patino@cedrum.sena.edu.co', 3175002007, 2, '$2y$12$dgxXUnHj4BOOOJylw0OmoOoVpouY9ZLVrH97zaKqrXUGBcFmR.P8G', 'Arquitecto', 'Diseño Sostenible');
 
 -- ============================================================
 -- 10. COMPETENCIAS (Transversales + Técnicas x10 Programas)

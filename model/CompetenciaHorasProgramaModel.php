@@ -27,14 +27,13 @@ class CompetenciaHorasProgramaModel {
         $stmt = $this->db->prepare("
             INSERT INTO competencia_horas_programa (prog_codigo, comp_id, horas_requeridas, aplica) 
             VALUES (:prog_codigo, :comp_id, :horas_requeridas, :aplica) 
-            ON CONFLICT (prog_codigo, comp_id) 
-            DO UPDATE SET horas_requeridas = EXCLUDED.horas_requeridas, aplica = EXCLUDED.aplica
+            ON DUPLICATE KEY UPDATE horas_requeridas = VALUES(horas_requeridas), aplica = VALUES(aplica)
         ");
         return $stmt->execute([
             'prog_codigo' => $prog_codigo,
             'comp_id' => $comp_id,
             'horas_requeridas' => $horas_requeridas,
-            'aplica' => $aplica ? 'true' : 'false'
+            'aplica' => $aplica ? 1 : 0
         ]);
     }
 
@@ -61,7 +60,7 @@ class CompetenciaHorasProgramaModel {
                 cxp.competencia_comp_id as comp_id,
                 c.comp_nombre_corto, c.comp_nombre_unidad_competencia,
                 COALESCE(chp.horas_requeridas, 0) as horas_requeridas,
-                COALESCE(chp.aplica, true) as aplica,
+                COALESCE(chp.aplica, 1) as aplica,
                 0 as horas_ejecutadas
             FROM competencia c
             LEFT JOIN competencia_horas_programa chp ON c.programa_prog_id = chp.prog_codigo AND c.comp_id = chp.comp_id

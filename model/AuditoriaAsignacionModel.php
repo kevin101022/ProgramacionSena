@@ -16,7 +16,7 @@ class AuditoriaAsignacionModel
                        au.instructor_inst_id, au.asig_fecha_ini, au.asig_fecha_fin, au.ficha_fich_id, 
                        au.ambiente_amb_id, au.competencia_comp_id, au.asig_id,
                        i.inst_nombres, i.inst_apellidos, am.amb_nombre, c.comp_nombre_corto, s.sede_nombre,
-                       COALESCE(au.nombre_usuario_accion, u_coord.coord_nombre_coordinador, u_cent.cent_nombre, (COALESCE(u_inst_acc.inst_nombres, '') || ' ' || COALESCE(u_inst_acc.inst_apellidos, '')), au.correo_usuario, 'Sistema') as nombre_responsable,
+                       COALESCE(au.nombre_usuario_accion, u_coord.coord_nombre_coordinador, u_cent.cent_nombre, CONCAT(COALESCE(u_inst_acc.inst_nombres, ''), ' ', COALESCE(u_inst_acc.inst_apellidos, '')), au.correo_usuario, 'Sistema') as nombre_responsable,
                        area.coord_descripcion as area_nombre, area.coord_id as area_id
                 FROM auditoria_asignacion au
                 LEFT JOIN instructor i ON au.instructor_inst_id = i.numero_documento
@@ -27,7 +27,7 @@ class AuditoriaAsignacionModel
                 LEFT JOIN COORDINACION area ON f.COORDINACION_coord_id = area.coord_id
                 -- Joins para resolver el responsable (Persona que hace la acción)
                 LEFT JOIN usuario_coordinador u_coord ON au.documento_usuario_accion = u_coord.numero_documento
-                LEFT JOIN CENTRO_FORMACION u_cent ON au.documento_usuario_accion = CAST(u_cent.cent_id AS BIGINT)
+                LEFT JOIN CENTRO_FORMACION u_cent ON au.documento_usuario_accion = CAST(u_cent.cent_id AS UNSIGNED)
                 LEFT JOIN instructor u_inst_acc ON au.documento_usuario_accion = u_inst_acc.numero_documento
                 WHERE 1=1";
 
@@ -67,7 +67,7 @@ class AuditoriaAsignacionModel
     public function find($id)
     {
         $sql = "SELECT au.*, i.inst_nombres, i.inst_apellidos, am.amb_nombre, c.comp_nombre_corto, s.sede_nombre,
-                       COALESCE(au.nombre_usuario_accion, u_coord.coord_nombre_coordinador, u_cent.cent_nombre, (COALESCE(u_inst_acc.inst_nombres, '') || ' ' || COALESCE(u_inst_acc.inst_apellidos, '')), au.correo_usuario, 'Sistema') as nombre_responsable,
+                       COALESCE(au.nombre_usuario_accion, u_coord.coord_nombre_coordinador, u_cent.cent_nombre, CONCAT(COALESCE(u_inst_acc.inst_nombres, ''), ' ', COALESCE(u_inst_acc.inst_apellidos, '')), au.correo_usuario, 'Sistema') as nombre_responsable,
                        area.coord_descripcion as area_nombre
                 FROM auditoria_asignacion au
                 LEFT JOIN instructor i ON au.instructor_inst_id = i.numero_documento
@@ -78,7 +78,7 @@ class AuditoriaAsignacionModel
                 LEFT JOIN COORDINACION area ON f.COORDINACION_coord_id = area.coord_id
                 -- Joins para resolver el responsable
                 LEFT JOIN usuario_coordinador u_coord ON au.documento_usuario_accion = u_coord.numero_documento
-                LEFT JOIN CENTRO_FORMACION u_cent ON au.documento_usuario_accion = CAST(u_cent.cent_id AS BIGINT)
+                LEFT JOIN CENTRO_FORMACION u_cent ON au.documento_usuario_accion = CAST(u_cent.cent_id AS UNSIGNED)
                 LEFT JOIN instructor u_inst_acc ON au.documento_usuario_accion = u_inst_acc.numero_documento
                 WHERE au.id_auditoria = :id";
 
