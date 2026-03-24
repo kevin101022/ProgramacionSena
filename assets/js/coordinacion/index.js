@@ -165,26 +165,38 @@ class CoordinacionManager {
         } else {
             paginated.forEach((c, index) => {
                 const tr = document.createElement('tr');
-                tr.className = 'hover:bg-slate-50 transition-all cursor-pointer group border-b border-slate-50/50';
+                tr.className = 'hover:bg-green-50/50 transition-colors cursor-pointer group';
                 tr.onclick = () => window.location.href = `ver.php?id=${c.coord_id}`;
                 tr.innerHTML = `
-                    <td class="pl-6 py-4 text-[11px] font-black text-slate-300">
+                    <td class="text-xs font-semibold text-gray-400 pl-6">
                         ${String(start + index + 1).padStart(2, '0')}
                     </td>
-                    <td class="py-4">
-                        <span class="font-black text-sm text-slate-700">${c.coord_descripcion}</span>
-                    </td>
-                    <td class="py-4">
-                        <span class="text-xs font-black text-slate-600">${c.cent_nombre || 'N/A'}</span>
-                    </td>
-                    <td class="py-4 pr-6 text-right">
-                        <div class="flex items-center justify-end gap-2 text-sena-green font-black text-[10px] opacity-0 group-hover:opacity-100 transition-all">
-                            VER DETALLE
-                            <ion-icon src="../../assets/ionicons/chevron-forward-outline.svg" class="text-lg"></ion-icon>
+                    <td>
+                        <div class="user-cell">
+                            <div class="user-avatar-sm">
+                                <ion-icon src="../../assets/ionicons/business-outline.svg"></ion-icon>
+                            </div>
+                            <div class="user-info-sm">
+                                <div class="user-name-sm">${c.coord_descripcion}</div>
+                                <div class="user-meta-sm">ID: ${c.coord_id}</div>
+                            </div>
                         </div>
                     </td>
-                </tr>
-            `;
+                    <td>
+                        <div class="contact-cell">
+                            <div class="contact-item">
+                                <ion-icon src="../../assets/ionicons/location-outline.svg"></ion-icon>
+                                <span>${c.cent_nombre || 'N/A'}</span>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="text-right pr-6">
+                        <button class="btn-more-glass" onclick="event.stopPropagation(); window.location.href='ver.php?id=${c.coord_id}'">
+                            <span>Ver más</span>
+                            <ion-icon src="../../assets/ionicons/chevron-forward-outline.svg"></ion-icon>
+                        </button>
+                    </td>
+                `;
                 tableBody.appendChild(tr);
             });
         }

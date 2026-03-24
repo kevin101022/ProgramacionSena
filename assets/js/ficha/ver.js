@@ -304,7 +304,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
                 if (response.ok) {
                     NotificationService.showSuccess('Ficha eliminada');
-                    setTimeout(() => window.location.href = 'index.php', 1500);
+                    setTimeout(() => window.location.href = window.isInstructor ? '../instructor/mi_ficha.php' : '../../routing.php?controller=ficha&action=index', 1500);
                 } else {
                     const data = await response.json();
                     NotificationService.showError(data.error || 'No se pudo eliminar');

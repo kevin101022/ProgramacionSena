@@ -32,10 +32,10 @@ class AuditoriaAsignacionModel
                 WHERE 1=1";
 
         if ($cent_id !== null && $cent_id !== '') {
-            $sql .= " AND (i.CENTRO_FORMACION_cent_id = :cent_id 
-                        OR f.COORDINACION_coord_id IN (SELECT coord_id FROM COORDINACION WHERE centro_formacion_cent_id = :cent_id)
-                        OR au.documento_usuario_accion = :cent_id
-                        OR au.documento_usuario_accion IN (SELECT numero_documento FROM usuario_coordinador WHERE centro_formacion_id = :cent_id))";
+            $sql .= " AND (i.CENTRO_FORMACION_cent_id = :cent_id1 
+                        OR f.COORDINACION_coord_id IN (SELECT coord_id FROM COORDINACION WHERE centro_formacion_cent_id = :cent_id2)
+                        OR au.documento_usuario_accion = :cent_id3
+                        OR au.documento_usuario_accion IN (SELECT numero_documento FROM usuario_coordinador WHERE centro_formacion_id = :cent_id4))";
         }
 
         if ($coord_id !== null && $coord_id !== '') {
@@ -51,7 +51,10 @@ class AuditoriaAsignacionModel
         $stmt = $this->db->prepare($sql);
 
         if ($cent_id !== null && $cent_id !== '') {
-            $stmt->bindParam(':cent_id', $cent_id);
+            $stmt->bindValue(':cent_id1', $cent_id);
+            $stmt->bindValue(':cent_id2', $cent_id);
+            $stmt->bindValue(':cent_id3', $cent_id);
+            $stmt->bindValue(':cent_id4', $cent_id);
         }
         if ($coord_id !== null && $coord_id !== '') {
             $stmt->bindParam(':coord_id', $coord_id);

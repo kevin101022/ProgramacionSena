@@ -204,26 +204,28 @@ class ReportePdfController
             if (!isset($grupos[$key])) {
                 $grupos[$key] = [
                     'key'              => $key,
-                    'fecha_inicio'     => $d['detasig_fecha'],
-                    'fecha_fin'        => $d['detasig_fecha'],
-                    'hora_ini'         => $d['detasig_hora_ini'],
-                    'hora_fin'         => $d['detasig_hora_fin'],
-                    'coordinacion'     => $d['coord_descripcion'],
+                    'fecha_inicio'     => $d['detasig_fecha'] ?? '',
+                    'fecha_fin'        => $d['detasig_fecha'] ?? '',
+                    'hora_ini'         => $d['detasig_hora_ini'] ?? '',
+                    'hora_fin'         => $d['detasig_hora_fin'] ?? '',
+                    'coordinacion'     => $d['coord_descripcion'] ?? '',
                     'ficha'            => $d['fich_id'],
-                    'competencia'      => $d['comp_nombre_corto'],
-                    'competencia_full' => $d['comp_nombre_unidad_competencia'],
-                    'instructor'       => trim($d['inst_nombres'] . ' ' . $d['inst_apellidos']),
+                    'competencia'      => $d['comp_nombre_corto'] ?? '',
+                    'competencia_full' => $d['comp_nombre_unidad_competencia'] ?? '',
+                    'instructor'       => trim(($d['inst_nombres'] ?? '') . ' ' . ($d['inst_apellidos'] ?? '')),
                     'ambiente'         => $d['amb_id']
                         ? $d['amb_id'] . ' - ' . ($d['amb_nombre'] ?? '')
                         : null,
                 ];
             } else {
-                // Extender rango de fechas
-                if ($d['detasig_fecha'] < $grupos[$key]['fecha_inicio']) {
-                    $grupos[$key]['fecha_inicio'] = $d['detasig_fecha'];
-                }
-                if ($d['detasig_fecha'] > $grupos[$key]['fecha_fin']) {
-                    $grupos[$key]['fecha_fin'] = $d['detasig_fecha'];
+                // Extender rango de fechas (solo si la fecha no es nula)
+                if (!empty($d['detasig_fecha'])) {
+                    if (empty($grupos[$key]['fecha_inicio']) || $d['detasig_fecha'] < $grupos[$key]['fecha_inicio']) {
+                        $grupos[$key]['fecha_inicio'] = $d['detasig_fecha'];
+                    }
+                    if (empty($grupos[$key]['fecha_fin']) || $d['detasig_fecha'] > $grupos[$key]['fecha_fin']) {
+                        $grupos[$key]['fecha_fin'] = $d['detasig_fecha'];
+                    }
                 }
             }
         }
@@ -355,26 +357,29 @@ class ReportePdfController
             if (!isset($grupos[$key])) {
                 $grupos[$key] = [
                     'key'              => $key,
-                    'fecha_inicio'     => $d['detasig_fecha'],
-                    'fecha_fin'        => $d['detasig_fecha'],
-                    'hora_ini'         => $d['detasig_hora_ini'],
-                    'hora_fin'         => $d['detasig_hora_fin'],
+                    'fecha_inicio'     => $d['detasig_fecha'] ?? '',
+                    'fecha_fin'        => $d['detasig_fecha'] ?? '',
+                    'hora_ini'         => $d['detasig_hora_ini'] ?? '',
+                    'hora_fin'         => $d['detasig_hora_fin'] ?? '',
                     'ficha'            => $d['fich_id'] ?? null,
-                    'competencia'      => $d['comp_nombre_corto'],
-                    'competencia_full' => $d['comp_nombre_unidad_competencia'],
+                    'competencia'      => $d['comp_nombre_corto'] ?? '',
+                    'competencia_full' => $d['comp_nombre_unidad_competencia'] ?? '',
                     'instructor'       => isset($d['inst_nombres'])
-                        ? trim($d['inst_nombres'] . ' ' . $d['inst_apellidos'])
+                        ? trim(($d['inst_nombres'] ?? '') . ' ' . ($d['inst_apellidos'] ?? ''))
                         : null,
                     'ambiente'         => isset($d['amb_id'])
                         ? $d['amb_id'] . ' - ' . ($d['amb_nombre'] ?? '')
                         : null,
                 ];
             } else {
-                if ($d['detasig_fecha'] < $grupos[$key]['fecha_inicio']) {
-                    $grupos[$key]['fecha_inicio'] = $d['detasig_fecha'];
-                }
-                if ($d['detasig_fecha'] > $grupos[$key]['fecha_fin']) {
-                    $grupos[$key]['fecha_fin'] = $d['detasig_fecha'];
+                // Solo actualizar fechas si no es nulo
+                if (!empty($d['detasig_fecha'])) {
+                    if (empty($grupos[$key]['fecha_inicio']) || $d['detasig_fecha'] < $grupos[$key]['fecha_inicio']) {
+                        $grupos[$key]['fecha_inicio'] = $d['detasig_fecha'];
+                    }
+                    if (empty($grupos[$key]['fecha_fin']) || $d['detasig_fecha'] > $grupos[$key]['fecha_fin']) {
+                        $grupos[$key]['fecha_fin'] = $d['detasig_fecha'];
+                    }
                 }
             }
         }
@@ -599,7 +604,9 @@ class ReportePdfController
                             <tr>
                                 <td class="fecha-col">
                                     <?php 
-                                    if ($asig['fecha_inicio'] === $asig['fecha_fin']) {
+                                    if (empty($asig['fecha_inicio'])) {
+                                        echo 'Sin fecha';
+                                    } elseif ($asig['fecha_inicio'] === $asig['fecha_fin']) {
                                         echo date('d/m/Y', strtotime($asig['fecha_inicio']));
                                     } else {
                                         echo date('d/m/Y', strtotime($asig['fecha_inicio'])) . 
@@ -608,8 +615,8 @@ class ReportePdfController
                                     }
                                     ?>
                                 </td>
-                                <td class="hora-col"><?php echo substr($asig['hora_ini'], 0, 5); ?></td>
-                                <td class="hora-col"><?php echo substr($asig['hora_fin'], 0, 5); ?></td>
+                                <td class="hora-col"><?php echo substr((string)($asig['hora_ini'] ?? ''), 0, 5); ?></td>
+                                <td class="hora-col"><?php echo substr((string)($asig['hora_fin'] ?? ''), 0, 5); ?></td>
                                 <?php if ($tipo === 'total'): ?>
                                     <td><?php echo htmlspecialchars($asig['coordinacion'] ?? 'N/A'); ?></td>
                                     <td><?php echo htmlspecialchars($asig['ficha'] ?? 'N/A'); ?></td>
@@ -672,18 +679,19 @@ class ReportePdfController
     {
         require_once dirname(__DIR__) . '/lib/fpdf/fpdf.php';
         
-        $pdf = new \FPDF('L', 'mm', 'A4'); // Landscape
+        $fpdfClass = 'FPDF';
+        $pdf = new $fpdfClass('L', 'mm', 'A4'); // Landscape
         $pdf->AddPage();
         $pdf->SetFont('Arial', 'B', 16);
         
         // Header
         $pdf->SetFillColor(57, 169, 0);
         $pdf->SetTextColor(255, 255, 255);
-        $pdf->Cell(0, 15, utf8_decode($titulo), 0, 1, 'C', true);
+        $pdf->Cell(0, 15, mb_convert_encoding($titulo, 'ISO-8859-1', 'UTF-8'), 0, 1, 'C', true);
         
         $pdf->SetFont('Arial', '', 10);
-        $pdf->Cell(0, 6, utf8_decode($subtitulo), 0, 1, 'C', true);
-        $pdf->Cell(0, 6, utf8_decode($info), 0, 1, 'C', true);
+        $pdf->Cell(0, 6, mb_convert_encoding($subtitulo, 'ISO-8859-1', 'UTF-8'), 0, 1, 'C', true);
+        $pdf->Cell(0, 6, mb_convert_encoding($info, 'ISO-8859-1', 'UTF-8'), 0, 1, 'C', true);
         $pdf->Ln(5);
         
         // Stats
@@ -701,7 +709,7 @@ class ReportePdfController
         $pdf->SetFont('Arial', 'B', 8);
         
         foreach ($columnas as $i => $col) {
-            $pdf->Cell($widths[$i], 8, utf8_decode($col), 1, 0, 'L', true);
+            $pdf->Cell($widths[$i], 8, mb_convert_encoding($col, 'ISO-8859-1', 'UTF-8'), 1, 0, 'L', true);
         }
         $pdf->Ln();
         
@@ -714,38 +722,40 @@ class ReportePdfController
             $pdf->SetFillColor($fill ? 249 : 255, $fill ? 250 : 255, $fill ? 251 : 255);
             
             // Fecha
-            if ($asig['fecha_inicio'] === $asig['fecha_fin']) {
+            if (empty($asig['fecha_inicio'])) {
+                $fecha = 'Sin fecha';
+            } elseif ($asig['fecha_inicio'] === $asig['fecha_fin']) {
                 $fecha = date('d/m/Y', strtotime($asig['fecha_inicio']));
             } else {
                 $fecha = date('d/m/Y', strtotime($asig['fecha_inicio'])) . ' - ' . date('d/m/Y', strtotime($asig['fecha_fin']));
             }
-            $pdf->Cell($widths[0], 7, utf8_decode($fecha), 1, 0, 'L', true);
+            $pdf->Cell($widths[0], 7, mb_convert_encoding($fecha, 'ISO-8859-1', 'UTF-8'), 1, 0, 'L', true);
             
             // Horas
-            $pdf->Cell($widths[1], 7, substr($asig['hora_ini'], 0, 5), 1, 0, 'L', true);
-            $pdf->Cell($widths[2], 7, substr($asig['hora_fin'], 0, 5), 1, 0, 'L', true);
+            $pdf->Cell($widths[1], 7, substr((string)($asig['hora_ini'] ?? ''), 0, 5), 1, 0, 'L', true);
+            $pdf->Cell($widths[2], 7, substr((string)($asig['hora_fin'] ?? ''), 0, 5), 1, 0, 'L', true);
             
             // Columnas dinámicas según tipo
             $colIndex = 3;
             if ($tipo === 'total') {
-                $pdf->Cell($widths[$colIndex], 7, utf8_decode(substr($asig['coordinacion'] ?? 'N/A', 0, 25)), 1, 0, 'L', true); $colIndex++;
-                $pdf->Cell($widths[$colIndex], 7, utf8_decode($asig['ficha'] ?? 'N/A'), 1, 0, 'L', true); $colIndex++;
-                $pdf->Cell($widths[$colIndex], 7, utf8_decode(substr($asig['competencia'], 0, 30)), 1, 0, 'L', true); $colIndex++;
-                $pdf->Cell($widths[$colIndex], 7, utf8_decode(substr($asig['instructor'] ?? 'N/A', 0, 25)), 1, 0, 'L', true); $colIndex++;
-                $pdf->Cell($widths[$colIndex], 7, utf8_decode(substr($asig['ambiente'] ?? 'N/A', 0, 15)), 1, 0, 'L', true);
+                $pdf->Cell($widths[$colIndex], 7, mb_convert_encoding(substr($asig['coordinacion'] ?? 'N/A', 0, 25), 'ISO-8859-1', 'UTF-8'), 1, 0, 'L', true); $colIndex++;
+                $pdf->Cell($widths[$colIndex], 7, mb_convert_encoding($asig['ficha'] ?? 'N/A', 'ISO-8859-1', 'UTF-8'), 1, 0, 'L', true); $colIndex++;
+                $pdf->Cell($widths[$colIndex], 7, mb_convert_encoding(substr($asig['competencia'], 0, 30), 'ISO-8859-1', 'UTF-8'), 1, 0, 'L', true); $colIndex++;
+                $pdf->Cell($widths[$colIndex], 7, mb_convert_encoding(substr($asig['instructor'] ?? 'N/A', 0, 25), 'ISO-8859-1', 'UTF-8'), 1, 0, 'L', true); $colIndex++;
+                $pdf->Cell($widths[$colIndex], 7, mb_convert_encoding(substr($asig['ambiente'] ?? 'N/A', 0, 15), 'ISO-8859-1', 'UTF-8'), 1, 0, 'L', true);
             } else {
                 if ($tipo !== 'ficha') {
-                    $pdf->Cell($widths[$colIndex], 7, utf8_decode($asig['ficha'] ?? 'N/A'), 1, 0, 'L', true);
+                    $pdf->Cell($widths[$colIndex], 7, mb_convert_encoding($asig['ficha'] ?? 'N/A', 'ISO-8859-1', 'UTF-8'), 1, 0, 'L', true);
                     $colIndex++;
                 }
-                $pdf->Cell($widths[$colIndex], 7, utf8_decode(substr($asig['competencia'], 0, 30)), 1, 0, 'L', true);
+                $pdf->Cell($widths[$colIndex], 7, mb_convert_encoding(substr($asig['competencia'], 0, 30), 'ISO-8859-1', 'UTF-8'), 1, 0, 'L', true);
                 $colIndex++;
                 if ($tipo !== 'ambiente') {
-                    $pdf->Cell($widths[$colIndex], 7, utf8_decode(substr($asig['ambiente'] ?? 'N/A', 0, 20)), 1, 0, 'L', true);
+                    $pdf->Cell($widths[$colIndex], 7, mb_convert_encoding(substr($asig['ambiente'] ?? 'N/A', 0, 20), 'ISO-8859-1', 'UTF-8'), 1, 0, 'L', true);
                     $colIndex++;
                 }
                 if ($tipo !== 'instructor') {
-                    $pdf->Cell($widths[$colIndex], 7, utf8_decode(substr($asig['instructor'] ?? 'N/A', 0, 25)), 1, 0, 'L', true);
+                    $pdf->Cell($widths[$colIndex], 7, mb_convert_encoding(substr($asig['instructor'] ?? 'N/A', 0, 25), 'ISO-8859-1', 'UTF-8'), 1, 0, 'L', true);
                 }
             }
             
@@ -757,7 +767,7 @@ class ReportePdfController
         $pdf->Ln(5);
         $pdf->SetFont('Arial', 'I', 7);
         $pdf->SetTextColor(150, 150, 150);
-        $pdf->Cell(0, 5, utf8_decode('Documento generado automáticamente por el Sistema de Programaciones SENA'), 0, 1, 'C');
+        $pdf->Cell(0, 5, mb_convert_encoding('Documento generado automáticamente por el Sistema de Programaciones SENA', 'ISO-8859-1', 'UTF-8'), 0, 1, 'C');
         
         // Output
         $pdf->Output('D', $filename);

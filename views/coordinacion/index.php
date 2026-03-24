@@ -67,29 +67,27 @@ require_once '../layouts/sidebar.php';
         </div>
 
         <!-- Data Table -->
-        <div class="table-container bg-white rounded-3xl shadow-sm overflow-hidden border border-slate-100">
-            <div class="overflow-x-auto">
-                <table class="data-table w-full text-left">
-                    <thead>
-                        <tr class="bg-slate-50/50">
-                            <th class="w-20 pl-6 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest">N°</th>
-                            <th class="py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest min-w-[200px]">Nombre del Área</th>
-                            <th class="py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest min-w-[200px]">Centro de Formación</th>
-                            <th class="pr-6 py-5 text-[10px] font-black text-slate-500 uppercase tracking-widest text-right">Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody id="coordinacionTableBody">
-                        <tr>
-                            <td colspan="3" class="text-center py-20">
-                                <div class="animate-pulse flex flex-col items-center">
-                                    <div class="w-10 h-10 border-4 border-slate-100 border-t-sena-green rounded-full animate-spin"></div>
-                                    <p class="text-sm text-slate-400 font-black mt-4 uppercase tracking-tighter">Sincronizando información...</p>
-                                </div>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+        <div class="table-container">
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th class="w-10">N°</th>
+                        <th>Nombre del Área</th>
+                        <th>Centro de Formación</th>
+                        <th class="text-right w-15">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="coordinacionTableBody">
+                    <tr>
+                        <td colspan="4" class="text-center py-20">
+                            <div class="animate-pulse flex flex-col items-center">
+                                <div class="w-10 h-10 border-4 border-slate-100 border-t-sena-green rounded-full animate-spin"></div>
+                                <p class="text-sm text-slate-400 font-black mt-4 uppercase tracking-tighter">Sincronizando información...</p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
 
             <!-- Pagination -->
             <div class="pagination-container border-t border-slate-50 p-4 md:p-6 flex flex-col sm:flex-row items-center justify-between gap-4">

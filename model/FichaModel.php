@@ -89,8 +89,9 @@ class FichaModel
 
         $params = [':fich_id' => $this->fich_id];
         if ($cent_id) {
-            $sql .= " AND (c.centro_formacion_cent_id = :cent_id OR i.centro_formacion_cent_id = :cent_id)";
-            $params[':cent_id'] = $cent_id;
+            $sql .= " AND (c.centro_formacion_cent_id = :cent_id1 OR i.centro_formacion_cent_id = :cent_id2)";
+            $params[':cent_id1'] = $cent_id;
+            $params[':cent_id2'] = $cent_id;
         }
 
         $stmt = $this->db->prepare($sql);
@@ -137,8 +138,9 @@ class FichaModel
             $where[] = "f.coordinacion_coord_id = :coord_id";
             $params[':coord_id'] = $coord_id;
         } elseif ($cent_id) {
-            $where[] = "(c.centro_formacion_cent_id = :cent_id OR i.centro_formacion_cent_id = :cent_id)";
-            $params[':cent_id'] = $cent_id;
+            $where[] = "(c.centro_formacion_cent_id = :cent_id1 OR i.centro_formacion_cent_id = :cent_id2)";
+            $params[':cent_id1'] = $cent_id;
+            $params[':cent_id2'] = $cent_id;
         }
 
         if ($where) {
@@ -211,14 +213,17 @@ class FichaModel
                     c.comp_nombre_corto,
                     c.comp_horas as comp_num_horas
                   FROM competencia c
-                  WHERE c.programa_prog_id = (SELECT programa_prog_id FROM ficha WHERE fich_id = :fich_id)
+                  WHERE c.programa_prog_id = (SELECT programa_prog_id FROM ficha WHERE fich_id = :fich_id1)
                   AND c.comp_id NOT IN (
-                      SELECT competencia_comp_id FROM asignacion WHERE ficha_fich_id = :fich_id
+                      SELECT competencia_comp_id FROM asignacion WHERE ficha_fich_id = :fich_id2
                   )
                   ORDER BY c.comp_nombre_corto ASC";
         
         $stmt = $this->db->prepare($query);
-        $stmt->execute([':fich_id' => $this->fich_id]);
+        $stmt->execute([
+            ':fich_id1' => $this->fich_id,
+            ':fich_id2' => $this->fich_id
+        ]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
