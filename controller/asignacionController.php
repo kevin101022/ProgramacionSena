@@ -79,7 +79,10 @@ class AsignacionController
                 $asig_id,
                 $dia['fecha'],
                 $dia['hora_ini'],
-                $dia['hora_fin']
+                $dia['hora_fin'],
+                $inst_id,
+                $amb_id,
+                $fich_id
             );
             if (!empty($conflicts)) {
                 $label = date('d/m/Y', strtotime($dia['fecha']));
@@ -205,23 +208,14 @@ class AsignacionController
         require_once dirname(__DIR__) . '/model/CompetenciaModel.php';
         $compModel = new CompetenciaModel($data['competencia_comp_id']);
         $compData = $compModel->read()[0] ?? null;
+        $compMaxHours = 0;
+        $totalProposedHours = array_sum($hoursByMonth);
         if ($compData) {
             $compMaxHours = (float)$compData['comp_horas'];
             $currentAssignedHours = $asigModelCheck->getCompetenceHoursAssigned($data['ficha_fich_id'], $data['competencia_comp_id'], null);
-            $totalProposedHours = array_sum($hoursByMonth);
 
             if (($currentAssignedHours + $totalProposedHours) > $compMaxHours) {
                 $this->sendResponse(['error' => "Las horas asignadas superan las horas de la competencia ($compMaxHours h). Ya tiene asignadas $currentAssignedHours h e intentas asignar $totalProposedHours h."], 400);
-                return;
-            }
-
-            // Alerta 80% (Solo si no viene confirmado)
-            $percentage = ($compMaxHours > 0) ? (($currentAssignedHours + $totalProposedHours) / $compMaxHours) * 100 : 100;
-            if ($percentage < 80 && !isset($data['confirm_80_percent'])) {
-                $this->sendResponse([
-                    'warning' => '80_percent_alert',
-                    'message' => "El porcentaje de horas programadas (" . round($percentage, 2) . "%) es menor al recomendado (80%). ¿Deseas continuar con la asignación de todos modos?"
-                ], 202);
                 return;
             }
         }
@@ -231,6 +225,31 @@ class AsignacionController
         if (!empty($dayErrors)) {
             $this->sendResponse(['error' => implode("\n", $dayErrors)], 400);
             return;
+        }
+
+        // PASO 1: Validar cruces ANTES de cualquier INSERT (asig_id = null porque aún no existe)
+        $conflicts = $this->checkDayConflicts(
+            $diasSeleccionados,
+            null,
+            $data['instructor_inst_id'],
+            $data['ambiente_amb_id'],
+            $data['ficha_fich_id']
+        );
+        if (!empty($conflicts)) {
+            $this->sendResponse(['error' => 'Cruce de horario detectado', 'details' => $conflicts], 409);
+            return;
+        }
+
+        // PASO 2: Solo si no hay cruce, verificar alerta del 80%
+        if ($compData && $compMaxHours > 0 && !isset($data['confirm_80_percent'])) {
+            $percentage = (($currentAssignedHours + $totalProposedHours) / $compMaxHours) * 100;
+            if ($percentage < 80) {
+                $this->sendResponse([
+                    'warning' => '80_percent_alert',
+                    'message' => "El porcentaje de horas programadas (" . round($percentage, 2) . "%) es menor al recomendado (80%). ¿Deseas continuar con la asignación de todos modos?"
+                ], 202);
+                return;
+            }
         }
 
         try {
@@ -251,20 +270,6 @@ class AsignacionController
             if (!$id) {
                 $this->db->rollBack();
                 $this->sendResponse(['error' => 'No se pudo crear el registro principal'], 500);
-                return;
-            }
-
-            // 4. Verificar cruces de horario por cada día
-            $conflicts = $this->checkDayConflicts(
-                $diasSeleccionados,
-                $id,
-                $data['instructor_inst_id'],
-                $data['ambiente_amb_id'],
-                $data['ficha_fich_id']
-            );
-            if (!empty($conflicts)) {
-                $this->db->rollBack();
-                $this->sendResponse(['error' => 'Cruce de horario detectado', 'details' => $conflicts], 409);
                 return;
             }
 
@@ -419,23 +424,14 @@ class AsignacionController
         require_once dirname(__DIR__) . '/model/CompetenciaModel.php';
         $compModel = new CompetenciaModel($data['competencia_comp_id']);
         $compData = $compModel->read()[0] ?? null;
+        $compMaxHours = 0;
+        $totalProposedHours = array_sum($hoursByMonth);
         if ($compData) {
             $compMaxHours = (float)$compData['comp_horas'];
             $currentAssignedHours = $asigModelCheck->getCompetenceHoursAssigned($data['ficha_fich_id'], $data['competencia_comp_id'], $data['asig_id']);
-            $totalProposedHours = array_sum($hoursByMonth);
 
             if (($currentAssignedHours + $totalProposedHours) > $compMaxHours) {
                 $this->sendResponse(['error' => "Las horas asignadas superan las horas de la competencia ($compMaxHours h). Ya tiene asignadas $currentAssignedHours h e intentas asignar $totalProposedHours h."], 400);
-                return;
-            }
-
-            // Alerta 80% (Solo si no viene confirmado)
-            $percentage = ($compMaxHours > 0) ? (($currentAssignedHours + $totalProposedHours) / $compMaxHours) * 100 : 100;
-            if ($percentage < 80 && !isset($data['confirm_80_percent'])) {
-                $this->sendResponse([
-                    'warning' => '80_percent_alert',
-                    'message' => "El porcentaje de horas programadas (" . round($percentage, 2) . "%) es menor al recomendado (80%). ¿Deseas continuar con la asignación de todos modos?"
-                ], 202);
                 return;
             }
         }
@@ -445,6 +441,31 @@ class AsignacionController
         if (!empty($dayErrors)) {
             $this->sendResponse(['error' => implode("\n", $dayErrors)], 400);
             return;
+        }
+
+        // PASO 1: Validar cruces ANTES de la transacción (asig_id excluye los propios detalles existentes)
+        $conflicts = $this->checkDayConflicts(
+            $diasSeleccionados,
+            $data['asig_id'],
+            $data['instructor_inst_id'],
+            $data['ambiente_amb_id'],
+            $data['ficha_fich_id']
+        );
+        if (!empty($conflicts)) {
+            $this->sendResponse(['error' => 'Cruce de horario detectado', 'details' => $conflicts], 409);
+            return;
+        }
+
+        // PASO 2: Solo si no hay cruce, verificar alerta del 80%
+        if ($compData && $compMaxHours > 0 && !isset($data['confirm_80_percent'])) {
+            $percentage = (($currentAssignedHours + $totalProposedHours) / $compMaxHours) * 100;
+            if ($percentage < 80) {
+                $this->sendResponse([
+                    'warning' => '80_percent_alert',
+                    'message' => "El porcentaje de horas programadas (" . round($percentage, 2) . "%) es menor al recomendado (80%). ¿Deseas continuar con la asignación de todos modos?"
+                ], 202);
+                return;
+            }
         }
 
         try {
@@ -467,23 +488,9 @@ class AsignacionController
                 return;
             }
 
-            // Borrar detalles anteriores
+            // Borrar detalles anteriores e insertar los nuevos (ya validados sin cruce)
             $stmt = $this->db->prepare("DELETE FROM DETALLExASIGNACION WHERE ASIGNACION_asig_id = :asig_id");
             $stmt->execute([':asig_id' => $data['asig_id']]);
-
-            // Verificar cruces con los nuevos días
-            $conflicts = $this->checkDayConflicts(
-                $diasSeleccionados,
-                $data['asig_id'],
-                $data['instructor_inst_id'],
-                $data['ambiente_amb_id'],
-                $data['ficha_fich_id']
-            );
-            if (!empty($conflicts)) {
-                $this->db->rollBack();
-                $this->sendResponse(['error' => 'Cruce de horario detectado', 'details' => $conflicts], 409);
-                return;
-            }
 
             // Insertar nuevos detalles
             foreach ($diasSeleccionados as $dia) {
@@ -573,6 +580,128 @@ class AsignacionController
             error_log("Error in destroy: " . $e->getMessage());
             $this->sendResponse(['error' => 'Error al eliminar: ' . $e->getMessage()], 500);
         }
+    }
+
+    public function getCalendarioFicha()
+    {
+        $fich_id = $_GET['ficha_id'] ?? null;
+        $start = $_GET['start'] ?? null;
+        $end = $_GET['end'] ?? null;
+
+        if (!$fich_id || !$start || !$end) {
+            $this->sendResponse(['events' => []]);
+            return;
+        }
+
+        $startStr = substr($start, 0, 10);
+        $endStr = substr($end, 0, 10);
+
+        $db = Conexion::getConnect();
+        $sql = "SELECT d.detasig_id, d.detasig_fecha, d.detasig_hora_ini, d.detasig_hora_fin, d.observaciones,
+                       a.ASIG_ID as asig_id, a.INSTRUCTOR_inst_id as instructor_inst_id, a.AMBIENTE_amb_id as ambiente_amb_id,
+                       a.FICHA_fich_id as ficha_fich_id, a.COMPETENCIA_comp_id as competencia_comp_id,
+                       i.inst_nombres, i.inst_apellidos, am.amb_nombre, f.fich_id as ficha_num, c.comp_nombre_corto
+                FROM DETALLExASIGNACION d
+                INNER JOIN ASIGNACION a ON d.ASIGNACION_asig_id = a.ASIG_ID
+                INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.numero_documento
+                INNER JOIN AMBIENTE am ON a.AMBIENTE_amb_id = am.amb_id
+                INNER JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
+                INNER JOIN COMPETENCIA c ON a.COMPETENCIA_comp_id = c.comp_id
+                WHERE a.FICHA_fich_id = :fich_id
+                AND d.detasig_fecha >= :start_date AND d.detasig_fecha <= :end_date";
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute([
+            ':fich_id' => $fich_id,
+            ':start_date' => $startStr,
+            ':end_date' => $endStr
+        ]);
+        $detalles = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $this->sendResponse(['events' => $detalles]);
+    }
+
+    public function getCalendarioInstructor()
+    {
+        $inst_id = $_GET['instructor_id'] ?? null;
+        $start = $_GET['start'] ?? null;
+        $end = $_GET['end'] ?? null;
+        $mes = $_GET['mes'] ?? date('m');
+        $anio = $_GET['anio'] ?? date('Y');
+
+        if (!$inst_id || !$start || !$end) {
+            $this->sendResponse(['events' => [], 'horasMes' => 0]);
+            return;
+        }
+
+        $startStr = substr($start, 0, 10);
+        $endStr = substr($end, 0, 10);
+
+        $db = Conexion::getConnect();
+        $sql = "SELECT d.detasig_id, d.detasig_fecha, d.detasig_hora_ini, d.detasig_hora_fin, d.observaciones,
+                       a.ASIG_ID as asig_id, a.INSTRUCTOR_inst_id as instructor_inst_id, a.AMBIENTE_amb_id as ambiente_amb_id,
+                       a.FICHA_fich_id as ficha_fich_id, a.COMPETENCIA_comp_id as competencia_comp_id,
+                       i.inst_nombres, i.inst_apellidos, am.amb_nombre, f.fich_id as ficha_num, c.comp_nombre_corto
+                FROM DETALLExASIGNACION d
+                INNER JOIN ASIGNACION a ON d.ASIGNACION_asig_id = a.ASIG_ID
+                INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.numero_documento
+                INNER JOIN AMBIENTE am ON a.AMBIENTE_amb_id = am.amb_id
+                INNER JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
+                INNER JOIN COMPETENCIA c ON a.COMPETENCIA_comp_id = c.comp_id
+                WHERE a.INSTRUCTOR_inst_id = :inst_id
+                AND d.detasig_fecha >= :start_date AND d.detasig_fecha <= :end_date";
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute([
+            ':inst_id' => $inst_id,
+            ':start_date' => $startStr,
+            ':end_date' => $endStr
+        ]);
+        $detalles = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $model = new AsignacionModel();
+        $horasMes = $model->getMonthlyHours($inst_id, $mes, $anio);
+
+        $this->sendResponse(['events' => $detalles, 'horasMes' => $horasMes]);
+    }
+
+    public function getCalendarioAmbiente()
+    {
+        $amb_id = $_GET['ambiente_id'] ?? null;
+        $start = $_GET['start'] ?? null;
+        $end = $_GET['end'] ?? null;
+
+        if (!$amb_id || !$start || !$end) {
+            $this->sendResponse(['events' => []]);
+            return;
+        }
+
+        $startStr = substr($start, 0, 10);
+        $endStr = substr($end, 0, 10);
+
+        $db = Conexion::getConnect();
+        $sql = "SELECT d.detasig_id, d.detasig_fecha, d.detasig_hora_ini, d.detasig_hora_fin, d.observaciones,
+                       a.ASIG_ID as asig_id, a.INSTRUCTOR_inst_id as instructor_inst_id, a.AMBIENTE_amb_id as ambiente_amb_id,
+                       a.FICHA_fich_id as ficha_fich_id, a.COMPETENCIA_comp_id as competencia_comp_id,
+                       i.inst_nombres, i.inst_apellidos, am.amb_nombre, f.fich_id as ficha_num, c.comp_nombre_corto
+                FROM DETALLExASIGNACION d
+                INNER JOIN ASIGNACION a ON d.ASIGNACION_asig_id = a.ASIG_ID
+                INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.numero_documento
+                INNER JOIN AMBIENTE am ON a.AMBIENTE_amb_id = am.amb_id
+                INNER JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
+                INNER JOIN COMPETENCIA c ON a.COMPETENCIA_comp_id = c.comp_id
+                WHERE a.AMBIENTE_amb_id = :amb_id
+                AND d.detasig_fecha >= :start_date AND d.detasig_fecha <= :end_date";
+
+        $stmt = $db->prepare($sql);
+        $stmt->execute([
+            ':amb_id' => $amb_id,
+            ':start_date' => $startStr,
+            ':end_date' => $endStr
+        ]);
+        $detalles = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        $this->sendResponse(['events' => $detalles]);
     }
 
     private function sendResponse($data, $status = 200)

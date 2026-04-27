@@ -107,9 +107,10 @@ class FichaManager {
                     programas.forEach(p => {
                         const opt = document.createElement('option');
                         opt.value = p.prog_codigo;
-                        opt.textContent = `${p.prog_codigo} - ${p.prog_denominacion}`;
+                        opt.textContent = `${p.prog_codigo} — ${p.prog_denominacion}`;
                         programaSelect.appendChild(opt);
                     });
+                    initTS('#programa_id', 'Buscar programa...');
                 }
             }
 
@@ -125,6 +126,7 @@ class FichaManager {
                         opt.textContent = `${i.inst_nombres} ${i.inst_apellidos}`;
                         instructorSelect.appendChild(opt);
                     });
+                    initTS('#instructor_id', 'Buscar instructor...');
                 }
             }
 
@@ -140,6 +142,7 @@ class FichaManager {
                         opt.textContent = c.cent_nombre ? `${c.coord_descripcion} - ${c.cent_nombre}` : c.coord_descripcion;
                         coordinacionSelect.appendChild(opt);
                     });
+                    initTS('#coordinacion_id', 'Buscar coordinación...');
                 }
             }
 

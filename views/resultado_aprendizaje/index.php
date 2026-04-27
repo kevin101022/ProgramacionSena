@@ -443,10 +443,10 @@ require_once '../layouts/sidebar.php';
                 errorDiv.classList.remove('hidden');
                 errorDiv.style.display = 'block';
             } else {
-                if (!id && data.success && faseSelec) {
-                    // Only assign to phase on creation flow for simplicity
+                if (data.success && faseSelec) {
+                    // Assign to phase regardless of if it's a new RAP or an update
                     const fdFase = new URLSearchParams();
-                    fdFase.append('rap_id', data.rap_id);
+                    fdFase.append('rap_id', id || data.rap_id);
                     fdFase.append('fase_id', faseSelec);
                     
                     await fetch(`${API_URL}&action=asignarAFase`, {

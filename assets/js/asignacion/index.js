@@ -6,7 +6,11 @@ class AsignacionManager {
     constructor() {
         this.calendar = null;
         this.fichas = [];
+        this.instructores = [];
+        this.activeTab = 'ficha';
         this.selectedFicha = null;
+        this.selectedInstructor = null;
+        this.selectedAmbiente = null;
         this.allAsignaciones = [];
         this.allCompetenciasPrograma = [];
         this.allHabilitaciones = [];
@@ -26,15 +30,62 @@ class AsignacionManager {
         this.bindEvents();
         await Promise.all([
             this.loadFichas(),
+            this.loadInstructores(),
             this.loadSedes(),
             this.loadAmbientes()
         ]);
+        
+        this.processUrlParams();
+    }
+
+    processUrlParams() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tab = urlParams.get('tab');
+        
+        if (tab) {
+            const btn = document.querySelector(`.tab-btn[data-tab="${tab}"]`);
+            if (btn) btn.click();
+            
+            setTimeout(() => {
+                if (tab === 'ficha' && urlParams.get('fich')) {
+                    const fichaSelector = document.getElementById('fichaSelector');
+                    if (fichaSelector && fichaSelector.tomselect) {
+                        fichaSelector.tomselect.setValue(urlParams.get('fich'));
+                    }
+                } else if (tab === 'instructor' && urlParams.get('inst')) {
+                    const instructorSelector = document.getElementById('instructorSelector');
+                    if (instructorSelector && instructorSelector.tomselect) {
+                        instructorSelector.tomselect.setValue(urlParams.get('inst'));
+                    }
+                }
+            }, 300);
+        }
     }
 
     bindEvents() {
+        const tabBtns = document.querySelectorAll('.tab-btn');
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => this.handleTabChange(e.target.dataset.tab));
+        });
+
         const fichaSelector = document.getElementById('fichaSelector');
         if (fichaSelector) {
             fichaSelector.addEventListener('change', () => this.handleFichaChange());
+        }
+
+        const instructorSelector = document.getElementById('instructorSelector');
+        if (instructorSelector) {
+            instructorSelector.addEventListener('change', () => this.handleInstructorTabChange());
+        }
+
+        const sedeFilter = document.getElementById('sedeFilter');
+        if (sedeFilter) {
+            sedeFilter.addEventListener('change', () => this.handleSedeFilterChange());
+        }
+
+        const ambienteSelectorTab = document.getElementById('ambienteSelectorTab');
+        if (ambienteSelectorTab) {
+            ambienteSelectorTab.addEventListener('change', () => this.handleAmbienteTabChange());
         }
 
         const addBtn = document.getElementById('addBtn');
@@ -101,8 +152,7 @@ class AsignacionManager {
                     // Reload assignments and calendar
                     const fichId = this.selectedFicha?.fich_id;
                     if (fichId) await this.loadAsignacionesFicha(fichId);
-                    await this.loadAllDetalles();
-                    this.initCalendar();
+                    if (this.calendar) this.calendar.refetchEvents();
                     this.updateDashboardStats();
                 } else {
                     const data = await res.json();
@@ -126,8 +176,7 @@ class AsignacionManager {
                 if (res.ok) {
                     NotificationService.showSuccess('Día de asignación eliminado');
                     this.closeDayEditModal();
-                    await this.loadAllDetalles();
-                    this.initCalendar();
+                    if (this.calendar) this.calendar.refetchEvents();
                     this.updateDashboardStats();
                 } else {
                     const data = await res.json();
@@ -196,14 +245,7 @@ class AsignacionManager {
                     fichaSelector.appendChild(opt);
                 });
                 
-                // Initialize TomSelect if loaded
-                if (window.TomSelect) {
-                    new TomSelect('#fichaSelector', {
-                        create: false,
-                        maxOptions: null,
-                        placeholder: 'Buscar ficha o programa...',
-                    });
-                }
+                initTS('#fichaSelector', 'Buscar ficha o programa...');
             }
 
         } catch (e) {
@@ -217,6 +259,19 @@ class AsignacionManager {
                 headers: { 'Accept': 'application/json' }
             });
             this.sedes = await res.json();
+            
+            const sedeFilter = document.getElementById('sedeFilter');
+            if (sedeFilter) {
+                this.sedes.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s.sede_id;
+                    opt.textContent = s.sede_nombre;
+                    sedeFilter.appendChild(opt);
+                });
+                if (window.initTS) {
+                    initTS('#sedeFilter', 'Filtrar por sede...');
+                }
+            }
         } catch (e) {
             console.error('Error cargando sedes:', e);
         }
@@ -265,40 +320,226 @@ class AsignacionManager {
     async handleFichaChange() {
         const fichaSelector = document.getElementById('fichaSelector');
         const fichId = fichaSelector ? fichaSelector.value : null;
+        
+        const btnFicha = document.getElementById('verDetalleFichaBtn');
 
         if (fichId) {
             this.selectedFicha = this.fichas.find(f => f.fich_id == fichId) || null;
+            if (btnFicha) {
+                btnFicha.href = `../ficha/ver.php?id=${fichId}&from=asignaciones_ficha`;
+                btnFicha.style.display = 'inline-flex';
+                btnFicha.classList.remove('hidden');
+            }
+            await Promise.all([
+                this.loadAsignacionesFicha(fichId),
+                this.loadCompetenciasPrograma(),
+                this.loadHabilitaciones()
+            ]);
+            this.updateDashboardStats();
         } else {
             this.selectedFicha = null;
+            if (btnFicha) {
+                btnFicha.style.display = 'none';
+                btnFicha.classList.add('hidden');
+            }
         }
 
-        const addBtn = document.getElementById('addBtn');
-        const calendarEl = document.getElementById('calendar');
-        const placeholder = document.getElementById('calendarPlaceholder');
+        this.updateCalendarVisibility();
+    }
 
-        if (!fichId) {
-            this.selectedFicha = null;
-            if (addBtn) addBtn.disabled = true;
-            if (calendarEl) calendarEl.style.display = 'none';
-            if (placeholder) placeholder.style.display = '';
+    handleTabChange(tabName) {
+        this.activeTab = tabName;
+        
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            if (btn.dataset.tab === tabName) {
+                btn.classList.add('active', 'bg-green-50', 'text-green-700');
+                btn.classList.remove('text-gray-500', 'hover:bg-gray-50');
+            } else {
+                btn.classList.remove('active', 'bg-green-50', 'text-green-700');
+                btn.classList.add('text-gray-500', 'hover:bg-gray-50');
+            }
+        });
+
+        document.querySelectorAll('.tab-pane').forEach(pane => {
+            pane.style.display = 'none';
+        });
+        document.getElementById(`tab-${tabName}`).style.display = 'block';
+
+        this.updateCalendarVisibility();
+    }
+
+    handleInstructorTabChange() {
+        const sel = document.getElementById('instructorSelector');
+        this.selectedInstructor = sel ? sel.value : null;
+        
+        const btnInst = document.getElementById('verDetalleInstructorBtn');
+        if (this.selectedInstructor) {
+            if (btnInst) {
+                btnInst.href = `../instructor/ver.php?id=${this.selectedInstructor}&from=asignaciones_instructor`;
+                btnInst.style.display = 'inline-flex';
+                btnInst.classList.remove('hidden');
+            }
+        } else {
+            if (btnInst) {
+                btnInst.style.display = 'none';
+                btnInst.classList.add('hidden');
+            }
+        }
+        
+        this.updateCalendarVisibility();
+    }
+
+    handleSedeFilterChange() {
+        const sedeId = document.getElementById('sedeFilter')?.value;
+        const ambSelect = document.getElementById('ambienteSelectorTab');
+        
+        ambSelect.innerHTML = '<option value="">Seleccione ambiente...</option>';
+        if (!sedeId) {
+            ambSelect.innerHTML = '<option value="">Primero seleccione sede...</option>';
+            ambSelect.disabled = true;
+            this.selectedAmbiente = null;
+            this.updateCalendarVisibility();
             return;
         }
 
-        this.selectedFicha = this.fichas.find(f => f.fich_id == fichId);
-        if (addBtn) addBtn.disabled = false;
-        if (placeholder) placeholder.style.display = 'none';
-        if (calendarEl) calendarEl.style.display = '';
+        ambSelect.disabled = false;
+        const filtered = this.ambientes.filter(a => a.sede_sede_id == sedeId);
+        if (filtered.length === 0) {
+            ambSelect.innerHTML = '<option value="">No hay ambientes en esta sede</option>';
+        } else {
+            filtered.forEach(a => {
+                const opt = document.createElement('option');
+                opt.value = a.amb_id;
+                opt.textContent = `${a.amb_id} - ${a.amb_nombre || 'Sin nombre'} (${a.tipo_ambiente || 'Convencional'})`;
+                ambSelect.appendChild(opt);
+            });
+        }
+        
+        this.selectedAmbiente = null;
+        this.updateCalendarVisibility();
+    }
 
-        await Promise.all([
-            this.loadAsignacionesFicha(fichId),
-            this.loadCompetenciasPrograma(),
-            this.loadHabilitaciones()
-        ]);
+    handleAmbienteTabChange() {
+        const sel = document.getElementById('ambienteSelectorTab');
+        this.selectedAmbiente = sel ? sel.value : null;
+        this.updateCalendarVisibility();
+    }
 
-        // Load all detail events for the calendar
-        await this.loadAllDetalles();
-        this.initCalendar();
-        this.updateDashboardStats();
+    updateCalendarVisibility() {
+        const addBtn = document.getElementById('addBtn');
+        const calendarEl = document.getElementById('calendar');
+        const placeholder = document.getElementById('calendarPlaceholder');
+        const title = document.getElementById('placeholderTitle');
+        const subtitle = document.getElementById('placeholderSubtitle');
+        const statsGrid = document.querySelector('.stats-grid');
+
+        let isSelected = false;
+
+        if (this.activeTab === 'ficha' && this.selectedFicha) {
+            isSelected = true;
+        } else if (this.activeTab === 'instructor' && this.selectedInstructor) {
+            isSelected = true;
+        } else if (this.activeTab === 'ambiente' && this.selectedAmbiente) {
+            isSelected = true;
+        }
+
+        if (statsGrid) {
+            statsGrid.style.display = this.activeTab === 'ficha' ? 'grid' : 'none';
+        }
+
+        if (isSelected) {
+            addBtn.disabled = false;
+            placeholder.style.display = 'none';
+            calendarEl.style.display = '';
+            
+            if (!this.calendar) {
+                this.initCalendar();
+            } else {
+                // Must call render to recalculate dimensions after being display:none
+                this.calendar.render();
+                this.calendar.refetchEvents();
+            }
+        } else {
+            addBtn.disabled = true;
+            calendarEl.style.display = 'none';
+            placeholder.style.display = '';
+            
+            if (this.activeTab === 'ficha') {
+                if(title) title.textContent = 'Seleccione una ficha';
+                if(subtitle) subtitle.textContent = 'El calendario se cargará con las asignaciones de la ficha seleccionada';
+            } else if (this.activeTab === 'instructor') {
+                if(title) title.textContent = 'Seleccione un instructor';
+                if(subtitle) subtitle.textContent = 'El calendario se cargará con las asignaciones del instructor seleccionado';
+                this.updateInstructorProgress(0, true);
+            } else if (this.activeTab === 'ambiente') {
+                if(title) title.textContent = 'Seleccione un ambiente';
+                if(subtitle) subtitle.textContent = 'El calendario se cargará con la ocupación del ambiente seleccionado';
+            }
+        }
+    }
+
+    updateInstructorProgress(horas, reset = false) {
+        const bar = document.getElementById('instructorProgressBar');
+        const text = document.getElementById('instructorProgressText');
+        if (!bar || !text) return;
+        
+        if (reset) {
+            bar.style.width = '0%';
+            bar.className = 'h-3 rounded-full transition-all duration-500 bg-gray-400';
+            text.textContent = 'Seleccione un instructor para ver sus horas mensuales asignadas';
+            return;
+        }
+
+        const limit = 160;
+        let percentage = (horas / limit) * 100;
+        
+        // Colores: Verde < 80% (128h), Amarillo 80-100%, Rojo > 100% (160h)
+        if (percentage < 80) {
+            bar.className = 'h-3 rounded-full transition-all duration-500 bg-green-500';
+        } else if (percentage <= 100) {
+            bar.className = 'h-3 rounded-full transition-all duration-500 bg-yellow-400';
+        } else {
+            bar.className = 'h-3 rounded-full transition-all duration-500 bg-red-500';
+        }
+
+        if (percentage > 100) percentage = 100;
+        bar.style.width = `${percentage}%`;
+        
+        if (horas > limit) {
+            const exceso = (horas - limit).toFixed(1);
+            text.textContent = `${horas}h / ${limit}h (¡Superó el límite por ${exceso}h!)`;
+            text.className = 'text-xs font-medium text-red-600 mt-2 block';
+        } else {
+            const faltan = (limit - horas).toFixed(1);
+            text.textContent = `${horas}h / ${limit}h (Faltan ${faltan}h para completar el mes)`;
+            text.className = 'text-xs font-medium text-gray-600 mt-2 block';
+        }
+    }
+
+    async loadInstructores() {
+        try {
+            const res = await fetch('../../routing.php?controller=instructor&action=index', {
+                headers: { 'Accept': 'application/json' }
+            });
+            this.instructores = await res.json();
+            
+            const instSelect = document.getElementById('instructorSelector');
+            if (instSelect) {
+                this.instructores.forEach(i => {
+                    const opt = document.createElement('option');
+                    const docId = i.numero_documento || i.inst_id;
+                    opt.value = docId;
+                    opt.textContent = `${i.inst_nombres} ${i.inst_apellidos} — CC: ${docId}`;
+                    instSelect.appendChild(opt);
+                });
+                
+                if (window.initTS) {
+                    initTS('#instructorSelector', 'Buscar instructor...');
+                }
+            }
+        } catch (e) {
+            console.error('Error cargando instructores:', e);
+        }
     }
 
     updateDashboardStats() {
@@ -335,26 +576,6 @@ class AsignacionManager {
             if (totalLabel) totalLabel.textContent = this.allAsignaciones.length;
         } catch (e) {
             console.error('Error:', e);
-        }
-    }
-
-    async loadAllDetalles() {
-        this.allDetalles = [];
-        try {
-            for (const asig of this.allAsignaciones) {
-                const res = await fetch(`../../routing.php?controller=detalle_asignacion&action=index&asig_id=${asig.asig_id}&_=${Date.now()}`, {
-                    headers: { 'Accept': 'application/json' }
-                });
-                const detalles = await res.json();
-                if (Array.isArray(detalles)) {
-                    detalles.forEach(d => {
-                        d._asig = asig; // attach parent assignment info
-                    });
-                    this.allDetalles.push(...detalles);
-                }
-            }
-        } catch (e) {
-            console.error('Error cargando detalles:', e);
         }
     }
 
@@ -397,24 +618,6 @@ class AsignacionManager {
         if (!calendarEl) return;
         if (this.calendar) this.calendar.destroy();
 
-        // Build events from DETAILS (individual days) instead of just assignment ranges
-        const events = this.allDetalles.map((d, i) => {
-            const asig = d._asig;
-            const colorIndex = this.allAsignaciones.findIndex(a => a.asig_id == asig.asig_id);
-            const horaIni = this.formatTime(d.detasig_hora_ini);
-            const horaFin = this.formatTime(d.detasig_hora_fin);
-
-            return {
-                id: `det_${d.detasig_id}`,
-                title: `${horaIni}-${horaFin} | ${asig.comp_nombre_corto || 'Comp.'} — ${asig.inst_nombres || ''} ${asig.inst_apellidos || ''} (Amb. ${asig.ambiente_amb_id || ''})`,
-                start: d.detasig_fecha,
-                allDay: true,
-                backgroundColor: this.COLORS[colorIndex % this.COLORS.length],
-                borderColor: this.COLORS[colorIndex % this.COLORS.length],
-                extendedProps: { ...d, asig }
-            };
-        });
-
         this.calendar = new FullCalendar.Calendar(calendarEl, {
             locale: 'es',
             initialView: 'dayGridMonth',
@@ -423,7 +626,70 @@ class AsignacionManager {
                 center: 'title',
                 right: 'dayGridMonth,timeGridWeek,listWeek'
             },
-            events: events,
+            events: async (fetchInfo, successCallback, failureCallback) => {
+                let url = '';
+                let params = new URLSearchParams({
+                    start: fetchInfo.startStr,
+                    end: fetchInfo.endStr
+                });
+                
+                const midDate = new Date((fetchInfo.start.getTime() + fetchInfo.end.getTime()) / 2);
+                params.append('mes', midDate.getMonth() + 1);
+                params.append('anio', midDate.getFullYear());
+
+                if (this.activeTab === 'ficha' && this.selectedFicha) {
+                    params.append('ficha_id', this.selectedFicha.fich_id);
+                    url = `../../routing.php?controller=asignacion&action=getCalendarioFicha&${params.toString()}`;
+                } else if (this.activeTab === 'instructor' && this.selectedInstructor) {
+                    params.append('instructor_id', this.selectedInstructor);
+                    url = `../../routing.php?controller=asignacion&action=getCalendarioInstructor&${params.toString()}`;
+                } else if (this.activeTab === 'ambiente' && this.selectedAmbiente) {
+                    params.append('ambiente_id', this.selectedAmbiente);
+                    url = `../../routing.php?controller=asignacion&action=getCalendarioAmbiente&${params.toString()}`;
+                } else {
+                    successCallback([]);
+                    return;
+                }
+
+                try {
+                    const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+                    const data = await res.json();
+                    
+                    if (this.activeTab === 'instructor' && data.horasMes !== undefined) {
+                        this.updateInstructorProgress(data.horasMes);
+                    }
+
+                    const rawEvents = data.events || data;
+                    const events = rawEvents.map((d) => {
+                        const asigIdNum = parseInt(d.asig_id, 10) || 0;
+                        const horaIni = this.formatTime(d.detasig_hora_ini);
+                        const horaFin = this.formatTime(d.detasig_hora_fin);
+                        
+                        let titleText = '';
+                        if (this.activeTab === 'ficha') {
+                            titleText = `${horaIni}-${horaFin} | ${d.comp_nombre_corto || 'Comp.'} — ${d.inst_nombres || ''} (Amb. ${d.ambiente_amb_id || ''})`;
+                        } else if (this.activeTab === 'instructor') {
+                            titleText = `${horaIni}-${horaFin} | ${d.comp_nombre_corto || 'Comp.'} — Ficha: ${d.ficha_num || ''} (Amb. ${d.ambiente_amb_id || ''})`;
+                        } else {
+                            titleText = `${horaIni}-${horaFin} | ${d.comp_nombre_corto || 'Comp.'} — ${d.inst_nombres || ''} (Ficha: ${d.ficha_num || ''})`;
+                        }
+
+                        return {
+                            id: `det_${d.detasig_id}`,
+                            title: titleText,
+                            start: d.detasig_fecha,
+                            allDay: true,
+                            backgroundColor: this.COLORS[asigIdNum % this.COLORS.length],
+                            borderColor: this.COLORS[asigIdNum % this.COLORS.length],
+                            extendedProps: { ...d, asig: d }
+                        };
+                    });
+                    successCallback(events);
+                } catch (e) {
+                    console.error('Error fetching events:', e);
+                    failureCallback(e);
+                }
+            },
             dateClick: (info) => this.handleDateClick(info),
             eventClick: (info) => this.handleEventClick(info),
             height: 'auto',
@@ -541,8 +807,7 @@ class AsignacionManager {
                 NotificationService.showSuccess('Horario actualizado');
                 this.closeDayEditModal();
                 // Reload data from server then re-render calendar
-                await this.loadAllDetalles();
-                this.initCalendar();
+                if (this.calendar) this.calendar.refetchEvents();
                 this.updateDashboardStats();
             } else if (res.status === 409) {
                 const result = await res.json();
@@ -563,23 +828,151 @@ class AsignacionManager {
         }
     }
 
+    async handleModalFichaChange() {
+        const fichaId = document.getElementById('modal_ficha_id')?.value;
+        const compSelect = document.getElementById('competencia_id');
+        const instSelect = document.getElementById('instructor_id');
+        
+        if (!compSelect || !instSelect) return;
+
+        compSelect.innerHTML = '<option value="">Cargando competencias...</option>';
+        instSelect.innerHTML = '<option value="">Primero seleccione competencia...</option>';
+        instSelect.disabled = true;
+
+        if (!fichaId) {
+            compSelect.innerHTML = '<option value="">Primero seleccione ficha...</option>';
+            if (window.refreshTS) {
+                refreshTS('#competencia_id', [], 'Primero seleccione ficha...');
+            }
+            return;
+        }
+
+        const ficha = this.fichas.find(f => f.fich_id == fichaId);
+        if (!ficha) return;
+
+        const progId = ficha.programa_prog_codigo || ficha.programa_prog_id;
+        
+        try {
+            const [resComp, resHab] = await Promise.all([
+                fetch(`../../routing.php?controller=competencia&action=getByPrograma&prog_id=${progId}`, { headers: { 'Accept': 'application/json' } }),
+                fetch('../../routing.php?controller=instru_competencia&action=index', { headers: { 'Accept': 'application/json' } })
+            ]);
+            
+            this.allCompetenciasPrograma = await resComp.json();
+            this.allHabilitaciones = await resHab.json();
+            
+            // Load available competencias (not already assigned to this ficha)
+            const asigIdInput = document.getElementById('asig_id')?.value;
+            // Fetch asignaciones for this specific ficha to filter out already assigned comps
+            const resAsig = await fetch('../../routing.php?controller=asignacion&action=index', { headers: { 'Accept': 'application/json' } });
+            const dataAsig = await resAsig.json();
+            this.allAsignaciones = (Array.isArray(dataAsig) ? dataAsig : []).filter(
+                a => a.ficha_fich_id == fichaId || a.fich_id == fichaId
+            );
+
+            const assignedCompIds = this.allAsignaciones
+                .filter(a => !asigIdInput || a.asig_id != asigIdInput)
+                .map(a => a.competencia_comp_id);
+                
+            let availableComps = (Array.isArray(this.allCompetenciasPrograma) ? this.allCompetenciasPrograma : []).filter(c => !assignedCompIds.includes(c.comp_id));
+
+            // Si estamos en la pestaña Instructor y creando una nueva asignación, filtramos las competencias a SOLO las que este instructor puede dictar
+            if (this.activeTab === 'instructor' && this.selectedInstructor && (!asigIdInput || asigIdInput === '')) {
+                const habilitacionesInst = this.allHabilitaciones.filter(h => h.instructor_inst_id == this.selectedInstructor);
+                const compIdsHab = habilitacionesInst.map(h => h.competencia_comp_id);
+                availableComps = availableComps.filter(c => compIdsHab.includes(c.comp_id));
+            }
+
+            const compOpts = availableComps.length === 0
+                ? [{ value: '', text: 'No hay competencias pendientes (o habilitadas para el instructor)' }]
+                : [{ value: '', text: 'Seleccione competencia...' }, ...availableComps.map(c => ({ value: c.comp_id, text: c.comp_nombre_corto || c.comp_nombre_unidad_competencia }))];
+            
+            if (window.refreshTS) {
+                refreshTS('#competencia_id', compOpts, 'Buscar competencia...');
+            }
+            
+            // Auto-seleccionar si solo hay 1 competencia disponible para el instructor
+            if (this.activeTab === 'instructor' && this.selectedInstructor && availableComps.length === 1 && (!asigIdInput || asigIdInput === '')) {
+                setTimeout(() => {
+                    const compSelect = document.getElementById('competencia_id');
+                    if (compSelect) {
+                        if (compSelect.tomselect) {
+                            compSelect.tomselect.setValue(availableComps[0].comp_id);
+                        } else {
+                            compSelect.value = availableComps[0].comp_id;
+                        }
+                        this.handleCompetenciaChange();
+                    }
+                }, 100);
+            }
+
+        } catch(e) {
+            console.error('Error cargando data de ficha para modal:', e);
+        }
+    }
+
     openModal(asig = null, startDate = null, endDate = null) {
         const modal = document.getElementById('asignacionModal');
         const form = document.getElementById('asignacionForm');
-        if (!form || !this.selectedFicha) return;
+        if (!form) return;
         form.reset();
 
         const modalTitle = document.getElementById('modalTitle');
         const asigIdInput = document.getElementById('asig_id');
-        const fichaInput = document.getElementById('modal_ficha_id');
-        const fichaDisplay = document.getElementById('fichaDisplay');
+        const fichaSelect = document.getElementById('modal_ficha_id');
         const fechaIni = document.getElementById('asig_fecha_ini');
         const fechaFin = document.getElementById('asig_fecha_fin');
         const competenciaSelect = document.getElementById('competencia_id');
         const instructorSelect = document.getElementById('instructor_id');
+        const sedeSelect = document.getElementById('sede_id');
+        const ambienteSelect = document.getElementById('ambiente_id');
 
-        if (fichaInput) fichaInput.value = this.selectedFicha.fich_id;
-        if (fichaDisplay) fichaDisplay.value = `Ficha ${this.selectedFicha.fich_id} — ${this.selectedFicha.prog_denominacion || this.selectedFicha.titpro_nombre || ''}`;
+        // Populate and init Ficha TomSelect
+        if (fichaSelect) {
+            fichaSelect.innerHTML = '<option value="">Seleccione una ficha...</option>';
+            const fichOpts = [{ value: '', text: 'Seleccione una ficha...' }];
+            this.fichas.forEach(f => {
+                fichOpts.push({
+                    value: f.fich_id,
+                    text: `Ficha ${f.fich_id} — ${f.prog_denominacion || f.titpro_nombre || ''}`
+                });
+            });
+            if (window.initTS) {
+                initTS('#modal_ficha_id', 'Seleccione una ficha...');
+                refreshTS('#modal_ficha_id', fichOpts, 'Seleccione una ficha...');
+            }
+            
+            // Add event listener only once
+            if (!fichaSelect.dataset.bound) {
+                fichaSelect.addEventListener('change', () => this.handleModalFichaChange());
+                fichaSelect.dataset.bound = 'true';
+            }
+
+            if (asig) {
+                fichaSelect.value = asig.ficha_fich_id;
+                if(fichaSelect.tomselect) {
+                    fichaSelect.tomselect.setValue(asig.ficha_fich_id);
+                    fichaSelect.tomselect.disable();
+                } else {
+                    fichaSelect.disabled = true;
+                }
+            } else if (this.activeTab === 'ficha' && this.selectedFicha) {
+                fichaSelect.value = this.selectedFicha.fich_id;
+                if(fichaSelect.tomselect) {
+                    fichaSelect.tomselect.setValue(this.selectedFicha.fich_id);
+                    fichaSelect.tomselect.enable();
+                } else {
+                    fichaSelect.disabled = false;
+                }
+            } else {
+                if(fichaSelect.tomselect) {
+                    fichaSelect.tomselect.clear();
+                    fichaSelect.tomselect.enable();
+                } else {
+                    fichaSelect.disabled = false;
+                }
+            }
+        }
 
         if (startDate && fechaIni) fechaIni.value = startDate;
         if (endDate && fechaFin) {
@@ -603,33 +996,44 @@ class AsignacionManager {
             }
         }
 
-        // Load available competencias (not already assigned to this ficha)
-        const assignedCompIds = this.allAsignaciones
-            .filter(a => !asig || a.asig_id != asig?.asig_id)
-            .map(a => a.competencia_comp_id);
-        const availableComps = this.allCompetenciasPrograma.filter(c => !assignedCompIds.includes(c.comp_id));
-
-        if (competenciaSelect) {
-            competenciaSelect.innerHTML = '<option value="">Seleccione competencia...</option>';
-            if (availableComps.length === 0) {
-                competenciaSelect.innerHTML = '<option value="">Todas las competencias asignadas</option>';
-            } else {
-                availableComps.forEach(c => {
-                    const opt = document.createElement('option');
-                    opt.value = c.comp_id;
-                    opt.textContent = c.comp_nombre_corto || c.comp_nombre_unidad_competencia;
-                    competenciaSelect.appendChild(opt);
-                });
-            }
+        if (competenciaSelect && !asig) {
+            refreshTS('#competencia_id', [{ value: '', text: 'Primero seleccione ficha...' }], 'Buscar competencia...');
         }
 
         if (instructorSelect) {
             instructorSelect.innerHTML = '<option value="">Primero seleccione competencia...</option>';
             instructorSelect.disabled = true;
         }
+        
+        const instGroup = document.getElementById('instructor_form_group');
+        if (instGroup) {
+            if (this.activeTab === 'instructor') {
+                instGroup.style.display = 'none';
+            } else {
+                instGroup.style.display = 'block';
+            }
+        }
+        
+        const fichaGroup = fichaSelect ? fichaSelect.closest('.form-group') : null;
+        if (fichaGroup) {
+            if (this.activeTab === 'ficha') {
+                fichaGroup.style.display = 'none';
+            } else {
+                fichaGroup.style.display = 'block';
+            }
+        }
 
-        const sedeSelect = document.getElementById('sede_id');
-        const ambienteSelect = document.getElementById('ambiente_id');
+        const sedeGroup = document.getElementById('sede_form_group');
+        const ambGroup = document.getElementById('ambiente_form_group');
+        if (sedeGroup && ambGroup) {
+            if (this.activeTab === 'ambiente') {
+                sedeGroup.style.display = 'none';
+                ambGroup.style.display = 'none';
+            } else {
+                sedeGroup.style.display = 'block';
+                ambGroup.style.display = 'block';
+            }
+        }
 
         if (sedeSelect) {
             sedeSelect.innerHTML = '<option value="">Seleccione sede...</option>';
@@ -654,26 +1058,48 @@ class AsignacionManager {
                 }
             }
 
-            // Pre-select competencia and instructor for edit
-            if (competenciaSelect) {
-                // Add current competencia if not already in the list
-                const currentCompInList = Array.from(competenciaSelect.options).some(o => o.value == asig.competencia_comp_id);
-                if (!currentCompInList) {
-                    const opt = document.createElement('option');
-                    opt.value = asig.competencia_comp_id;
-                    opt.textContent = asig.comp_nombre_corto || 'Competencia actual';
-                    competenciaSelect.appendChild(opt);
+            // Fire Ficha change to load competencies, then preselect
+            this.handleModalFichaChange().then(() => {
+                if (competenciaSelect) {
+                    const currentCompInList = Array.from(competenciaSelect.options).some(o => o.value == asig.competencia_comp_id);
+                    if (!currentCompInList) {
+                        if (competenciaSelect.tomselect) {
+                             competenciaSelect.tomselect.addOption({value: asig.competencia_comp_id, text: asig.comp_nombre_corto || 'Competencia actual'});
+                        } else {
+                             const opt = document.createElement('option');
+                             opt.value = asig.competencia_comp_id;
+                             opt.textContent = asig.comp_nombre_corto || 'Competencia actual';
+                             competenciaSelect.appendChild(opt);
+                        }
+                    }
+                    if (competenciaSelect.tomselect) {
+                        competenciaSelect.tomselect.setValue(asig.competencia_comp_id);
+                    } else {
+                        competenciaSelect.value = asig.competencia_comp_id;
+                    }
+                    this.handleCompetenciaChange();
+                    setTimeout(() => {
+                        if (instructorSelect) instructorSelect.value = asig.instructor_inst_id;
+                    }, 100);
                 }
-                competenciaSelect.value = asig.competencia_comp_id;
-                this.handleCompetenciaChange();
-                setTimeout(() => {
-                    if (instructorSelect) instructorSelect.value = asig.instructor_inst_id;
-                }, 100);
-            }
+            });
+
         } else {
             if (modalTitle) modalTitle.textContent = 'Nueva Asignación';
             if (asigIdInput) asigIdInput.value = '';
             if (ambienteSelect) ambienteSelect.innerHTML = '<option value="">Primero seleccione sede...</option>';
+            
+            // Pre-fill fields based on active tab
+            if (this.activeTab === 'ambiente' && this.selectedAmbiente && sedeSelect) {
+                const amb = this.ambientes.find(a => a.amb_id == this.selectedAmbiente);
+                if (amb) {
+                    sedeSelect.value = amb.sede_sede_id;
+                    this.handleSedeChange(this.selectedAmbiente);
+                }
+            }
+            if (this.activeTab === 'ficha' && this.selectedFicha) {
+                this.handleModalFichaChange();
+            }
         }
 
         // Clear previous conflict alerts
@@ -846,38 +1272,60 @@ class AsignacionManager {
     handleCompetenciaChange() {
         const competenciaSelect = document.getElementById('competencia_id');
         const instructorSelect = document.getElementById('instructor_id');
+        const fichaSelect = document.getElementById('modal_ficha_id');
         const compId = competenciaSelect.value;
+        const fichaId = fichaSelect ? fichaSelect.value : null;
 
         if (!instructorSelect) return;
 
-        if (!compId) {
+        if (!compId || !fichaId) {
             instructorSelect.innerHTML = '<option value="">Primero seleccione competencia...</option>';
             instructorSelect.disabled = true;
             return;
         }
 
-        const progId = this.selectedFicha.programa_prog_codigo || this.selectedFicha.programa_prog_id;
+        const ficha = this.fichas.find(f => f.fich_id == fichaId);
+        if (!ficha) return;
+
+        const progId = ficha.programa_prog_codigo || ficha.programa_prog_id;
         const habilitados = this.allHabilitaciones.filter(h =>
-            h.competencia_comp_id == compId &&
-            h.programa_prog_id == progId
+            h.competencia_comp_id == compId
         );
 
         instructorSelect.innerHTML = '<option value="">Seleccione instructor...</option>';
         if (habilitados.length === 0) {
-            instructorSelect.innerHTML = '<option value="">Sin instructores habilitados</option>';
+            refreshTS('#instructor_id', [{ value: '', text: 'Sin instructores habilitados' }], 'Buscar instructor...');
             instructorSelect.disabled = true;
         } else {
             const seen = new Set();
+            const instOpts = [{ value: '', text: 'Seleccione instructor...' }];
             habilitados.forEach(h => {
                 if (!seen.has(h.instructor_inst_id)) {
                     seen.add(h.instructor_inst_id);
-                    const opt = document.createElement('option');
-                    opt.value = h.instructor_inst_id;
-                    opt.textContent = `${h.inst_nombres} ${h.inst_apellidos}`;
-                    instructorSelect.appendChild(opt);
+                    instOpts.push({ value: h.instructor_inst_id, text: `${h.inst_nombres} ${h.inst_apellidos}` });
                 }
             });
+            refreshTS('#instructor_id', instOpts, 'Buscar instructor...');
             instructorSelect.disabled = false;
+            
+            // Si el tab activo es Instructor y este instructor está en la lista de habilitados, pre-seleccionar y bloquear
+            if (this.activeTab === 'instructor' && this.selectedInstructor) {
+                const isHabilitado = habilitados.some(h => h.instructor_inst_id == this.selectedInstructor);
+                if (isHabilitado) {
+                    if (instructorSelect.tomselect) {
+                        instructorSelect.tomselect.setValue(this.selectedInstructor);
+                        instructorSelect.tomselect.enable();
+                    } else {
+                        instructorSelect.value = this.selectedInstructor;
+                        instructorSelect.disabled = false;
+                    }
+                    
+                    const instGroup = document.getElementById('instructor_form_group');
+                    if (instGroup) {
+                        instGroup.style.display = 'none';
+                    }
+                }
+            }
         }
     }
 
@@ -990,9 +1438,9 @@ class AsignacionManager {
                         if (resRetry.ok) {
                             NotificationService.showSuccess(id ? '¡Asignación actualizada!' : '¡Asignación registrada!');
                             this.closeModal();
-                            await this.loadAsignacionesFicha(this.selectedFicha.fich_id);
-                            await this.loadAllDetalles();
-                            this.initCalendar();
+                            const fichId = this.selectedFicha?.fich_id;
+                            if (fichId) await this.loadAsignacionesFicha(fichId);
+                            if (this.calendar) this.calendar.refetchEvents();
                             this.updateDashboardStats();
                         } else {
                             NotificationService.showError(resultRetry.error || 'Error al guardar.');
@@ -1013,9 +1461,9 @@ class AsignacionManager {
             } else if (res.ok) {
                 NotificationService.showSuccess(id ? '¡Asignación actualizada!' : '¡Asignación registrada!');
                 this.closeModal();
-                await this.loadAsignacionesFicha(this.selectedFicha.fich_id);
-                await this.loadAllDetalles();
-                this.initCalendar();
+                const fichId = this.selectedFicha?.fich_id;
+                if (fichId) await this.loadAsignacionesFicha(fichId);
+                if (this.calendar) this.calendar.refetchEvents();
                 this.updateDashboardStats();
             } else if (res.status === 409) {
                 this.showConflictAlert(result.details || [], result.error);

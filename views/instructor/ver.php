@@ -10,6 +10,10 @@ if ($rol === 'instructor') {
 } else {
     require_once '../layouts/sidebar.php';
     $backUrl = 'index.php';
+    if (isset($_GET['from']) && $_GET['from'] === 'asignaciones_instructor') {
+        $id = $_GET['id'] ?? '';
+        $backUrl = "../asignacion/index.php?tab=instructor&inst={$id}";
+    }
 }
 ?>
 
@@ -78,15 +82,11 @@ if ($rol === 'instructor') {
                                 <ion-icon src="../../assets/ionicons/school-outline.svg" class="text-sena-green text-lg"></ion-icon>
                                 <span id="instEspecializacion" class="text-gray-600">--</span>
                             </div>
-                            <div class="flex items-center gap-3 text-sm">
-                                <ion-icon src="../../assets/ionicons/book-outline.svg" class="text-sena-green text-lg"></ion-icon>
-                                <span id="instEspecialidad" class="text-gray-600">--</span>
-                            </div>
                         </div>
 
                         <?php
                         $rol = $_SESSION['rol'] ?? 'centro';
-                        if ($rol === 'centro'): ?>
+                        if (in_array($rol, ['centro', 'coordinador'])): ?>
                             <div class="mt-8 flex flex-col gap-3">
                                 <a href="#" id="editBtn" class="btn-primary w-full justify-center">
                                     <ion-icon src="../../assets/ionicons/create-outline.svg"></ion-icon>
@@ -135,6 +135,21 @@ if ($rol === 'instructor') {
                     </div>
                 </div>
 
+                <!-- Competencias Habilitadas -->
+                <div id="competenciasSection" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden" style="display: none;">
+                    <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
+                        <h3 class="font-bold text-gray-800 flex items-center gap-2">
+                            <ion-icon src="../../assets/ionicons/ribbon-outline.svg" class="text-blue-500"></ion-icon>
+                            Competencias Habilitadas
+                        </h3>
+                    </div>
+                    <div class="p-5">
+                        <div id="competenciasList" class="space-y-3">
+                            <p class="text-sm text-gray-500 text-center py-4 italic">Cargando competencias...</p>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Fichas Líder -->
                 <div id="fichasSection" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden" style="display: none;">
                     <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
@@ -161,21 +176,6 @@ if ($rol === 'instructor') {
                     <div class="p-5">
                         <div id="asignacionesList" class="space-y-3">
                             <p class="text-sm text-gray-500 text-center py-4 italic">Cargando asignaciones...</p>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Competencias Habilitadas -->
-                <div id="competenciasSection" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden" style="display: none;">
-                    <div class="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50/50">
-                        <h3 class="font-bold text-gray-800 flex items-center gap-2">
-                            <ion-icon src="../../assets/ionicons/ribbon-outline.svg" class="text-blue-500"></ion-icon>
-                            Competencias Habilitadas
-                        </h3>
-                    </div>
-                    <div class="p-5">
-                        <div id="competenciasList" class="space-y-3">
-                            <p class="text-sm text-gray-500 text-center py-4 italic">Cargando competencias...</p>
                         </div>
                     </div>
                 </div>

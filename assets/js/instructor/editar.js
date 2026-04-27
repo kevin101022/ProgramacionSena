@@ -20,32 +20,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         return await response.json();
     };
 
-    // 1. Cargar Catálogo de Programas
-    const loadProgramas = async () => {
-        try {
-            const programas = await fetchAPI('../../routing.php?controller=competencia&action=getProgramas');
-            programaSelect.innerHTML = '<option value="">-- Seleccione un Programa --</option>';
-            programas.forEach(p => {
-                const opt = document.createElement('option');
-                opt.value = p.prog_codigo;
-                opt.textContent = `${p.prog_codigo} - ${p.prog_denominacion}`;
-                programaSelect.appendChild(opt);
-            });
-        } catch (error) {
-            console.error('Error cargando programas:', error);
-        }
-    };
-
-    // 2. Cargar Competencias por Programa
-    const loadCompetenciasByPrograma = async (progId) => {
-        if (!progId) {
-            allCompetencias = [];
-            renderCompetencias();
-            return;
-        }
+    // 1. Cargar Catálogo de Competencias
+    const loadCompetencias = async () => {
         competenciasContainer.innerHTML = '<p class="text-gray-400 text-sm italic text-center py-4">Cargando competencias...</p>';
         try {
-            allCompetencias = await fetchAPI(`../../routing.php?controller=competencia&action=getByPrograma&prog_id=${progId}`);
+            allCompetencias = await fetchAPI('../../routing.php?controller=competencia&action=index');
             renderCompetencias();
         } catch (error) {
             console.error('Error cargando competencias:', error);
@@ -57,8 +36,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!competenciasContainer) return;
 
         if (allCompetencias.length === 0) {
-            competenciasContainer.innerHTML = '<p class="text-gray-400 text-sm italic text-center py-4">' + 
-                (programaSelect.value ? 'No hay competencias asociadas.' : 'Primero seleccione un programa...') + '</p>';
+            competenciasContainer.innerHTML = '<p class="text-gray-400 text-sm italic text-center py-4">No hay competencias disponibles.</p>';
             return;
         }
 
@@ -113,7 +91,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     const init = async () => {
         try {
-            await loadProgramas();
+            await loadCompetencias();
 
             const [instructor, currentHabs] = await Promise.all([
                 fetchAPI(`../../routing.php?controller=instructor&action=show&id=${instId}`),
@@ -137,6 +115,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             }
             updateSummary();
+            renderCompetencias(compSearch.value);
 
         } catch (error) {
             console.error('Error initializing:', error);
@@ -145,7 +124,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     // Eventos
-    programaSelect.addEventListener('change', (e) => loadCompetenciasByPrograma(e.target.value));
+    if (programaSelect) {
+        programaSelect.closest('.form-group').style.display = 'none'; // Hide the program selector in the UI
+    }
     compSearch.addEventListener('input', (e) => renderCompetencias(e.target.value));
 
     if (form) {
@@ -171,15 +152,16 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                 const result = await response.json();
                 if (response.ok && !result.error) {
-                    if (window.NotificationService) NotificationService.showSuccess('Instructor actualizado con éxito');
-                    setTimeout(() => window.location.href = `ver.php?id=${instId}`, 1500);
+                    NotificationService.showSuccess('¡Instructor actualizado con éxito!', () => {
+                        window.location.href = `ver.php?id=${instId}`;
+                    });
                 } else {
-                    if (window.NotificationService) NotificationService.showError(result.error || 'Error al actualizar');
+                    NotificationService.showError(result.error || 'Error al actualizar');
                     submitBtn.disabled = false;
                 }
             } catch (error) {
                 console.error(error);
-                if (window.NotificationService) NotificationService.showError('Error de servidor');
+                NotificationService.showError('Error de servidor');
                 submitBtn.disabled = false;
             }
         });

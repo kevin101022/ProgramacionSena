@@ -78,31 +78,18 @@ class instructorController
 
             if (!empty($competencias)) {
                 require_once dirname(__DIR__) . '/model/InstruCompetenciaModel.php';
-                require_once dirname(__DIR__) . '/model/CompetenciaModel.php';
-                $compModel = new CompetenciaModel();
+                $instruCompModel = new InstruCompetenciaModel();
 
                 foreach ($competencias as $compData) {
                     try {
-                        if (strpos($compData, '|') !== false) {
-                            list($progId, $compId) = explode('|', $compData);
-                            $instruCompModel = new InstruCompetenciaModel(null, $id, $progId, $compId);
-                            $instruCompModel->create();
-                        } else {
-                            $compId = $compData;
-                            $compRow = $compModel->readById($compId);
-                            if ($compRow && !empty($compRow['programa_prog_id'])) {
-                                try {
-                                    $instruCompModel = new InstruCompetenciaModel(null, $id, $compRow['programa_prog_id'], $compId);
-                                    $instruCompModel->create();
-                                } catch (PDOException $innerEx) {
-                                    error_log("Habilitación duplicada o error: " . $innerEx->getMessage());
-                                }
-                            } else {
-                                error_log("Competencia $compId no tiene programa asociado, no se puede habilitar aún.");
-                            }
-                        }
+                        // Support both new direct ID and old 'prog|comp' format gracefully
+                        $compId = (strpos($compData, '|') !== false) ? explode('|', $compData)[1] : $compData;
+                        
+                        // Pass null for programa_prog_id since competencies are now global for the instructor
+                        $instruCompModel = new InstruCompetenciaModel(null, $id, null, $compId);
+                        $instruCompModel->create();
                     } catch (PDOException $ex) {
-                        error_log("Error habilitando competencia: " . $ex->getMessage());
+                        error_log("Error habilitando competencia $compData: " . $ex->getMessage());
                     }
                 }
             }
@@ -178,26 +165,14 @@ class instructorController
                 if (!empty($competencias)) {
                     foreach ($competencias as $compData) {
                         try {
-                            if (strpos($compData, '|') !== false) {
-                                list($progId, $compId) = explode('|', $compData);
-                                $newModel = new InstruCompetenciaModel(null, $id, $progId, $compId);
-                                $newModel->create();
-                            } else {
-                                $compId = $compData;
-                                $compRow = $compModel->readById($compId);
-                                if ($compRow && !empty($compRow['programa_prog_id'])) {
-                                    try {
-                                        $newModel = new InstruCompetenciaModel(null, $id, $compRow['programa_prog_id'], $compId);
-                                        $newModel->create();
-                                    } catch (PDOException $innerEx) {
-                                        error_log("Habilitación duplicada o error: " . $innerEx->getMessage());
-                                    }
-                                } else {
-                                    error_log("Competencia $compId no tiene programa asociado, no se puede habilitar.");
-                                }
-                            }
+                            // Support both new direct ID and old 'prog|comp' format gracefully
+                            $compId = (strpos($compData, '|') !== false) ? explode('|', $compData)[1] : $compData;
+                            
+                            // Pass null for programa_prog_id since competencies are now global for the instructor
+                            $newModel = new InstruCompetenciaModel(null, $id, null, $compId);
+                            $newModel->create();
                         } catch (PDOException $ex) {
-                            error_log("Error habilitando competencia: " . $ex->getMessage());
+                            error_log("Error habilitando competencia $compData: " . $ex->getMessage());
                         }
                     }
                 }

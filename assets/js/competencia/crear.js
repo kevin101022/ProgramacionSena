@@ -43,9 +43,10 @@ class CrearCompetencia {
         this.programas.forEach(p => {
             const option = document.createElement('option');
             option.value = p.prog_codigo;
-            option.textContent = `${p.prog_denominacion} (${p.titpro_nombre})`;
+            option.textContent = `${p.prog_codigo} — ${p.prog_denominacion}`;
             this.programaSelect.appendChild(option);
         });
+        initTS(this.programaSelect, 'Buscar programa...');
     }
 
     async handleSubmit(e) {
@@ -63,17 +64,14 @@ class CrearCompetencia {
             const result = await response.json();
 
             if (result.id) {
-                if (window.NotificationService) {
-                    NotificationService.show('Competencia creada con éxito', 'success');
-                }
-                setTimeout(() => window.location.href = 'index.php', 1500);
+                NotificationService.showSuccess('¡Competencia creada con éxito!', () => {
+                    window.location.href = 'index.php';
+                });
             } else {
                 throw new Error(result.error || 'Error al guardar');
             }
         } catch (error) {
-            if (window.NotificationService) {
-                NotificationService.show(error.message, 'error');
-            }
+            NotificationService.showError(error.message || 'Error al guardar la competencia');
         }
     }
 }

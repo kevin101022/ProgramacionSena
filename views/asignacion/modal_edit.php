@@ -9,12 +9,13 @@
         </div>
         <form id="asignacionForm">
             <input type="hidden" id="asig_id" name="asig_id">
-            <input type="hidden" id="modal_ficha_id" name="ficha_fich_id">
             <div class="modal-body p-6">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div class="form-group md:col-span-2">
-                        <label class="form-label">Ficha seleccionada</label>
-                        <input type="text" id="fichaDisplay" class="search-input" style="padding-left: 12px !important;" readonly>
+                        <label class="form-label">Ficha <span class="text-red-500">*</span></label>
+                        <select id="modal_ficha_id" name="ficha_fich_id" required class="search-input" style="padding-left: 12px !important;">
+                            <option value="">Seleccione una ficha...</option>
+                        </select>
                     </div>
                     <div class="form-group">
                         <label class="form-label">Competencia <span class="text-red-500">*</span></label>
@@ -23,20 +24,20 @@
                         </select>
                         <p class="text-[10px] text-gray-400 mt-1 italic">Solo competencias no asignadas a esta ficha</p>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" id="instructor_form_group">
                         <label class="form-label">Instructor <span class="text-red-500">*</span></label>
                         <select id="instructor_id" name="instructor_inst_id" required class="search-input" style="padding-left: 12px !important;" disabled>
                             <option value="">Primero seleccione competencia...</option>
                         </select>
                         <p class="text-xs text-gray-400 mt-1">Solo instructores habilitados</p>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" id="sede_form_group">
                         <label class="form-label">Sede <span class="text-red-500">*</span></label>
                         <select id="sede_id" name="sede_id" required class="search-input" style="padding-left: 12px !important;">
                             <option value="">Seleccione sede...</option>
                         </select>
                     </div>
-                    <div class="form-group">
+                    <div class="form-group" id="ambiente_form_group">
                         <label class="form-label">Ambiente <span class="text-red-500">*</span></label>
                         <select id="ambiente_id" name="ambiente_amb_id" required class="search-input" style="padding-left: 12px !important;">
                             <option value="">Primero seleccione sede...</option>

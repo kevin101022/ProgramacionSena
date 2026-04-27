@@ -232,7 +232,7 @@ class CompetenciaModel
                        i.inst_correo, p.prog_codigo, p.prog_denominacion
                 FROM INSTRU_COMPETENCIA ic
                 INNER JOIN INSTRUCTOR i ON ic.INSTRUCTOR_inst_id = i.numero_documento
-                INNER JOIN PROGRAMA p ON ic.programa_prog_id = p.prog_codigo
+                LEFT JOIN PROGRAMA p ON ic.programa_prog_id = p.prog_codigo
                 WHERE ic.competencia_comp_id = :comp_id";
 
         $params = [':comp_id' => $this->comp_id];

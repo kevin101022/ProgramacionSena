@@ -3,6 +3,12 @@ $pageTitle = 'Detalle de Competencia - SENA';
 $activeNavItem = 'competencias';
 require_once '../layouts/head.php';
 require_once '../layouts/sidebar.php';
+
+$backUrl = 'index.php';
+if (isset($_GET['from']) && $_GET['from'] === 'ficha' && isset($_GET['fich_id'])) {
+    $fich_id = $_GET['fich_id'];
+    $backUrl = "../ficha/ver.php?id={$fich_id}";
+}
 ?>
 
 <!-- Main Content -->
@@ -30,7 +36,7 @@ require_once '../layouts/sidebar.php';
         </div>
 
         <div class="flex items-center gap-4">
-            <a href="index.php" class="flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:text-sena-orange transition-colors px-3 py-2 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-900/10 border border-transparent hover:border-sena-orange/20">
+            <a href="<?php echo htmlspecialchars($backUrl); ?>" class="flex items-center gap-2 text-slate-600 dark:text-slate-300 hover:text-sena-orange transition-colors px-3 py-2 rounded-lg hover:bg-orange-50 dark:hover:bg-orange-900/10 border border-transparent hover:border-sena-orange/20">
                 <ion-icon src="../../assets/ionicons/arrow-back-outline.svg"></ion-icon>
                 <span class="text-sm font-medium">Regresar</span>
             </a>
@@ -57,7 +63,7 @@ require_once '../layouts/sidebar.php';
                         <div class="p-6">
                             <div class="flex items-center justify-between mb-4">
                                 <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">DATOS DE LA COMPETENCIA</h4>
-                                <?php if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'centro'): ?>
+                                <?php if (isset($_SESSION['rol']) && in_array($_SESSION['rol'], ['centro', 'coordinador'])): ?>
                                     <a href="#" id="editLink" class="text-sena-green hover:text-emerald-700 transition-colors flex items-center gap-1 text-sm font-medium">
                                         <ion-icon src="../../assets/ionicons/create-outline.svg"></ion-icon>
                                         Editar
@@ -164,7 +170,7 @@ require_once '../layouts/sidebar.php';
         </div>
 
         <!-- Static Delete Button -->
-        <?php if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'centro'): ?>
+        <?php if (isset($_SESSION['rol']) && in_array($_SESSION['rol'], ['centro', 'coordinador'])): ?>
             <div id="deleteButtonWrapper" class="flex justify-end pt-4" style="display: none;">
                 <button id="deleteBtn" class="flex items-center gap-2 bg-white dark:bg-slate-800 text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 px-4 py-3 rounded-xl shadow-md border border-red-100 dark:border-red-900/30 transition-all duration-300 hover:translate-y-[-2px] active:translate-y-[0px] group">
                     <ion-icon src="../../assets/ionicons/trash-outline.svg" class="text-xl"></ion-icon>

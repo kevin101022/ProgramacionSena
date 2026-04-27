@@ -53,9 +53,14 @@ require_once '../layouts/sidebar.php';
         <!-- Action Bar -->
         <div class="action-bar">
             <div class="flex gap-4 items-center flex-1">
-                <div class="search-container flex-1">
+                <div class="search-container flex-1 max-w-md">
                     <ion-icon src="../../assets/ionicons/search-outline.svg" class="search-icon"></ion-icon>
                     <input type="text" id="searchInput" placeholder="Buscar por nombre, apellido o correo..." class="search-input">
+                </div>
+                <div class="filter-container">
+                    <select id="competenciaFilter" class="form-input min-w-[250px] text-sm">
+                        <option value="">Todas las competencias...</option>
+                    </select>
                 </div>
             </div>
 

@@ -74,12 +74,13 @@ class EditarCompetencia {
         this.programas.forEach(p => {
             const option = document.createElement('option');
             option.value = p.prog_codigo;
-            option.textContent = `${p.prog_denominacion} (${p.titpro_nombre})`;
+            option.textContent = `${p.prog_codigo} — ${p.prog_denominacion}`;
             if (this.associatedProgramId && p.prog_codigo == this.associatedProgramId) {
                 option.selected = true;
             }
             this.programaSelect.appendChild(option);
         });
+        initTS(this.programaSelect, 'Buscar programa...');
     }
 
     async handleSubmit(e) {
@@ -97,17 +98,14 @@ class EditarCompetencia {
             const result = await response.json();
 
             if (result.message) {
-                if (window.NotificationService) {
-                    NotificationService.show(result.message, 'success');
-                }
-                setTimeout(() => window.location.href = 'index.php', 1500);
+                NotificationService.showSuccess(result.message || '¡Competencia actualizada con éxito!', () => {
+                    window.location.href = 'index.php';
+                });
             } else {
                 throw new Error(result.error || 'Error al actualizar');
             }
         } catch (error) {
-            if (window.NotificationService) {
-                NotificationService.show(error.message, 'error');
-            }
+            NotificationService.showError(error.message || 'Error al actualizar la competencia');
         }
     }
 }

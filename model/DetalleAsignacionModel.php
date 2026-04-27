@@ -66,24 +66,33 @@ class DetalleAsignacionModel
         return $stmt->execute();
     }
 
-    public function checkGlobalConflicts($asig_id, $fecha, $hora_ini, $hora_fin, $detasig_id = null)
+    /**
+     * Verifica cruces de horario para una franja dada.
+     *
+     * @param int|null $asig_id   ID de la asignación a EXCLUIR (null cuando aún no existe — en store).
+     * @param string   $fecha     Fecha ISO (YYYY-MM-DD).
+     * @param string   $hora_ini  Hora de inicio (HH:MM).
+     * @param string   $hora_fin  Hora de fin (HH:MM).
+     * @param int      $inst_id   ID del instructor.
+     * @param int      $amb_id    ID del ambiente.
+     * @param int      $fich_id   ID de la ficha.
+     * @param int|null $detasig_id ID de detalle a excluir (edición de día individual).
+     * @return array   Lista de conflictos encontrados.
+     */
+    public function checkGlobalConflicts($asig_id, $fecha, $hora_ini, $hora_fin, $inst_id, $amb_id, $fich_id, $detasig_id = null)
     {
-        // 1. Get current assignment info
-        $sqlAsig = "SELECT INSTRUCTOR_inst_id as instructor_inst_id, AMBIENTE_amb_id as ambiente_amb_id, FICHA_fich_id as ficha_fich_id 
-                    FROM ASIGNACION WHERE ASIG_ID = :asig_id";
-        $stmtAsig = $this->db->prepare($sqlAsig);
-        $stmtAsig->execute([':asig_id' => $asig_id]);
-        $current = $stmtAsig->fetch(PDO::FETCH_ASSOC);
+        // Buscar cualquier detalle en OTRAS asignaciones que solape con la franja dada,
+        // comparando por instructor, ambiente o ficha.
+        // Si $asig_id es null (store), la cláusula de exclusión usa IS NULL para que
+        // MySQL la ignore correctamente sin falso positivo por comparación con NULL.
+        if ($asig_id !== null) {
+            $excludeClause = "d.ASIGNACION_asig_id != :current_asig_id";
+        } else {
+            $excludeClause = "1=1"; // No hay nada que excluir: la asignación aún no existe
+        }
 
-        if (!$current) return [];
-
-        $inst_id = $current['instructor_inst_id'];
-        $amb_id  = $current['ambiente_amb_id'];
-        $fich_id = $current['ficha_fich_id'];
-
-        // 2. Search for ANY detail in OTHER assignments that overlaps
         $sql = "SELECT d.detasig_id, d.detasig_fecha, d.detasig_hora_ini, d.detasig_hora_fin,
-                       a.INSTRUCTOR_inst_id as instructor_inst_id, a.AMBIENTE_amb_id as ambiente_amb_id, 
+                       a.INSTRUCTOR_inst_id as instructor_inst_id, a.AMBIENTE_amb_id as ambiente_amb_id,
                        a.FICHA_fich_id as ficha_fich_id, a.ASIG_ID as asig_id,
                        i.inst_nombres, i.inst_apellidos, am.amb_nombre, f.fich_id as ficha_num
                 FROM DETALLExASIGNACION d
@@ -91,7 +100,7 @@ class DetalleAsignacionModel
                 INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.numero_documento
                 INNER JOIN AMBIENTE am ON a.AMBIENTE_amb_id = am.amb_id
                 INNER JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
-                WHERE d.ASIGNACION_asig_id != :current_asig_id
+                WHERE $excludeClause
                 AND d.detasig_fecha = :fecha
                 AND (d.detasig_hora_ini < :hora_fin AND d.detasig_hora_fin > :hora_ini)
                 AND (a.INSTRUCTOR_inst_id = :inst_id OR a.AMBIENTE_amb_id = :amb_id OR a.FICHA_fich_id = :fich_id)";
@@ -102,15 +111,19 @@ class DetalleAsignacionModel
 
         $stmt = $this->db->prepare($sql);
         $params = [
-            ':current_asig_id' => $asig_id,
-            ':fecha'     => $fecha,
-            ':hora_ini'  => $hora_ini,
-            ':hora_fin'  => $hora_fin,
-            ':inst_id'   => $inst_id,
-            ':amb_id'    => $amb_id,
-            ':fich_id'   => $fich_id
+            ':fecha'    => $fecha,
+            ':hora_ini' => $hora_ini,
+            ':hora_fin' => $hora_fin,
+            ':inst_id'  => $inst_id,
+            ':amb_id'   => $amb_id,
+            ':fich_id'  => $fich_id
         ];
-        if ($detasig_id) $params[':det_id'] = $detasig_id;
+        if ($asig_id !== null) {
+            $params[':current_asig_id'] = $asig_id;
+        }
+        if ($detasig_id) {
+            $params[':det_id'] = $detasig_id;
+        }
 
         $stmt->execute($params);
         $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -118,8 +131,8 @@ class DetalleAsignacionModel
         return array_map(function ($row) use ($inst_id, $amb_id, $fich_id) {
             $row['conflict_type'] = [];
             if ($row['instructor_inst_id'] == $inst_id) $row['conflict_type'][] = 'instructor';
-            if ($row['ambiente_amb_id'] == $amb_id) $row['conflict_type'][] = 'ambiente';
-            if ($row['ficha_fich_id'] == $fich_id) $row['conflict_type'][] = 'ficha';
+            if ($row['ambiente_amb_id']    == $amb_id)  $row['conflict_type'][] = 'ambiente';
+            if ($row['ficha_fich_id']      == $fich_id) $row['conflict_type'][] = 'ficha';
             return $row;
         }, $results);
     }

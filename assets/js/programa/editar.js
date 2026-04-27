@@ -108,20 +108,15 @@ class EditarPrograma {
             const result = await response.json();
 
             if (result.message) {
-                if (window.NotificationService) {
-                    NotificationService.show(result.message, 'success');
-                }
-                setTimeout(() => {
+                NotificationService.showSuccess(result.message || '¡Programa actualizado con éxito!', () => {
                     window.location.href = 'index.php';
-                }, 1500);
+                });
             } else {
                 throw new Error(result.error || 'Error al actualizar el programa');
             }
         } catch (error) {
             console.error('Error updating programa:', error);
-            if (window.NotificationService) {
-                NotificationService.show(error.message, 'error');
-            }
+            NotificationService.showError(error.message || 'Error al actualizar el programa');
         }
     }
 }

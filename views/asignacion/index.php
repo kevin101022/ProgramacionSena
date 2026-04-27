@@ -13,9 +13,6 @@ if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'instructor') {
 <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.17/index.global.min.js"></script>
 
-<!-- Tom Select CDN -->
-<link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
 <style>
     /* Forzar que los mensajes de SweetAlert aparezcan por encima de los modales (.modal) */
     .swal2-container {
@@ -183,25 +180,75 @@ if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'instructor') {
             </div>
         </div>
 
-        <!-- Ficha selector -->
-        <div class="action-bar flex-col md:flex-row gap-4">
-            <div class="w-full" style="max-width: 600px;">
-                <select id="fichaSelector" placeholder="Buscar ficha o programa..." class="w-full">
-                    <option value="">Buscar ficha o programa...</option>
-                </select>
+        <!-- Tabs Nav -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 mb-4">
+            <div class="flex space-x-2 border-b border-gray-100 pb-3 mb-4" id="tabsContainer">
+                <button class="tab-btn active px-4 py-2 rounded-lg font-medium bg-green-50 text-green-700 transition-colors" data-tab="ficha">Ficha</button>
+                <button class="tab-btn px-4 py-2 rounded-lg font-medium text-gray-500 hover:bg-gray-50 transition-colors" data-tab="instructor">Instructor</button>
+                <button class="tab-btn px-4 py-2 rounded-lg font-medium text-gray-500 hover:bg-gray-50 transition-colors" data-tab="ambiente">Ambiente</button>
             </div>
-            <button id="addBtn" class="btn-primary flex-shrink-0" disabled>
-                <ion-icon src="../../assets/ionicons/add-outline.svg"></ion-icon>
-                Nueva Asignación
-            </button>
+
+            <!-- Tab Content -->
+            <div class="action-bar flex-col md:flex-row gap-4">
+                <!-- Ficha Tab -->
+                <div id="tab-ficha" class="tab-pane w-full flex-1">
+                    <div class="flex flex-col md:flex-row gap-2 items-start md:items-center w-full max-w-3xl">
+                        <select id="fichaSelector" placeholder="Buscar ficha o programa..." class="w-full max-w-2xl">
+                            <option value="">Buscar ficha o programa...</option>
+                        </select>
+                        <a id="verDetalleFichaBtn" href="#" class="btn-secondary whitespace-nowrap text-sm h-[42px] px-4 hidden" style="display: none;">
+                            <ion-icon src="../../assets/ionicons/eye-outline.svg"></ion-icon> Ver Ficha
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Instructor Tab -->
+                <div id="tab-instructor" class="tab-pane w-full flex-1" style="display: none;">
+                    <div class="flex flex-col gap-2">
+                        <div class="flex flex-col md:flex-row gap-2 items-start md:items-center w-full max-w-3xl">
+                            <select id="instructorSelector" placeholder="Buscar instructor..." class="w-full max-w-2xl">
+                                <option value="">Buscar instructor...</option>
+                            </select>
+                            <a id="verDetalleInstructorBtn" href="#" class="btn-secondary whitespace-nowrap text-sm h-[42px] px-4 hidden" style="display: none;">
+                                <ion-icon src="../../assets/ionicons/eye-outline.svg"></ion-icon> Ver Perfil
+                            </a>
+                        </div>
+                        <div class="w-full max-w-2xl bg-gray-200 rounded-full h-3 mt-2 relative overflow-hidden">
+                            <div id="instructorProgressBar" class="h-3 rounded-full transition-all duration-500 bg-gray-400" style="width: 0%"></div>
+                        </div>
+                        <p id="instructorProgressText" class="text-xs text-gray-600 font-medium">Seleccione un instructor para ver sus horas mensuales asignadas</p>
+                    </div>
+                </div>
+
+                <!-- Ambiente Tab -->
+                <div id="tab-ambiente" class="tab-pane w-full flex-1" style="display: none;">
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <div class="w-full max-w-xs">
+                            <select id="sedeFilter" placeholder="Filtrar por sede..." class="w-full">
+                                <option value="">Filtrar por sede...</option>
+                            </select>
+                        </div>
+                        <div class="w-full max-w-sm">
+                            <select id="ambienteSelectorTab" class="form-input w-full" disabled>
+                                <option value="">Primero seleccione sede...</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <button id="addBtn" class="btn-primary flex-shrink-0 self-start md:self-auto" disabled>
+                    <ion-icon src="../../assets/ionicons/add-outline.svg"></ion-icon>
+                    Nueva Asignación
+                </button>
+            </div>
         </div>
 
         <!-- Calendar area -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mt-4">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
             <div id="calendarPlaceholder" class="calendar-placeholder">
                 <ion-icon src="../../assets/ionicons/calendar-outline.svg"></ion-icon>
-                <p class="text-lg font-semibold">Seleccione una ficha</p>
-                <p class="text-sm">El calendario se cargará con las asignaciones de la ficha seleccionada</p>
+                <p class="text-lg font-semibold" id="placeholderTitle">Seleccione una ficha</p>
+                <p class="text-sm" id="placeholderSubtitle">El calendario se cargará con las asignaciones de la ficha seleccionada</p>
             </div>
             <div id="calendar" style="display: none;"></div>
         </div>
@@ -275,6 +322,7 @@ if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'instructor') {
     </div>
 </div>
 
+<script src="../../assets/js/utils/tom-select-utils.js?v=<?php echo time(); ?>"></script>
 <script src="../../assets/js/asignacion/index.js?v=<?php echo time(); ?>"></script>
 </body>
 

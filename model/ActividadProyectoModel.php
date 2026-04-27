@@ -64,7 +64,12 @@ class ActividadProyectoModel {
         }
 
         $stmt = $this->db->prepare("INSERT IGNORE INTO rap_actividad (rap_id, act_id) VALUES (:rap_id, :act_id)");
-        return $stmt->execute(['rap_id' => $rap_id, 'act_id' => $act_id]);
+        $stmt->execute(['rap_id' => $rap_id, 'act_id' => $act_id]);
+
+        // Ensure it is also in the rap_fase table for project-level consistency
+        $faseSql = "INSERT IGNORE INTO rap_fase (rap_rap_id, fase_fase_id) VALUES (:rap_id, :fase_id)";
+        $stmtFase = $this->db->prepare($faseSql);
+        return $stmtFase->execute(['rap_id' => $rap_id, 'fase_id' => $projectInfo['fase_id']]);
     }
 
     public function desasignarRap($rap_id, $act_id) {

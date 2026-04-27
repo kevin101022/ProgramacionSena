@@ -2,10 +2,17 @@
 $pageTitle = 'Detalle de Ficha - SENA';
 $activeNavItem = 'fichas';
 require_once '../layouts/head.php';
-if ($_SESSION['rol'] === 'instructor') {
+$rol = $_SESSION['rol'] ?? '';
+if ($rol === 'instructor') {
     require_once '../layouts/instructor_sidebar.php';
+    $backUrl = '../instructor/mi_ficha.php';
 } else {
     require_once '../layouts/sidebar.php';
+    $backUrl = 'index.php';
+    if (isset($_GET['from']) && $_GET['from'] === 'asignaciones_ficha') {
+        $id = $_GET['id'] ?? '';
+        $backUrl = "../asignacion/index.php?tab=ficha&fich={$id}";
+    }
 }
 ?>
 
@@ -13,10 +20,10 @@ if ($_SESSION['rol'] === 'instructor') {
     <header class="main-header">
         <div class="header-content">
             <nav class="breadcrumb">
-                <?php if ($_SESSION['rol'] === 'instructor'): ?>
-                    <a href="../instructor/mi_ficha.php">Mis Fichas</a>
+                <?php if ($rol === 'instructor'): ?>
+                    <a href="<?php echo htmlspecialchars($backUrl); ?>">Mis Fichas</a>
                 <?php else: ?>
-                    <a href="index.php">Fichas</a>
+                    <a href="<?php echo htmlspecialchars($backUrl); ?>">Fichas</a>
                 <?php endif; ?>
                 <ion-icon src="../../assets/ionicons/chevron-forward-outline.svg"></ion-icon>
                 <span>Detalle de Ficha</span>
@@ -24,7 +31,7 @@ if ($_SESSION['rol'] === 'instructor') {
             <h1 class="page-title">Información de la Ficha</h1>
         </div>
         <div class="header-actions">
-            <a href="<?php echo ($_SESSION['rol'] === 'instructor') ? '../instructor/mi_ficha.php' : 'index.php'; ?>" class="btn-secondary">
+            <a href="<?php echo htmlspecialchars($backUrl); ?>" class="btn-secondary">
                 <ion-icon src="../../assets/ionicons/arrow-back-outline.svg"></ion-icon>
                 Regresar
             </a>
@@ -146,7 +153,7 @@ if ($_SESSION['rol'] === 'instructor') {
             </div>
             <h3 class="text-lg font-bold text-gray-900 mb-2">Error de Carga</h3>
             <p id="errorMessage" class="text-gray-500 mb-6">No se pudo cargar la información de la ficha.</p>
-            <a href="<?php echo ($_SESSION['rol'] === 'instructor') ? '../instructor/mi_ficha.php' : 'index.php'; ?>" class="btn-primary inline-flex">Volver a Fichas</a>
+            <a href="<?php echo htmlspecialchars($backUrl); ?>" class="btn-primary inline-flex">Volver a Fichas</a>
         </div>
     </div>
 </main>

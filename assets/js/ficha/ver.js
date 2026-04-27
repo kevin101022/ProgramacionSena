@@ -217,7 +217,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     const card = document.createElement('div');
                     card.className = 'flex flex-col p-4 bg-amber-50/30 rounded-xl border border-amber-100 hover:border-amber-400 cursor-pointer transition-colors shadow-sm';
                     card.onclick = () => {
-                        window.location.href = `../instru_competencia/index.php?comp_id=${c.comp_id}`;
+                        window.location.href = `../competencia/ver.php?id=${c.comp_id}&from=ficha&fich_id=${fichId}`;
                     };
                     card.innerHTML = `
                         <div class="flex items-start gap-3 pointer-events-none">

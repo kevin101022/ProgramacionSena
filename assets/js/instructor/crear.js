@@ -10,39 +10,11 @@ document.addEventListener('DOMContentLoaded', () => {
     let allCompetencias = []; // Competencias del programa seleccionado
     let selectedCompetencyIds = new Set();
 
-    // 1. Cargar Programas al iniciar
-    const loadProgramas = async () => {
-        try {
-            const res = await fetch('../../routing.php?controller=competencia&action=getProgramas', {
-                headers: { 'Accept': 'application/json' }
-            });
-            const programas = await res.json();
-            
-            programaSelect.innerHTML = '<option value="">-- Seleccione un Programa --</option>';
-            programas.forEach(p => {
-                const opt = document.createElement('option');
-                opt.value = p.prog_codigo;
-                opt.textContent = `${p.prog_codigo} - ${p.prog_denominacion}`;
-                programaSelect.appendChild(opt);
-            });
-        } catch (error) {
-            console.error('Error cargando programas:', error);
-            programaSelect.innerHTML = '<option value="">Error al cargar</option>';
-        }
-    };
-
-    // 2. Cargar Competencias por Programa
-    const loadCompetenciasByPrograma = async (progId) => {
-        if (!progId) {
-            allCompetencias = [];
-            renderCompetencias();
-            return;
-        }
-
+    // 1. Cargar TODAS las Competencias
+    const loadCompetencias = async () => {
         competenciasContainer.innerHTML = '<p class="text-gray-400 text-sm italic text-center py-4">Cargando competencias...</p>';
-        
         try {
-            const res = await fetch(`../../routing.php?controller=competencia&action=getByPrograma&prog_id=${progId}`, {
+            const res = await fetch(`../../routing.php?controller=competencia&action=index`, {
                 headers: { 'Accept': 'application/json' }
             });
             allCompetencias = await res.json();
@@ -57,8 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!competenciasContainer) return;
 
         if (allCompetencias.length === 0) {
-            competenciasContainer.innerHTML = '<p class="text-gray-400 text-sm italic text-center py-4">' + 
-                (programaSelect.value ? 'No hay competencias asociadas.' : 'Primero seleccione un programa...') + '</p>';
+            competenciasContainer.innerHTML = '<p class="text-gray-400 text-sm italic text-center py-4">No hay competencias disponibles.</p>';
             return;
         }
 
@@ -112,7 +83,9 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // Eventos
-    programaSelect.addEventListener('change', (e) => loadCompetenciasByPrograma(e.target.value));
+    if (programaSelect) {
+        programaSelect.closest('.form-group').style.display = 'none'; // Hide the program selector in the UI
+    }
     compSearch.addEventListener('input', (e) => renderCompetencias(e.target.value));
 
     // Form Submit
@@ -144,19 +117,20 @@ document.addEventListener('DOMContentLoaded', () => {
                 const result = await response.json();
 
                 if (response.ok && !result.error) {
-                    if (window.NotificationService) NotificationService.showSuccess('Instructor guardado con éxito');
-                    setTimeout(() => window.location.href = 'index.php', 1500);
+                    NotificationService.showSuccess('¡Instructor guardado con éxito!', () => {
+                        window.location.href = 'index.php';
+                });
                 } else {
-                    if (window.NotificationService) NotificationService.showError(result.error || 'Error al guardar el instructor');
+                    NotificationService.showError(result.error || 'Error al guardar el instructor');
                     submitBtn.disabled = false;
                 }
             } catch (error) {
                 console.error(error);
-                if (window.NotificationService) NotificationService.showError('Error de red o de servidor');
+                NotificationService.showError('Error de red o de servidor');
                 submitBtn.disabled = false;
             }
         });
     }
 
-    loadProgramas();
+    loadCompetencias();
 });

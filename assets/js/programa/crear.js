@@ -78,20 +78,15 @@ class CrearPrograma {
             const result = await response.json();
 
             if (result.message) {
-                if (window.NotificationService) {
-                    NotificationService.show(result.message, 'success');
-                }
-                setTimeout(() => {
+                NotificationService.showSuccess(result.message || '¡Programa creado con éxito!', () => {
                     window.location.href = 'index.php';
-                }, 1500);
+                });
             } else {
                 throw new Error(result.error || 'Error al crear el programa');
             }
         } catch (error) {
             console.error('Error creating programa:', error);
-            if (window.NotificationService) {
-                NotificationService.show(error.message, 'error');
-            }
+            NotificationService.showError(error.message || 'Error al crear el programa');
         }
     }
 }

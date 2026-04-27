@@ -3,8 +3,8 @@ $pageTitle = 'Editar Competencia - Programaciones';
 $activeNavItem = 'competencias';
 require_once '../layouts/head.php';
 
-// Solo el Centro de Formación puede editar competencias
-if (isset($_SESSION['rol']) && $_SESSION['rol'] !== 'centro') {
+// Instructores no pueden editar competencias
+if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'instructor') {
     header("Location: index.php");
     exit;
 }

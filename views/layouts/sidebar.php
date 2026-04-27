@@ -82,16 +82,21 @@ $nombre_usuario = isset($_SESSION['nombre']) ? $_SESSION['nombre'] : 'Usuario';
                 </a>
                 <a href="../competencia/index.php" class="nav-item <?php echo ($activeNavItem === 'competencias') ? 'active' : ''; ?>">
                     <ion-icon src="../../assets/ionicons/bookmarks-outline.svg"></ion-icon>
-                    Competencias (Consulta)
+                    Competencias
+                </a>
+                <a href="../programa/index.php" class="nav-item <?php echo ($activeNavItem === 'programas') ? 'active' : ''; ?>">
+                    <ion-icon src="../../assets/ionicons/school-outline.svg"></ion-icon>
+                    Programas
+                </a>
+                <a href="../instructor/index.php" class="nav-item <?php echo ($activeNavItem === 'instructores') ? 'active' : ''; ?>">
+                    <ion-icon src="../../assets/ionicons/people-outline.svg"></ion-icon>
+                    Instructores
                 </a>
                 <a href="../ficha/index.php" class="nav-item <?php echo ($activeNavItem === 'fichas') ? 'active' : ''; ?>">
                     <ion-icon src="../../assets/ionicons/layers-outline.svg"></ion-icon>
                     Fichas
                 </a>
-                <a href="../instru_competencia/index.php" class="nav-item <?php echo ($activeNavItem === 'instruc_comp') ? 'active' : ''; ?>">
-                    <ion-icon src="../../assets/ionicons/git-merge-outline.svg"></ion-icon>
-                    Instructor x Competencia
-                </a>
+
                 <a href="../asignacion/index.php" class="nav-item <?php echo ($activeNavItem === 'asignaciones') ? 'active' : ''; ?>">
                     <ion-icon src="../../assets/ionicons/calendar-outline.svg"></ion-icon>
                     Asignaciones
@@ -152,6 +157,7 @@ $nombre_usuario = isset($_SESSION['nombre']) ? $_SESSION['nombre'] : 'Usuario';
 <!-- Custom Notifications -->
 <?php require_once dirname(__DIR__) . '/layouts/notifications.php'; ?>
 <script src="../../assets/js/utils/notifications.js?v=<?php echo time(); ?>"></script>
+<script src="../../assets/js/utils/tom-select-utils.js?v=<?php echo time(); ?>"></script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         // --- Mobile sidebar toggle ---

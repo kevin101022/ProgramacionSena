@@ -9,6 +9,8 @@ class InstructorManager {
         this.itemsPerPage = 5;
         this.instructores = [];
         this.filteredInstructores = [];
+        this.competencias = [];
+        this.habilitaciones = [];
 
         this.init();
     }
@@ -30,6 +32,14 @@ class InstructorManager {
         const refreshBtn = document.getElementById('refreshBtn');
         if (refreshBtn) {
             refreshBtn.addEventListener('click', () => this.loadInstructores());
+        }
+
+        const compFilter = document.getElementById('competenciaFilter');
+        if (compFilter) {
+            compFilter.addEventListener('change', () => {
+                this.currentPage = 1;
+                this.renderTable();
+            });
         }
 
         // Pagination buttons
@@ -60,32 +70,78 @@ class InstructorManager {
 
     async loadInstructores() {
         try {
-            const response = await fetch('../../routing.php?controller=instructor&action=index', {
-                headers: { 'Accept': 'application/json' }
-            });
-            const data = await response.json();
-            if (!response.ok) throw new Error(data.details || data.error || 'Error desconocido');
+            const [resInst, resComp, resHab] = await Promise.all([
+                fetch('../../routing.php?controller=instructor&action=index', { headers: { 'Accept': 'application/json' } }),
+                fetch('../../routing.php?controller=competencia&action=index', { headers: { 'Accept': 'application/json' } }),
+                fetch('../../routing.php?controller=instru_competencia&action=index', { headers: { 'Accept': 'application/json' } })
+            ]);
 
-            this.instructores = data;
+            if (!resInst.ok) throw new Error('Error al cargar instructores');
+            
+            this.instructores = await resInst.json();
+            this.competencias = await resComp.json();
+            this.habilitaciones = await resHab.json();
+
+            this.populateCompetenciaFilter();
             this.renderTable();
         } catch (error) {
-            console.error('Error loading instructores:', error);
+            console.error('Error loading data:', error);
             const tableBody = document.getElementById('instructorTableBody');
             if (tableBody) {
-                tableBody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-gray-500">No pudimos cargar la lista de instructores.</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="5" class="text-center py-8 text-gray-500">No pudimos cargar la información.</td></tr>`;
             }
         }
+    }
+
+    populateCompetenciaFilter() {
+        const select = document.getElementById('competenciaFilter');
+        if (!select) return;
+        
+        select.innerHTML = '<option value="">Todas las competencias...</option>';
+        this.competencias.forEach(comp => {
+            const opt = document.createElement('option');
+            opt.value = comp.comp_id;
+            opt.textContent = comp.comp_nombre_corto || `Competencia ${comp.comp_id}`;
+            select.appendChild(opt);
+        });
     }
 
     getFilteredData() {
         const searchInput = document.getElementById('searchInput');
         const searchTerm = (searchInput ? searchInput.value : '').toLowerCase();
+        const compFilter = document.getElementById('competenciaFilter')?.value;
 
         return this.instructores.filter(inst => {
             const names = (inst.inst_nombres + ' ' + inst.inst_apellidos).toLowerCase();
             const matchesSearch = names.includes(searchTerm) || inst.inst_correo.toLowerCase().includes(searchTerm);
-            return matchesSearch;
+            
+            let matchesComp = true;
+            if (compFilter) {
+                matchesComp = this.habilitaciones.some(h => 
+                    h.instructor_inst_id == inst.inst_id && h.competencia_comp_id == compFilter
+                );
+            }
+            
+            return matchesSearch && matchesComp;
         });
+    }
+
+    getCompetenciasPills(instId) {
+        const habs = this.habilitaciones.filter(h => h.instructor_inst_id == instId);
+        if (habs.length === 0) return '<span class="text-[10px] text-gray-400 italic">Sin competencias</span>';
+        
+        // Show max 2 pills, then +X
+        let html = '';
+        const limit = 2;
+        for (let i = 0; i < Math.min(habs.length, limit); i++) {
+            const comp = this.competencias.find(c => c.comp_id == habs[i].competencia_comp_id);
+            const name = comp ? comp.comp_nombre_corto : 'Comp. ' + habs[i].competencia_comp_id;
+            html += `<span class="inline-block bg-green-50 text-green-700 border border-green-200 text-[10px] font-medium px-2 py-0.5 rounded">${name}</span>`;
+        }
+        if (habs.length > limit) {
+            html += `<span class="inline-block bg-gray-100 text-gray-600 text-[10px] font-medium px-2 py-0.5 rounded" title="Ver perfil para más">+${habs.length - limit}</span>`;
+        }
+        return html;
     }
 
     renderTable() {
@@ -142,6 +198,9 @@ class InstructorManager {
                                 <ion-icon src="../../assets/ionicons/call-outline.svg"></ion-icon>
                                 <span>${inst.inst_telefono || 'N/A'}</span>
                             </div>
+                        </div>
+                        <div class="flex flex-wrap gap-1 mt-2">
+                            ${this.getCompetenciasPills(inst.inst_id)}
                         </div>
                     </td>
                     <td>

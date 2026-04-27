@@ -139,7 +139,7 @@ class ResultadoAprendizajeModel {
     }
 
     public function getHierarchyByProyecto($pf_id) {
-        $stmt = $this->db->prepare("
+        $sql = "
             SELECT f.fase_id, f.fase_nombre, f.fase_orden, f.fase_fecha_ini, f.fase_fecha_fin,
                    a.act_id, a.act_nombre,
                    r.rap_id, r.rap_codigo, r.rap_descripcion, r.rap_horas,
@@ -149,10 +149,34 @@ class ResultadoAprendizajeModel {
             LEFT JOIN rap_actividad ra ON a.act_id = ra.act_id
             LEFT JOIN resultado_aprendizaje r ON ra.rap_id = r.rap_id
             LEFT JOIN competencia c ON r.competencia_comp_id = c.comp_id
-            WHERE f.pf_pf_id = :pf_id
-            ORDER BY f.fase_orden ASC, a.act_id ASC, c.comp_id ASC
-        ");
-        $stmt->execute(['pf_id' => $pf_id]);
+            WHERE f.pf_pf_id = :pf_id1
+
+            UNION ALL
+
+            SELECT f.fase_id, f.fase_nombre, f.fase_orden, f.fase_fecha_ini, f.fase_fecha_fin,
+                   NULL as act_id, NULL as act_nombre,
+                   r.rap_id, r.rap_codigo, r.rap_descripcion, r.rap_horas,
+                   c.comp_id, c.comp_nombre_corto
+            FROM fase_proyecto f
+            JOIN rap_fase rf ON f.fase_id = rf.fase_fase_id
+            JOIN resultado_aprendizaje r ON rf.rap_rap_id = r.rap_id
+            LEFT JOIN competencia c ON r.competencia_comp_id = c.comp_id
+            WHERE f.pf_pf_id = :pf_id2
+            AND r.rap_id NOT IN (
+                SELECT ra2.rap_id 
+                FROM rap_actividad ra2 
+                JOIN actividad_proyecto a2 ON ra2.act_id = a2.act_id 
+                WHERE a2.fase_id = f.fase_id
+            )
+
+            ORDER BY fase_orden ASC, act_id ASC, comp_id ASC
+        ";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([
+            'pf_id1' => $pf_id,
+            'pf_id2' => $pf_id
+        ]);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
         $hierarchy = [];
@@ -165,7 +189,8 @@ class ResultadoAprendizajeModel {
                     'fase_orden' => $row['fase_orden'],
                     'fase_fecha_ini' => $row['fase_fecha_ini'],
                     'fase_fecha_fin' => $row['fase_fecha_fin'],
-                    'actividades' => []
+                    'actividades' => [],
+                    'raps_sin_actividad' => []
                 ];
             }
             
@@ -175,7 +200,7 @@ class ResultadoAprendizajeModel {
                     $hierarchy[$f_id]['actividades'][$a_id] = [
                         'act_id' => $a_id,
                         'act_nombre' => $row['act_nombre'],
-                        'competencias' => [] // Grouped by competency
+                        'competencias' => []
                     ];
                 }
                 
@@ -196,15 +221,31 @@ class ResultadoAprendizajeModel {
                         'rap_horas' => $row['rap_horas']
                     ];
                 }
+            } else if ($row['rap_id']) {
+                // RAP linked to phase but not activity
+                $c_id = $row['comp_id'];
+                if (!isset($hierarchy[$f_id]['raps_sin_actividad'][$c_id])) {
+                    $hierarchy[$f_id]['raps_sin_actividad'][$c_id] = [
+                        'comp_id' => $c_id,
+                        'comp_nombre_corto' => $row['comp_nombre_corto'],
+                        'raps' => []
+                    ];
+                }
+                $hierarchy[$f_id]['raps_sin_actividad'][$c_id]['raps'][] = [
+                    'rap_id' => $row['rap_id'],
+                    'rap_codigo' => $row['rap_codigo'],
+                    'rap_descripcion' => $row['rap_descripcion'],
+                    'rap_horas' => $row['rap_horas']
+                ];
             }
         }
         
-        // Final normalization to indexed arrays
         foreach ($hierarchy as &$fase) {
             foreach ($fase['actividades'] as &$act) {
                 $act['competencias'] = array_values($act['competencias']);
             }
             $fase['actividades'] = array_values($fase['actividades']);
+            $fase['raps_sin_actividad'] = array_values($fase['raps_sin_actividad']);
         }
         return array_values($hierarchy);
     }

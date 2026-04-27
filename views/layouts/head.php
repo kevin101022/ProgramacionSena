@@ -31,7 +31,7 @@ if ($navItem) {
     if ($rol === 'centro') {
         $allowed = in_array($navItem, ['dashboard', 'sedes', 'ambientes', 'programas', 'titulos', 'instructores', 'competencias', 'coordinaciones', 'usuarios_coordinadores', 'reportes', 'auditoria_asignacion']);
     } elseif ($rol === 'coordinador') {
-        $allowed = in_array($navItem, ['dashboard', 'competencias', 'fichas', 'instruc_comp', 'asignaciones', 'reportes', 'auditoria_asignacion', 'setdata', 'proyecto_formativo', 'resultado_aprendizaje']);
+        $allowed = in_array($navItem, ['dashboard', 'competencias', 'programas', 'instructores', 'fichas', 'instruc_comp', 'asignaciones', 'reportes', 'auditoria_asignacion', 'setdata', 'proyecto_formativo', 'resultado_aprendizaje']);
     } elseif ($rol === 'instructor') {
         $allowed = in_array($navItem, ['dashboard', 'asignaciones', 'mis_competencias', 'mi_ficha', 'mis_fichas', 'fichas']);
     }
@@ -68,6 +68,9 @@ if ($navItem) {
     <link href="../../assets/css/styles.css?v=<?php echo time(); ?>" rel="stylesheet">
     <meta name="description" content="Sistema de Gestión Académica de Transversales - SENA Colombia">
     <link href="https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- TomSelect — Selectores con búsqueda (global) -->
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
     <!-- Ionicons -->
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>

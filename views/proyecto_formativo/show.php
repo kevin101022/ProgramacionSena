@@ -198,6 +198,43 @@ require_once '../layouts/sidebar.php';
                                     <?php endforeach; ?>
                                 </div>
                             <?php endif; ?>
+
+                            <!-- RAPs SIN ACTIVIDAD (Vinculados a Fase pero no a Actividad) -->
+                            <?php if(!empty($fase['raps_sin_actividad'])): ?>
+                                <div style="margin-top: 1.5rem; border-top: 2px dashed #f3f4f6; padding-top: 1.5rem;">
+                                    <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 1.25rem; background: #fffbeb; padding: 0.75rem 1rem; border-radius: 0.5rem; border: 1px solid #fef3c7;">
+                                        <ion-icon src="../../assets/ionicons/alert-circle-outline.svg" style="color: #d97706; font-size: 1.2rem;"></ion-icon>
+                                        <div>
+                                            <h4 style="margin: 0; font-size: 0.85rem; color: #92400e; font-weight: 700; text-transform: uppercase; letter-spacing: 0.025em;">Resultados vinculados a la Fase</h4>
+                                            <p style="margin: 0; font-size: 0.75rem; color: #b45309;">Estos resultados están asociados al proyecto pero no han sido asignados a una actividad específica.</p>
+                                        </div>
+                                    </div>
+                                    <div style="display: flex; flex-direction: column; gap: 1.25rem;">
+                                        <?php foreach($fase['raps_sin_actividad'] as $comp): ?>
+                                            <div class="competencia-group">
+                                                <div style="font-size: 0.7rem; font-weight: 700; color: #d97706; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.6rem; padding: 2px 8px; background: #fef3c7; border-radius: 4px; display: inline-block;">
+                                                    <?php echo htmlspecialchars($comp['comp_nombre_corto']); ?>
+                                                </div>
+                                                <div style="display: grid; grid-template-columns: 1fr; gap: 0.5rem;">
+                                                    <?php foreach($comp['raps'] as $rap): ?>
+                                                        <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0.8rem; background: #fff; border: 1px solid #fef3c7; border-radius: 0.4rem; font-size: 0.8rem; box-shadow: 0 1px 2px rgba(217, 119, 6, 0.05);">
+                                                            <div style="display: flex; align-items: flex-start; gap: 0.8rem; flex: 1;">
+                                                                <div style="background: #fef3c7; color: #92400e; padding: 2px 6px; border-radius: 4px; font-weight: 700; font-size: 0.65rem; border: 1px solid #fde68a; min-width: 90px; text-align: center;">
+                                                                    <?php echo htmlspecialchars($rap['rap_codigo']); ?>
+                                                                </div>
+                                                                <div style="color: #78350f; line-height: 1.4;">
+                                                                    <?php echo htmlspecialchars($rap['rap_descripcion']); ?>
+                                                                    <span style="color: #b45309; font-size: 0.7rem; font-weight: 600; margin-left: 6px;">(<?php echo $rap['rap_horas']; ?>h)</span>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    <?php endforeach; ?>
+                                                </div>
+                                            </div>
+                                        <?php endforeach; ?>
+                                    </div>
+                                </div>
+                            <?php endif; ?>
                         </div>
                     </details>
                 <?php endforeach; ?>
