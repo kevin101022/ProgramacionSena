@@ -106,6 +106,36 @@ class DetalleAsignacionController
             return;
         }
 
+        // VALIDACIÓN DE SEGURIDAD: Solo el coordinador dueño de la ficha puede editar
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        $rol = $_SESSION['rol'] ?? null;
+        if ($rol === 'coordinador' && isset($_SESSION['id'])) {
+            $db = Conexion::getConnect();
+            $stmtCoord = $db->prepare("SELECT coord_id FROM COORDINACION WHERE coordinador_actual = :uid AND estado = 1 LIMIT 1");
+            $stmtCoord->execute([':uid' => $_SESSION['id']]);
+            $coord_id = $stmtCoord->fetchColumn();
+
+            if ($coord_id) {
+                // Sacar asig_id si no viene
+                $checkAsigId = $data['asignacion_asig_id'] ?? null;
+                if (!$checkAsigId) {
+                    $stmtAsig = $db->prepare("SELECT asignacion_asig_id FROM DETALLExASIGNACION WHERE detasig_id = :did");
+                    $stmtAsig->execute([':did' => $data['detasig_id']]);
+                    $checkAsigId = $stmtAsig->fetchColumn();
+                }
+
+                if ($checkAsigId) {
+                    $stmtCheck = $db->prepare("SELECT f.COORDINACION_coord_id FROM ASIGNACION a JOIN FICHA f ON a.FICHA_fich_id = f.fich_id WHERE a.asig_id = :aid");
+                    $stmtCheck->execute([':aid' => $checkAsigId]);
+                    $asigFichaCoord = $stmtCheck->fetchColumn();
+                    if ($asigFichaCoord && $asigFichaCoord != $coord_id) {
+                        $this->sendResponse(['error' => 'No tienes permisos para modificar una asignación de otra coordinación'], 403);
+                        return;
+                    }
+                }
+            }
+        }
+
         try {
             // If no date or asig_id provided, fetch from existing record
             if (empty($data['detasig_fecha']) || empty($data['asignacion_asig_id'])) {
@@ -148,6 +178,27 @@ class DetalleAsignacionController
             $this->sendResponse(['error' => 'ID requerido'], 400);
             return;
         }
+
+        // VALIDACIÓN DE SEGURIDAD: Solo el coordinador dueño de la ficha puede eliminar
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        $rol = $_SESSION['rol'] ?? null;
+        if ($rol === 'coordinador' && isset($_SESSION['id'])) {
+            $db = Conexion::getConnect();
+            $stmtCoord = $db->prepare("SELECT coord_id FROM COORDINACION WHERE coordinador_actual = :uid AND estado = 1 LIMIT 1");
+            $stmtCoord->execute([':uid' => $_SESSION['id']]);
+            $coord_id = $stmtCoord->fetchColumn();
+
+            if ($coord_id) {
+                $stmtCheck = $db->prepare("SELECT f.COORDINACION_coord_id FROM DETALLExASIGNACION d JOIN ASIGNACION a ON d.ASIGNACION_asig_id = a.asig_id JOIN FICHA f ON a.FICHA_fich_id = f.fich_id WHERE d.detasig_id = :did");
+                $stmtCheck->execute([':did' => $id]);
+                $asigFichaCoord = $stmtCheck->fetchColumn();
+                if ($asigFichaCoord && $asigFichaCoord != $coord_id) {
+                    $this->sendResponse(['error' => 'No tienes permisos para eliminar una asignación de otra coordinación'], 403);
+                    return;
+                }
+            }
+        }
+
         $model = new DetalleAsignacionModel(null, null, null, null, $id);
         if ($model->delete()) {
             $this->sendResponse(['message' => 'Detalle eliminado']);

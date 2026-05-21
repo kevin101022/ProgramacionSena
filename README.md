@@ -4,6 +4,13 @@ Esta guía explica paso a paso cómo poner en marcha el proyecto, configurar la 
 
 ---
 
+## 🚀 Novedades y Optimizaciones Recientes
+
+- **Seguridad de Asignaciones:** Los coordinadores ahora pueden ver las asignaciones de otros centros (para evitar cruces) pero en modo de **solo lectura**. La validación estricta de `coord_id` se hace tanto en Frontend (FullCalendar) como en Backend.
+- **Reportes PDF Avanzados:** Generación de reportes PDF optimizados con mPDF, agrupados lógicamente sin columnas redundantes, con filtros dinámicos temporales (Mes, Año, Historial) y etiquetado claro de las asignaciones de coordinaciones externas.
+
+---
+
 ## 1. Configuración y Conexión (MySQL)
 
 ### 🛡️ Archivo `.env`

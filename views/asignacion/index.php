@@ -223,7 +223,7 @@ if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'instructor') {
                 <!-- Ambiente Tab -->
                 <div id="tab-ambiente" class="tab-pane w-full flex-1" style="display: none;">
                     <div class="flex flex-col md:flex-row gap-4">
-                        <div class="w-full max-w-xs">
+                        <div class="w-full max-w-sm">
                             <select id="sedeFilter" placeholder="Filtrar por sede..." class="w-full">
                                 <option value="">Filtrar por sede...</option>
                             </select>
@@ -236,10 +236,14 @@ if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'instructor') {
                     </div>
                 </div>
 
-                <button id="addBtn" class="btn-primary flex-shrink-0 self-start md:self-auto" disabled>
-                    <ion-icon src="../../assets/ionicons/add-outline.svg"></ion-icon>
-                    Nueva Asignación
-                </button>
+                <div class="flex gap-2 flex-shrink-0 self-start md:self-auto">
+                    <button id="btnGenerarReporte" class="btn-secondary whitespace-nowrap hidden" style="display: none;">
+                        <ion-icon src="../../assets/ionicons/print-outline.svg"></ion-icon> Generar Reporte
+                    </button>
+                    <button id="addBtn" class="btn-primary" disabled>
+                        <ion-icon src="../../assets/ionicons/add-outline.svg"></ion-icon> Nueva Asignación
+                    </button>
+                </div>
             </div>
         </div>
 

@@ -120,6 +120,8 @@ class CalendarioAmbienteManager {
         if (ambienteSearch) ambienteSearch.value = `Ambiente ${a.amb_id} — ${a.amb_nombre || 'Sin nombre'}`;
         if (ambienteDropdown) ambienteDropdown.style.display = 'none';
         if (downloadPdfBtn) downloadPdfBtn.disabled = false;
+        const reporteFiltro = document.getElementById('reporteFiltro');
+        if (reporteFiltro) reporteFiltro.disabled = false;
 
         const calendarEl = document.getElementById('calendar');
         const placeholder = document.getElementById('calendarPlaceholder');
@@ -268,8 +270,20 @@ class CalendarioAmbienteManager {
         }
 
         try {
+            const filtroEl = document.getElementById('reporteFiltro');
+            const filtro = filtroEl ? filtroEl.value : 'mes';
+            let mes = 'all', anio = 'all';
+
+            if (filtro === 'mes' || filtro === 'anio') {
+                const currentDate = this.calendar ? this.calendar.getDate() : new Date();
+                anio = currentDate.getFullYear();
+                if (filtro === 'mes') {
+                    mes = currentDate.getMonth() + 1;
+                }
+            }
+
             // Abrir PDF en nueva ventana (el navegador mostrará el diálogo de impresión automáticamente)
-            const url = `../../routing.php?controller=reporte_pdf&action=calendarioAmbiente&amb_id=${this.selectedAmbiente.amb_id}`;
+            const url = `../../routing.php?controller=reporte_pdf&action=calendarioAmbiente&amb_id=${this.selectedAmbiente.amb_id}&mes=${mes}&anio=${anio}`;
             window.open(url, '_blank');
             
             // Restaurar botón

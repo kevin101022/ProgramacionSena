@@ -79,9 +79,11 @@ class CalendarioTotalManager {
         document.getElementById('calendarEmpty').style.display = 'none';
         document.getElementById('calendarWrapper').style.display = '';
 
-        // Show PDF button
+        // Show PDF button and filter
         const pdfBtn = document.getElementById('downloadPdfBtn');
         if (pdfBtn) pdfBtn.style.display = '';
+        const reporteFiltro = document.getElementById('reporteFiltro');
+        if (reporteFiltro) reporteFiltro.style.display = '';
 
         // Contar asignaciones únicas
         const uniqueAsigs = new Set(this.data.map(d => d.asig_id)).size;
@@ -209,7 +211,24 @@ class CalendarioTotalManager {
             btn.disabled = true;
             btn.innerHTML = '<span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></span>Generando...';
         }
-        window.open('../../routing.php?controller=reporte_pdf&action=calendarioTotal', '_blank');
+        try {
+            const filtroEl = document.getElementById('reporteFiltro');
+            const filtro = filtroEl ? filtroEl.value : 'mes';
+            let mes = 'all', anio = 'all';
+
+            if (filtro === 'mes' || filtro === 'anio') {
+                const currentDate = this.calendar ? this.calendar.getDate() : new Date();
+                anio = currentDate.getFullYear();
+                if (filtro === 'mes') {
+                    mes = currentDate.getMonth() + 1;
+                }
+            }
+
+            window.open(`../../routing.php?controller=reporte_pdf&action=calendarioTotal&mes=${mes}&anio=${anio}`, '_blank');
+        } catch (error) {
+            console.error('Error generando PDF:', error);
+            alert('Error al generar el PDF');
+        }
         setTimeout(() => {
             if (btn) {
                 btn.disabled = false;

@@ -106,6 +106,8 @@ class CalendarioInstructorManager {
         if (instructorSearch) instructorSearch.value = `${i.inst_nombres || ''} ${i.inst_apellidos || ''} (${i.numero_documento || i.inst_id})`;
         if (instructorDropdown) instructorDropdown.style.display = 'none';
         if (downloadPdfBtn) downloadPdfBtn.disabled = false;
+        const reporteFiltro = document.getElementById('reporteFiltro');
+        if (reporteFiltro) reporteFiltro.disabled = false;
 
         const calendarEl = document.getElementById('calendar');
         const placeholder = document.getElementById('calendarPlaceholder');
@@ -254,9 +256,21 @@ class CalendarioInstructorManager {
         }
 
         try {
+            const filtroEl = document.getElementById('reporteFiltro');
+            const filtro = filtroEl ? filtroEl.value : 'mes';
+            let mes = 'all', anio = 'all';
+
+            if (filtro === 'mes' || filtro === 'anio') {
+                const currentDate = this.calendar ? this.calendar.getDate() : new Date();
+                anio = currentDate.getFullYear();
+                if (filtro === 'mes') {
+                    mes = currentDate.getMonth() + 1;
+                }
+            }
+
             // Abrir PDF en nueva ventana (el navegador mostrará el diálogo de impresión automáticamente)
             const instId = this.selectedInstructor.numero_documento || this.selectedInstructor.inst_id;
-            const url = `../../routing.php?controller=reporte_pdf&action=calendarioInstructor&inst_id=${instId}`;
+            const url = `../../routing.php?controller=reporte_pdf&action=calendarioInstructor&inst_id=${instId}&mes=${mes}&anio=${anio}`;
             window.open(url, '_blank');
             
             // Restaurar botón

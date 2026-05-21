@@ -134,6 +134,21 @@ class AsignacionController
             $this->sendResponse(['error' => 'La ficha seleccionada no existe'], 404);
             return;
         }
+
+        // VALIDACIÓN DE SEGURIDAD: El coordinador dueño de la ficha
+        $rol = $_SESSION['rol'] ?? null;
+        if ($rol === 'coordinador' && isset($_SESSION['id'])) {
+            $db = Conexion::getConnect();
+            $stmtCoord = $db->prepare("SELECT coord_id FROM COORDINACION WHERE coordinador_actual = :uid AND estado = 1 LIMIT 1");
+            $stmtCoord->execute([':uid' => $_SESSION['id']]);
+            $coord_id = $stmtCoord->fetchColumn();
+            
+            if ($coord_id && $fichaData['coordinacion_coord_id'] != $coord_id) {
+                $this->sendResponse(['error' => 'No tienes permisos para crear asignaciones en fichas de otra coordinación'], 403);
+                return;
+            }
+        }
+
         $progId = $fichaData['programa_prog_id'];
 
         // 2. Validar que el instructor esté habilitado
@@ -558,6 +573,25 @@ class AsignacionController
 
         try {
             $this->db = Conexion::getConnect();
+
+            // VALIDACIÓN DE SEGURIDAD
+            $rol = $_SESSION['rol'] ?? null;
+            if ($rol === 'coordinador' && isset($_SESSION['id'])) {
+                $stmtCoord = $this->db->prepare("SELECT coord_id FROM COORDINACION WHERE coordinador_actual = :uid AND estado = 1 LIMIT 1");
+                $stmtCoord->execute([':uid' => $_SESSION['id']]);
+                $coord_id = $stmtCoord->fetchColumn();
+
+                if ($coord_id) {
+                    $stmtCheck = $this->db->prepare("SELECT f.COORDINACION_coord_id FROM ASIGNACION a JOIN FICHA f ON a.FICHA_fich_id = f.fich_id WHERE a.asig_id = :aid");
+                    $stmtCheck->execute([':aid' => $id]);
+                    $asigFichaCoord = $stmtCheck->fetchColumn();
+                    if ($asigFichaCoord && $asigFichaCoord != $coord_id) {
+                        $this->sendResponse(['error' => 'No tienes permisos para eliminar una asignación de otra coordinación'], 403);
+                        return;
+                    }
+                }
+            }
+
             $this->db->beginTransaction();
 
             // Primero eliminar detalles hijos (cascade manual)
@@ -641,12 +675,14 @@ class AsignacionController
         $sql = "SELECT d.detasig_id, d.detasig_fecha, d.detasig_hora_ini, d.detasig_hora_fin, d.observaciones,
                        a.ASIG_ID as asig_id, a.INSTRUCTOR_inst_id as instructor_inst_id, a.AMBIENTE_amb_id as ambiente_amb_id,
                        a.FICHA_fich_id as ficha_fich_id, a.COMPETENCIA_comp_id as competencia_comp_id,
-                       i.inst_nombres, i.inst_apellidos, am.amb_nombre, f.fich_id as ficha_num, c.comp_nombre_corto
+                       i.inst_nombres, i.inst_apellidos, am.amb_nombre, f.fich_id as ficha_num, c.comp_nombre_corto,
+                       f.COORDINACION_coord_id, co.coord_descripcion
                 FROM DETALLExASIGNACION d
                 INNER JOIN ASIGNACION a ON d.ASIGNACION_asig_id = a.ASIG_ID
                 INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.numero_documento
-                INNER JOIN AMBIENTE am ON a.AMBIENTE_amb_id = am.amb_id
+                LEFT JOIN AMBIENTE am ON a.AMBIENTE_amb_id = am.amb_id
                 INNER JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
+                INNER JOIN COORDINACION co ON f.COORDINACION_coord_id = co.coord_id
                 INNER JOIN COMPETENCIA c ON a.COMPETENCIA_comp_id = c.comp_id
                 WHERE a.INSTRUCTOR_inst_id = :inst_id
                 AND d.detasig_fecha >= :start_date AND d.detasig_fecha <= :end_date";
@@ -658,6 +694,23 @@ class AsignacionController
             ':end_date' => $endStr
         ]);
         $detalles = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        $rol = $_SESSION['rol'] ?? null;
+        $coord_id_user = null;
+        if ($rol === 'coordinador' && isset($_SESSION['id'])) {
+            $stmtCoord = $db->prepare("SELECT coord_id FROM COORDINACION WHERE coordinador_actual = :uid AND estado = 1 LIMIT 1");
+            $stmtCoord->execute([':uid' => $_SESSION['id']]);
+            $coord_id_user = $stmtCoord->fetchColumn();
+        }
+
+        foreach ($detalles as &$det) {
+             if ($rol === 'coordinador' && $coord_id_user && $det['COORDINACION_coord_id'] != $coord_id_user) {
+                 $det['editable'] = false;
+             } else {
+                 $det['editable'] = true;
+             }
+        }
 
         $model = new AsignacionModel();
         $horasMes = $model->getMonthlyHours($inst_id, $mes, $anio);
@@ -683,12 +736,14 @@ class AsignacionController
         $sql = "SELECT d.detasig_id, d.detasig_fecha, d.detasig_hora_ini, d.detasig_hora_fin, d.observaciones,
                        a.ASIG_ID as asig_id, a.INSTRUCTOR_inst_id as instructor_inst_id, a.AMBIENTE_amb_id as ambiente_amb_id,
                        a.FICHA_fich_id as ficha_fich_id, a.COMPETENCIA_comp_id as competencia_comp_id,
-                       i.inst_nombres, i.inst_apellidos, am.amb_nombre, f.fich_id as ficha_num, c.comp_nombre_corto
+                       i.inst_nombres, i.inst_apellidos, am.amb_nombre, f.fich_id as ficha_num, c.comp_nombre_corto,
+                       f.COORDINACION_coord_id, co.coord_descripcion
                 FROM DETALLExASIGNACION d
                 INNER JOIN ASIGNACION a ON d.ASIGNACION_asig_id = a.ASIG_ID
                 INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.numero_documento
-                INNER JOIN AMBIENTE am ON a.AMBIENTE_amb_id = am.amb_id
+                LEFT JOIN AMBIENTE am ON a.AMBIENTE_amb_id = am.amb_id
                 INNER JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
+                INNER JOIN COORDINACION co ON f.COORDINACION_coord_id = co.coord_id
                 INNER JOIN COMPETENCIA c ON a.COMPETENCIA_comp_id = c.comp_id
                 WHERE a.AMBIENTE_amb_id = :amb_id
                 AND d.detasig_fecha >= :start_date AND d.detasig_fecha <= :end_date";
@@ -700,6 +755,23 @@ class AsignacionController
             ':end_date' => $endStr
         ]);
         $detalles = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        $rol = $_SESSION['rol'] ?? null;
+        $coord_id_user = null;
+        if ($rol === 'coordinador' && isset($_SESSION['id'])) {
+            $stmtCoord = $db->prepare("SELECT coord_id FROM COORDINACION WHERE coordinador_actual = :uid AND estado = 1 LIMIT 1");
+            $stmtCoord->execute([':uid' => $_SESSION['id']]);
+            $coord_id_user = $stmtCoord->fetchColumn();
+        }
+
+        foreach ($detalles as &$det) {
+             if ($rol === 'coordinador' && $coord_id_user && $det['COORDINACION_coord_id'] != $coord_id_user) {
+                 $det['editable'] = false;
+             } else {
+                 $det['editable'] = true;
+             }
+        }
 
         $this->sendResponse(['events' => $detalles]);
     }

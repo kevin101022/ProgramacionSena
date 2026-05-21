@@ -1,10 +1,11 @@
 <?php
 /**
  * ReportePdfController - Generación de reportes PDF para calendarios
- * Usa TCPDF para generar documentos profesionales
+ * Formato Visual Moderno Mensual
  */
 
 require_once dirname(__DIR__) . '/Conexion.php';
+require_once dirname(__DIR__) . '/vendor/autoload.php';
 
 class ReportePdfController
 {
@@ -15,231 +16,170 @@ class ReportePdfController
         $this->db = Conexion::getConnect();
     }
 
-    /**
-     * Genera PDF de calendario de Ficha
-     */
+    private function getRoleContext() {
+        if (session_status() === PHP_SESSION_NONE) session_start();
+        $rol     = $_SESSION["rol"] ?? null;
+        $cent_id = $_SESSION["centro_id"] ?? null;
+        $user_id = $_SESSION["id"] ?? null;
+
+        $coord_id   = null;
+        if ($rol === "coordinador" && $user_id) {
+            $stmt = $this->db->prepare("SELECT coord_id FROM COORDINACION WHERE coordinador_actual = :uid AND estado = 1 LIMIT 1");
+            $stmt->execute([":uid" => $user_id]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            $coord_id = $row["coord_id"] ?? null;
+        }
+        
+        return ["rol" => $rol, "cent_id" => $cent_id, "coord_id" => $coord_id];
+    }
+
+    private function getTituloTiempo($mes, $anio) {
+        if ($mes !== "all" && $anio !== "all") {
+            return "{$anio}-" . str_pad($mes, 2, "0", STR_PAD_LEFT);
+        } elseif ($mes === "all" && $anio !== "all") {
+            return "Año {$anio}";
+        } else {
+            return "Historial Completo";
+        }
+    }
+
     public function calendarioFicha()
     {
-        if (session_status() === PHP_SESSION_NONE) session_start();
+        $context = $this->getRoleContext();
         
         $fichId = $_GET['fich_id'] ?? null;
+        $mes = $_GET['mes'] ?? date('m');
+        $anio = $_GET['anio'] ?? date('Y');
+
         if (!$fichId) {
             http_response_code(400);
             die('ID de ficha requerido');
         }
 
-        // Obtener datos de la ficha
         $ficha = $this->getFichaData($fichId);
         if (!$ficha) {
             http_response_code(404);
             die('Ficha no encontrada');
         }
 
-        // Obtener asignaciones agrupadas
-        $asignaciones = $this->getAsignacionesFicha($fichId);
+        $asignaciones = $this->getAsignacionesFicha($fichId, $mes, $anio, $context["cent_id"], $context["coord_id"]);
 
-        // Generar PDF
-        $this->generarPDF(
-            'Reporte de Asignaciones - Ficha',
-            "Ficha: {$ficha['fich_id']}",
-            $ficha['prog_denominacion'] ?? $ficha['titpro_nombre'] ?? 'Sin programa',
+        $this->generarHTMLModerno(
+            "Horario Ficha — " . $this->getTituloTiempo($mes, $anio),
+            "Ficha: {$ficha['fich_id']} — " . ($ficha['prog_denominacion'] ?? $ficha['titpro_nombre'] ?? 'Sin programa'),
             $asignaciones,
             'ficha',
-            "Calendario_Ficha_{$fichId}.pdf"
+            "Calendario_Ficha_{$fichId}_{$anio}_{$mes}.pdf",
+            $mes, $anio,
+            $context['coord_id']
         );
     }
 
-    /**
-     * Genera PDF de calendario de Instructor
-     */
     public function calendarioInstructor()
     {
-        if (session_status() === PHP_SESSION_NONE) session_start();
+        $context = $this->getRoleContext();
         
         $instId = $_GET['inst_id'] ?? null;
+        $mes = $_GET['mes'] ?? date('m');
+        $anio = $_GET['anio'] ?? date('Y');
+
         if (!$instId) {
             http_response_code(400);
             die('ID de instructor requerido');
         }
 
-        // Obtener datos del instructor
         $instructor = $this->getInstructorData($instId);
         if (!$instructor) {
             http_response_code(404);
             die('Instructor no encontrado');
         }
 
-        // Obtener asignaciones agrupadas
-        $asignaciones = $this->getAsignacionesInstructor($instId);
+        $asignaciones = $this->getAsignacionesInstructor($instId, $mes, $anio, $context["cent_id"], null);
 
-        // Generar PDF
-        $this->generarPDF(
-            'Reporte de Asignaciones - Instructor',
+        $this->generarHTMLModerno(
+            "Horario Instructor — " . $this->getTituloTiempo($mes, $anio),
             "{$instructor['inst_nombres']} {$instructor['inst_apellidos']}",
-            "Documento: {$instructor['numero_documento']}",
             $asignaciones,
             'instructor',
-            "Calendario_Instructor_{$instId}.pdf"
+            "Calendario_Instructor_{$instId}_{$anio}_{$mes}.pdf",
+            $mes, $anio,
+            $context['coord_id']
         );
     }
 
-    /**
-     * Genera PDF de calendario de Ambiente
-     */
     public function calendarioAmbiente()
     {
-        if (session_status() === PHP_SESSION_NONE) session_start();
+        $context = $this->getRoleContext();
         
         $ambId = $_GET['amb_id'] ?? null;
+        $mes = $_GET['mes'] ?? date('m');
+        $anio = $_GET['anio'] ?? date('Y');
+
         if (!$ambId) {
             http_response_code(400);
             die('ID de ambiente requerido');
         }
 
-        // Obtener datos del ambiente
         $ambiente = $this->getAmbienteData($ambId);
         if (!$ambiente) {
             http_response_code(404);
             die('Ambiente no encontrado');
         }
 
-        // Obtener asignaciones agrupadas
-        $asignaciones = $this->getAsignacionesAmbiente($ambId);
+        $asignaciones = $this->getAsignacionesAmbiente($ambId, $mes, $anio, $context["cent_id"], null);
 
-        // Generar PDF
-        $this->generarPDF(
-            'Reporte de Asignaciones - Ambiente',
+        $this->generarHTMLModerno(
+            "Horario Ambiente — " . $this->getTituloTiempo($mes, $anio),
             "Ambiente: {$ambiente['amb_id']} - {$ambiente['amb_nombre']}",
-            "Sede: {$ambiente['sede_nombre']}",
             $asignaciones,
             'ambiente',
-            "Calendario_Ambiente_{$ambId}.pdf"
+            "Calendario_Ambiente_{$ambId}_{$anio}_{$mes}.pdf",
+            $mes, $anio,
+            $context['coord_id']
         );
     }
 
-    /**
-     * Genera PDF del Calendario Total (filtrado por rol)
-     */
     public function calendarioTotal()
     {
         if (session_status() === PHP_SESSION_NONE) session_start();
+        $context = $this->getRoleContext();
 
-        $rol     = $_SESSION['rol'] ?? null;
-        $cent_id = $_SESSION['centro_id'] ?? null;
-        $user_id = $_SESSION['id'] ?? null;
+        $mes = $_GET['mes'] ?? date('m');
+        $anio = $_GET['anio'] ?? date('Y');
 
-        // Resolver coord_id para coordinador
-        $coord_id   = null;
+        $coord_id = $context['coord_id'];
+        $cent_id = $context['cent_id'];
+        
         $coord_desc = 'Todas las coordinaciones';
-        if ($rol === 'coordinador' && $user_id) {
-            $stmt = $this->db->prepare("SELECT coord_id, coord_descripcion FROM COORDINACION WHERE coordinador_actual = :uid AND estado = 1 LIMIT 1");
-            $stmt->execute([':uid' => $user_id]);
+        if ($context['rol'] === 'coordinador' && $coord_id) {
+            $stmt = $this->db->prepare("SELECT coord_descripcion FROM COORDINACION WHERE coord_id = :cid");
+            $stmt->execute([':cid' => $coord_id]);
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
-            $coord_id   = $row['coord_id'] ?? null;
             $coord_desc = $row['coord_descripcion'] ?? 'Mi coordinación';
+            $subtitulo = "Coordinación: {$coord_desc}";
+        } else {
+            $stmt = $this->db->prepare("SELECT cent_nombre FROM CENTRO_FORMACION WHERE cent_id = :cid");
+            $stmt->execute([':cid' => $cent_id]);
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            $cent_nombre = $row['cent_nombre'] ?? '';
+            $subtitulo = "Todas las coordinaciones del centro" . ($cent_nombre ? " ({$cent_nombre})" : "");
         }
 
-        // Subtítulo según rol
-        $subtitulo = $rol === 'coordinador' ? "Coordinación: {$coord_desc}" : 'Todas las coordinaciones del centro';
+        $asignaciones = $this->getAsignacionesTotal($cent_id, $coord_id, $mes, $anio);
 
-        $asignaciones = $this->getAsignacionesTotal($cent_id, $coord_id);
-
-        $this->generarPDF(
-            'Reporte de Asignaciones - Calendario Total',
+        $this->generarHTMLModerno(
+            "Horario Total — " . $this->getTituloTiempo($mes, $anio),
             $subtitulo,
-            'Generado: ' . date('d/m/Y H:i'),
             $asignaciones,
             'total',
-            'Calendario_Total_' . date('Ymd') . '.pdf'
+            "Calendario_Total_{$anio}_{$mes}.pdf",
+            $mes, $anio,
+            $context['coord_id']
         );
     }
 
-    /**
-     * Obtiene todas las asignaciones filtradas por centro o coordinación
-     */
-    private function getAsignacionesTotal($cent_id = null, $coord_id = null)
-    {
-        $sql = "SELECT a.asig_id, a.asig_fecha_ini, a.asig_fecha_fin,
-                       co.coord_descripcion,
-                       f.fich_id,
-                       c.comp_nombre_corto, c.comp_nombre_unidad_competencia,
-                       i.inst_nombres, i.inst_apellidos,
-                       amb.amb_id, amb.amb_nombre,
-                       d.detasig_fecha, d.detasig_hora_ini, d.detasig_hora_fin
-                FROM ASIGNACION a
-                INNER JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
-                INNER JOIN COORDINACION co ON f.COORDINACION_coord_id = co.coord_id
-                INNER JOIN COMPETENCIA c ON a.COMPETENCIA_comp_id = c.comp_id
-                INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.numero_documento
-                LEFT JOIN AMBIENTE amb ON a.AMBIENTE_amb_id = amb.amb_id
-                LEFT JOIN DETALLExASIGNACION d ON a.asig_id = d.ASIGNACION_asig_id";
-
-        $params = [];
-        if ($coord_id) {
-            $sql .= " WHERE co.coord_id = :coord_id";
-            $params[':coord_id'] = $coord_id;
-        } elseif ($cent_id) {
-            $sql .= " WHERE co.CENTRO_FORMACION_cent_id = :cent_id";
-            $params[':cent_id'] = $cent_id;
-        }
-        $sql .= " ORDER BY co.coord_descripcion, d.detasig_fecha, d.detasig_hora_ini";
-
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute($params);
-        return $this->agruparAsignacionesTotal($stmt->fetchAll(PDO::FETCH_ASSOC));
-    }
-
-    /**
-     * Agrupa asignaciones del calendario total por asig_id (una fila por asignación)
-     */
-    private function agruparAsignacionesTotal($detalles)
-    {
-        if (empty($detalles)) return [];
-
-        $grupos = [];
-
-        foreach ($detalles as $d) {
-            $key = $d['asig_id'];
-
-            if (!isset($grupos[$key])) {
-                $grupos[$key] = [
-                    'key'              => $key,
-                    'fecha_inicio'     => $d['detasig_fecha'] ?? '',
-                    'fecha_fin'        => $d['detasig_fecha'] ?? '',
-                    'hora_ini'         => $d['detasig_hora_ini'] ?? '',
-                    'hora_fin'         => $d['detasig_hora_fin'] ?? '',
-                    'coordinacion'     => $d['coord_descripcion'] ?? '',
-                    'ficha'            => $d['fich_id'],
-                    'competencia'      => $d['comp_nombre_corto'] ?? '',
-                    'competencia_full' => $d['comp_nombre_unidad_competencia'] ?? '',
-                    'instructor'       => trim(($d['inst_nombres'] ?? '') . ' ' . ($d['inst_apellidos'] ?? '')),
-                    'ambiente'         => $d['amb_id']
-                        ? $d['amb_id'] . ' - ' . ($d['amb_nombre'] ?? '')
-                        : null,
-                ];
-            } else {
-                // Extender rango de fechas (solo si la fecha no es nula)
-                if (!empty($d['detasig_fecha'])) {
-                    if (empty($grupos[$key]['fecha_inicio']) || $d['detasig_fecha'] < $grupos[$key]['fecha_inicio']) {
-                        $grupos[$key]['fecha_inicio'] = $d['detasig_fecha'];
-                    }
-                    if (empty($grupos[$key]['fecha_fin']) || $d['detasig_fecha'] > $grupos[$key]['fecha_fin']) {
-                        $grupos[$key]['fecha_fin'] = $d['detasig_fecha'];
-                    }
-                }
-            }
-        }
-
-        return array_values($grupos);
-    }
-
-    /**
-     * Obtiene datos de una ficha
-     */
-    private function getFichaData($fichId)
-    {
-        $sql = "SELECT f.fich_id, f.fich_jornada, 
-                       p.prog_denominacion, tp.titpro_nombre
+    private function getFichaData($fichId) {
+        $sql = "SELECT f.fich_id, p.prog_denominacion, tp.titpro_nombre
                 FROM FICHA f
                 LEFT JOIN PROGRAMA p ON f.PROGRAMA_prog_id = p.prog_codigo
                 LEFT JOIN TITULO_PROGRAMA tp ON p.TIT_PROGRAMA_titpro_id = tp.titpro_id
@@ -249,24 +189,14 @@ class ReportePdfController
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Obtiene datos de un instructor
-     */
-    private function getInstructorData($instId)
-    {
-        $sql = "SELECT numero_documento, inst_nombres, inst_apellidos, inst_correo
-                FROM INSTRUCTOR
-                WHERE numero_documento = :inst_id";
+    private function getInstructorData($instId) {
+        $sql = "SELECT numero_documento, inst_nombres, inst_apellidos FROM INSTRUCTOR WHERE numero_documento = :inst_id";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([':inst_id' => $instId]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Obtiene datos de un ambiente
-     */
-    private function getAmbienteData($ambId)
-    {
+    private function getAmbienteData($ambId) {
         $sql = "SELECT a.amb_id, a.amb_nombre, s.sede_nombre
                 FROM AMBIENTE a
                 LEFT JOIN SEDE s ON a.SEDE_sede_id = s.sede_id
@@ -276,519 +206,489 @@ class ReportePdfController
         return $stmt->fetch(PDO::FETCH_ASSOC);
     }
 
-    /**
-     * Obtiene asignaciones de una ficha agrupadas por rango
-     */
-    private function getAsignacionesFicha($fichId)
-    {
-        $sql = "SELECT a.asig_id, a.asig_fecha_ini, a.asig_fecha_fin,
+    private function getAsignacionesFicha($fichId, $mes, $anio, $cent_id, $coord_id) {
+        $sql = "SELECT a.asig_id, d.detasig_fecha, d.detasig_hora_ini, d.detasig_hora_fin,
+                       f.fich_id, p.prog_denominacion,
                        c.comp_nombre_corto, c.comp_nombre_unidad_competencia,
-                       i.inst_nombres, i.inst_apellidos,
-                       amb.amb_id, amb.amb_nombre,
-                       d.detasig_fecha, d.detasig_hora_ini, d.detasig_hora_fin
+                       i.inst_nombres, i.inst_apellidos, i.numero_documento,
+                       amb.amb_id, amb.amb_nombre, co.coord_descripcion, co.coord_id as asignacion_coord_id
                 FROM ASIGNACION a
+                LEFT JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
+                LEFT JOIN PROGRAMA p ON f.PROGRAMA_prog_id = p.prog_codigo
+                INNER JOIN COORDINACION co ON f.COORDINACION_coord_id = co.coord_id
+                INNER JOIN DETALLExASIGNACION d ON a.asig_id = d.ASIGNACION_asig_id
                 INNER JOIN COMPETENCIA c ON a.COMPETENCIA_comp_id = c.comp_id
                 INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.numero_documento
                 LEFT JOIN AMBIENTE amb ON a.AMBIENTE_amb_id = amb.amb_id
-                LEFT JOIN DETALLExASIGNACION d ON a.asig_id = d.ASIGNACION_asig_id
-                WHERE a.FICHA_fich_id = :fich_id
-                ORDER BY d.detasig_fecha, d.detasig_hora_ini";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([':fich_id' => $fichId]);
-        return $this->agruparAsignaciones($stmt->fetchAll(PDO::FETCH_ASSOC));
-    }
+                WHERE a.FICHA_fich_id = :fich_id";
 
-    /**
-     * Obtiene asignaciones de un instructor agrupadas por rango
-     */
-    private function getAsignacionesInstructor($instId)
-    {
-        $sql = "SELECT a.asig_id, a.asig_fecha_ini, a.asig_fecha_fin,
-                       f.fich_id,
-                       c.comp_nombre_corto, c.comp_nombre_unidad_competencia,
-                       amb.amb_id, amb.amb_nombre,
-                       d.detasig_fecha, d.detasig_hora_ini, d.detasig_hora_fin
-                FROM ASIGNACION a
-                INNER JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
-                INNER JOIN COMPETENCIA c ON a.COMPETENCIA_comp_id = c.comp_id
-                LEFT JOIN AMBIENTE amb ON a.AMBIENTE_amb_id = amb.amb_id
-                LEFT JOIN DETALLExASIGNACION d ON a.asig_id = d.ASIGNACION_asig_id
-                WHERE a.INSTRUCTOR_inst_id = :inst_id
-                ORDER BY d.detasig_fecha, d.detasig_hora_ini";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([':inst_id' => $instId]);
-        return $this->agruparAsignaciones($stmt->fetchAll(PDO::FETCH_ASSOC));
-    }
+        $params = [':fich_id' => $fichId];
 
-    /**
-     * Obtiene asignaciones de un ambiente agrupadas por rango
-     */
-    private function getAsignacionesAmbiente($ambId)
-    {
-        $sql = "SELECT a.asig_id, a.asig_fecha_ini, a.asig_fecha_fin,
-                       f.fich_id,
-                       c.comp_nombre_corto, c.comp_nombre_unidad_competencia,
-                       i.inst_nombres, i.inst_apellidos,
-                       d.detasig_fecha, d.detasig_hora_ini, d.detasig_hora_fin
-                FROM ASIGNACION a
-                INNER JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
-                INNER JOIN COMPETENCIA c ON a.COMPETENCIA_comp_id = c.comp_id
-                INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.numero_documento
-                LEFT JOIN DETALLExASIGNACION d ON a.asig_id = d.ASIGNACION_asig_id
-                WHERE a.AMBIENTE_amb_id = :amb_id
-                ORDER BY d.detasig_fecha, d.detasig_hora_ini";
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute([':amb_id' => $ambId]);
-        return $this->agruparAsignaciones($stmt->fetchAll(PDO::FETCH_ASSOC));
-    }
-
-    /**
-     * Agrupa asignaciones por asig_id — una fila por asignación con rango min/max de fechas
-     */
-    private function agruparAsignaciones($detalles)
-    {
-        if (empty($detalles)) return [];
-
-        $grupos = [];
-
-        foreach ($detalles as $d) {
-            $key = $d['asig_id'];
-
-            if (!isset($grupos[$key])) {
-                $grupos[$key] = [
-                    'key'              => $key,
-                    'fecha_inicio'     => $d['detasig_fecha'] ?? '',
-                    'fecha_fin'        => $d['detasig_fecha'] ?? '',
-                    'hora_ini'         => $d['detasig_hora_ini'] ?? '',
-                    'hora_fin'         => $d['detasig_hora_fin'] ?? '',
-                    'ficha'            => $d['fich_id'] ?? null,
-                    'competencia'      => $d['comp_nombre_corto'] ?? '',
-                    'competencia_full' => $d['comp_nombre_unidad_competencia'] ?? '',
-                    'instructor'       => isset($d['inst_nombres'])
-                        ? trim(($d['inst_nombres'] ?? '') . ' ' . ($d['inst_apellidos'] ?? ''))
-                        : null,
-                    'ambiente'         => isset($d['amb_id'])
-                        ? $d['amb_id'] . ' - ' . ($d['amb_nombre'] ?? '')
-                        : null,
-                ];
-            } else {
-                // Solo actualizar fechas si no es nulo
-                if (!empty($d['detasig_fecha'])) {
-                    if (empty($grupos[$key]['fecha_inicio']) || $d['detasig_fecha'] < $grupos[$key]['fecha_inicio']) {
-                        $grupos[$key]['fecha_inicio'] = $d['detasig_fecha'];
-                    }
-                    if (empty($grupos[$key]['fecha_fin']) || $d['detasig_fecha'] > $grupos[$key]['fecha_fin']) {
-                        $grupos[$key]['fecha_fin'] = $d['detasig_fecha'];
-                    }
-                }
-            }
+        if ($mes !== 'all') {
+            $sql .= " AND MONTH(d.detasig_fecha) = :mes";
+            $params[':mes'] = $mes;
+        }
+        if ($anio !== 'all') {
+            $sql .= " AND YEAR(d.detasig_fecha) = :anio";
+            $params[':anio'] = $anio;
+        }
+        if ($coord_id) {
+            $sql .= " AND co.coord_id = :coord_id";
+            $params[':coord_id'] = $coord_id;
+        } elseif ($cent_id) {
+            $sql .= " AND co.CENTRO_FORMACION_cent_id = :cent_id";
+            $params[':cent_id'] = $cent_id;
         }
 
+        $sql .= " ORDER BY d.detasig_fecha, d.detasig_hora_ini";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $this->agruparPorAsignacion($stmt->fetchAll(PDO::FETCH_ASSOC));
+    }
+
+    private function getAsignacionesInstructor($instId, $mes, $anio, $cent_id, $coord_id) {
+        $sql = "SELECT a.asig_id, d.detasig_fecha, d.detasig_hora_ini, d.detasig_hora_fin,
+                       f.fich_id, p.prog_denominacion,
+                       c.comp_nombre_corto, c.comp_nombre_unidad_competencia,
+                       i.inst_nombres, i.inst_apellidos, i.numero_documento,
+                       amb.amb_id, amb.amb_nombre, co.coord_descripcion, co.coord_id as asignacion_coord_id
+                FROM ASIGNACION a
+                LEFT JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
+                LEFT JOIN PROGRAMA p ON f.PROGRAMA_prog_id = p.prog_codigo
+                INNER JOIN COORDINACION co ON f.COORDINACION_coord_id = co.coord_id
+                INNER JOIN DETALLExASIGNACION d ON a.asig_id = d.ASIGNACION_asig_id
+                INNER JOIN COMPETENCIA c ON a.COMPETENCIA_comp_id = c.comp_id
+                INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.numero_documento
+                LEFT JOIN AMBIENTE amb ON a.AMBIENTE_amb_id = amb.amb_id
+                WHERE a.INSTRUCTOR_inst_id = :inst_id";
+
+        $params = [':inst_id' => $instId];
+
+        if ($mes !== 'all') {
+            $sql .= " AND MONTH(d.detasig_fecha) = :mes";
+            $params[':mes'] = $mes;
+        }
+        if ($anio !== 'all') {
+            $sql .= " AND YEAR(d.detasig_fecha) = :anio";
+            $params[':anio'] = $anio;
+        }
+        if ($coord_id) {
+            $sql .= " AND co.coord_id = :coord_id";
+            $params[':coord_id'] = $coord_id;
+        } elseif ($cent_id) {
+            $sql .= " AND co.CENTRO_FORMACION_cent_id = :cent_id";
+            $params[':cent_id'] = $cent_id;
+        }
+
+        $sql .= " ORDER BY d.detasig_fecha, d.detasig_hora_ini";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $this->agruparPorAsignacion($stmt->fetchAll(PDO::FETCH_ASSOC));
+    }
+
+    private function getAsignacionesAmbiente($ambId, $mes, $anio, $cent_id, $coord_id) {
+        $sql = "SELECT a.asig_id, d.detasig_fecha, d.detasig_hora_ini, d.detasig_hora_fin,
+                       f.fich_id, p.prog_denominacion,
+                       c.comp_nombre_corto, c.comp_nombre_unidad_competencia,
+                       i.inst_nombres, i.inst_apellidos, i.numero_documento,
+                       amb.amb_id, amb.amb_nombre, co.coord_descripcion, co.coord_id as asignacion_coord_id
+                FROM ASIGNACION a
+                LEFT JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
+                LEFT JOIN PROGRAMA p ON f.PROGRAMA_prog_id = p.prog_codigo
+                INNER JOIN COORDINACION co ON f.COORDINACION_coord_id = co.coord_id
+                INNER JOIN DETALLExASIGNACION d ON a.asig_id = d.ASIGNACION_asig_id
+                INNER JOIN COMPETENCIA c ON a.COMPETENCIA_comp_id = c.comp_id
+                INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.numero_documento
+                LEFT JOIN AMBIENTE amb ON a.AMBIENTE_amb_id = amb.amb_id
+                WHERE a.AMBIENTE_amb_id = :amb_id";
+
+        $params = [':amb_id' => $ambId];
+
+        if ($mes !== 'all') {
+            $sql .= " AND MONTH(d.detasig_fecha) = :mes";
+            $params[':mes'] = $mes;
+        }
+        if ($anio !== 'all') {
+            $sql .= " AND YEAR(d.detasig_fecha) = :anio";
+            $params[':anio'] = $anio;
+        }
+        if ($coord_id) {
+            $sql .= " AND co.coord_id = :coord_id";
+            $params[':coord_id'] = $coord_id;
+        } elseif ($cent_id) {
+            $sql .= " AND co.CENTRO_FORMACION_cent_id = :cent_id";
+            $params[':cent_id'] = $cent_id;
+        }
+
+        $sql .= " ORDER BY d.detasig_fecha, d.detasig_hora_ini";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $this->agruparPorAsignacion($stmt->fetchAll(PDO::FETCH_ASSOC));
+    }
+
+    private function getAsignacionesTotal($cent_id, $coord_id, $mes, $anio) {
+        $sql = "SELECT a.asig_id, d.detasig_fecha, d.detasig_hora_ini, d.detasig_hora_fin,
+                       co.coord_descripcion,
+                       f.fich_id, p.prog_denominacion,
+                       c.comp_nombre_corto, c.comp_nombre_unidad_competencia,
+                       i.inst_nombres, i.inst_apellidos, i.numero_documento,
+                       amb.amb_id, amb.amb_nombre
+                FROM ASIGNACION a
+                INNER JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
+                LEFT JOIN PROGRAMA p ON f.PROGRAMA_prog_id = p.prog_codigo
+                INNER JOIN COORDINACION co ON f.COORDINACION_coord_id = co.coord_id
+                INNER JOIN DETALLExASIGNACION d ON a.asig_id = d.ASIGNACION_asig_id
+                INNER JOIN COMPETENCIA c ON a.COMPETENCIA_comp_id = c.comp_id
+                INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.numero_documento
+                LEFT JOIN AMBIENTE amb ON a.AMBIENTE_amb_id = amb.amb_id
+                WHERE 1=1";
+
+        $params = [];
+        if ($mes !== 'all') {
+            $sql .= " AND MONTH(d.detasig_fecha) = :mes";
+            $params[':mes'] = $mes;
+        }
+        if ($anio !== 'all') {
+            $sql .= " AND YEAR(d.detasig_fecha) = :anio";
+            $params[':anio'] = $anio;
+        }
+        if ($coord_id) {
+            $sql .= " AND co.coord_id = :coord_id";
+            $params[':coord_id'] = $coord_id;
+        } elseif ($cent_id) {
+            $sql .= " AND co.CENTRO_FORMACION_cent_id = :cent_id";
+            $params[':cent_id'] = $cent_id;
+        }
+        $sql .= " ORDER BY co.coord_descripcion, d.detasig_fecha, d.detasig_hora_ini";
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        return $this->agruparPorAsignacion($stmt->fetchAll(PDO::FETCH_ASSOC));
+    }
+
+    private function agruparPorAsignacion($detalles) {
+        $grupos = [];
+        foreach ($detalles as $d) {
+            $key = $d['asig_id'];
+            if (!isset($grupos[$key])) {
+                $grupos[$key] = [
+                    'key' => $key,
+                    'ficha' => $d['fich_id'] ?? null,
+                    'programa' => $d['prog_denominacion'] ?? '',
+                    'competencia' => !empty($d['comp_nombre_corto']) ? $d['comp_nombre_corto'] : ($d['comp_nombre_unidad_competencia'] ?? ''),
+                    'instructor_req' => trim(($d['inst_nombres'] ?? '') . ' ' . ($d['inst_apellidos'] ?? '')),
+                    'instructor_id' => $d['numero_documento'] ?? '',
+                    'ambiente' => $d['amb_id'] ?? 'N/A',
+                    'coord_id' => $d['asignacion_coord_id'] ?? null,
+                    'coord_descripcion' => $d['coord_descripcion'] ?? '',
+                    'hora_ini' => $d['detasig_hora_ini'],
+                    'hora_fin' => $d['detasig_hora_fin'],
+                    'fechas' => []
+                ];
+            }
+            if (!in_array($d['detasig_fecha'], $grupos[$key]['fechas'])) {
+                $grupos[$key]['fechas'][] = $d['detasig_fecha'];
+            }
+        }
         return array_values($grupos);
     }
 
-    /**
-     * Genera el PDF usando HTML y CSS
-     */
-    private function generarPDF($titulo, $subtitulo, $info, $asignaciones, $tipo, $filename)
-    {
-        // Generar HTML del PDF
-        $html = $this->generarHTMLPDF($titulo, $subtitulo, $info, $asignaciones, $tipo, $filename);
-
-        // Intentar usar FPDF si está disponible
-        $fpdfPath = dirname(__DIR__) . '/lib/fpdf/fpdf.php';
-        
-        if (file_exists($fpdfPath)) {
-            $this->generarConFPDF($titulo, $subtitulo, $info, $asignaciones, $tipo, $filename);
-        } else {
-            // Fallback: Enviar HTML optimizado para impresión a PDF desde el navegador
-            header('Content-Type: text/html; charset=UTF-8');
-            echo $html;
-        }
+    private function formatearHora($time) {
+        $datetime = DateTime::createFromFormat('H:i:s', $time);
+        if (!$datetime) $datetime = DateTime::createFromFormat('H:i', $time);
+        return $datetime ? $datetime->format('h:i A') : $time;
     }
 
-    /**
-     * Genera el HTML del reporte
-     */
-    private function generarHTMLPDF($titulo, $subtitulo, $info, $asignaciones, $tipo, $filename)
-    {
-        $totalAsignaciones = count($asignaciones);
-        $fecha = date('d/m/Y H:i');
+    private function generarHTMLModerno($tituloAbsoluto, $subtituloAbsoluto, $asignaciones, $tipo, $filename, $mes, $anio, $currentUserCoordId) {
+        // Formateo y agrupamiento logico
+        $agrupadoPorSubGrupo = [];
+        $totalHorasGeneral = 0;
+        
+        $etiquetaTiempo = ($mes !== "all" && $anio !== "all") ? "del mes" : (($mes === "all" && $anio !== "all") ? "del año" : "del historial");
+        $etiquetaCorto = ($mes !== "all" && $anio !== "all") ? "mes" : (($mes === "all" && $anio !== "all") ? "año" : "historial");
+        
+        foreach ($asignaciones as $asig) {
+            $h_ini = strtotime($asig['hora_ini']);
+            $h_fin = strtotime($asig['hora_fin']);
+            $horasDiarias = ($h_fin - $h_ini) / 3600;
+            $dias = count($asig['fechas']);
+            $totalHorasAsig = $horasDiarias * $dias;
+            $totalHorasGeneral += $totalHorasAsig;
+            $asig['total_horas'] = $totalHorasAsig;
+            $asig['horas_diarias'] = $horasDiarias;
 
-        // Determinar columnas según tipo
-        $columnas = $this->getColumnasPorTipo($tipo);
+            $arrayDias = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+            $nombresMes = ['', 'ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+            if (empty($asig['fechas'])) continue; 
+            $minDate = min($asig['fechas']);
+            $maxDate = max($asig['fechas']);
+            
+            $weekdays = [];
+            foreach($asig['fechas'] as $f) {
+                $wd = date('N', strtotime($f)) - 1;
+                $weekdays[$wd] = $arrayDias[$wd];
+            }
+            ksort($weekdays);
+            $dayString = implode(' · ', $weekdays);
+            
+            if ($minDate == $maxDate) {
+                $dayString .= " · " . date('j', strtotime($minDate)) . " de " . $nombresMes[(int)date('n', strtotime($minDate))];
+            } else {
+                $dayString .= " · " . date('j', strtotime($minDate)) . "-" . date('j', strtotime($maxDate)) . " de " . $nombresMes[(int)date('n', strtotime($maxDate))];
+            }
+            $asig['string_dias'] = $dayString;
 
-        ob_start();
-        ?>
-        <!DOCTYPE html>
-        <html>
+            // Clave de Agrupacion
+            if ($tipo == 'instructor' || $tipo == 'ambiente' || $tipo == 'total') {
+                $claveAgrupamiento = $asig['ficha'] ?? 'Sin Ficha';
+                $tituloAgrupamiento = "FICHA {$claveAgrupamiento}" . (!empty($asig['programa']) ? " — {$asig['programa']}" : "");
+                
+                // Añadir aviso si es de otra coordinación
+                if ($currentUserCoordId && $asig['coord_id'] != $currentUserCoordId) {
+                    $tituloAgrupamiento .= " (De: {$asig['coord_descripcion']})";
+                }
+            } else { // Ficha
+                $claveAgrupamiento = $asig['competencia'] ?? 'Sin Competencia';
+                $tituloAgrupamiento = "COMPETENCIA: " . $asig['competencia'];
+            }
+            
+            if (!isset($agrupadoPorSubGrupo[$claveAgrupamiento])) {
+                $agrupadoPorSubGrupo[$claveAgrupamiento] = [
+                    'titulo' => $tituloAgrupamiento,
+                    'horas_diarias_promedio' => 0,
+                    'total_mes' => 0,
+                    'items' => []
+                ];
+            }
+            if ($horasDiarias > $agrupadoPorSubGrupo[$claveAgrupamiento]['horas_diarias_promedio']) {
+                $agrupadoPorSubGrupo[$claveAgrupamiento]['horas_diarias_promedio'] = $horasDiarias;
+            }
+            $agrupadoPorSubGrupo[$claveAgrupamiento]['total_mes'] += $totalHorasAsig;
+            $agrupadoPorSubGrupo[$claveAgrupamiento]['items'][] = $asig;
+        }
+
+        $countGrupos = count($agrupadoPorSubGrupo);
+        $descriptorInfo = ($tipo == 'instructor') ? "{$countGrupos} fichas" :
+                         (($tipo == 'ficha') ? "{$countGrupos} instructores" : "{$countGrupos} registros");
+
+        $totalHorasGeneral = number_format($totalHorasGeneral, 1, ',', '.');
+        
+        $html = '<!DOCTYPE html>
+        <html lang="es">
         <head>
             <meta charset="UTF-8">
-            <title><?php echo htmlspecialchars($filename); ?></title>
+            <title>' . htmlspecialchars($filename) . '</title>
             <style>
-                @page { 
-                    size: A4 landscape; 
-                    margin: 15mm;
-                }
-                @media print {
-                    body { margin: 0; }
-                    .no-print { display: none; }
-                }
                 body {
-                    font-family: 'Arial', sans-serif;
-                    font-size: 9pt;
-                    color: #1f2937;
+                    font-family: "Helvetica", "Arial", sans-serif;
                     margin: 0;
-                    padding: 20px;
+                    padding: 0;
+                }
+                .pdf-container {
+                    width: 100%;
+                    min-height: 210mm;
+                    margin: 0 auto;
                     background: white;
+                    padding: 15mm;
+                    box-sizing: border-box;
                 }
-                .header {
-                    background: linear-gradient(135deg, #39A900, #2d8a00);
+                .main-header {
+                    background-color: #003265;
                     color: white;
-                    padding: 15px 20px;
-                    margin-bottom: 15px;
-                    border-radius: 8px;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                }
-                .header-left h1 {
-                    margin: 0 0 5px 0;
-                    font-size: 18pt;
+                    text-align: center;
+                    padding: 12px;
+                    font-size: 20px;
                     font-weight: bold;
+                    margin-bottom: 20px;
                 }
-                .header-left p {
-                    margin: 2px 0;
-                    font-size: 10pt;
-                    opacity: 0.95;
+                .sub-header {
+                    margin-bottom: 25px;
                 }
-                .header-right {
+                .sub-title {
+                    color: #003265;
+                    font-size: 18px;
+                    font-weight: bold;
+                    margin-bottom: 5px;
+                }
+                .sub-info {
+                    font-size: 12px;
+                    color: #4b5563;
+                }
+                .group-card {
+                    margin-bottom: 20px;
+                    border-left: 1px solid #9ca3af;
+                    border-right: 1px solid #9ca3af;
+                    border-bottom: 1px solid #9ca3af;
+                }
+                .group-header {
+                    background-color: #effaf3;
+                    border-top: 1px solid #9ca3af;
+                    border-bottom: 1px solid #9ca3af;
+                    color: #0067b1;
+                    padding: 0;
+                }
+                .group-header table {
+                    width: 100%;
+                    border-collapse: collapse;
+                }
+                .group-header td {
+                    border: none;
+                    font-size: 11px;
+                    font-weight: bold;
+                    padding: 8px 12px;
+                }
+                .group-header-title {
+                    text-transform: uppercase;
+                    text-align: left;
+                }
+                .group-header-stats {
+                    color: #1f2937;
                     text-align: right;
-                    font-size: 8pt;
-                }
-                .stats-bar {
-                    background: #f3f4f6;
-                    padding: 10px 15px;
-                    margin-bottom: 15px;
-                    border-radius: 6px;
-                    border-left: 4px solid #39A900;
-                }
-                .stats-bar strong {
-                    color: #39A900;
-                    font-size: 11pt;
                 }
                 table {
                     width: 100%;
                     border-collapse: collapse;
-                    margin-top: 10px;
-                }
-                thead {
-                    background: #39A900;
-                    color: white;
                 }
                 th {
-                    padding: 8px 6px;
-                    text-align: left;
-                    font-size: 8pt;
-                    font-weight: bold;
-                    text-transform: uppercase;
-                    letter-spacing: 0.5px;
-                }
-                tbody tr:nth-child(even) {
-                    background: #f9fafb;
-                }
-                tbody tr:nth-child(odd) {
-                    background: white;
+                    background-color: #003265;
+                    color: white;
+                    font-size: 11px;
+                    padding: 8px;
+                    text-align: center;
+                    border: 1px solid #9ca3af;
                 }
                 td {
-                    padding: 7px 6px;
-                    border-bottom: 1px solid #e5e7eb;
-                    font-size: 8pt;
-                    vertical-align: top;
-                }
-                .fecha-col {
-                    font-weight: 600;
-                    color: #374151;
-                    white-space: nowrap;
-                }
-                .hora-col {
-                    color: #6b7280;
-                    white-space: nowrap;
-                }
-                .competencia-col {
-                    font-weight: 500;
+                    font-size: 10px;
+                    padding: 8px;
+                    border: 1px solid #9ca3af;
                     color: #1f2937;
                 }
-                .footer {
-                    margin-top: 20px;
-                    padding-top: 10px;
-                    border-top: 2px solid #e5e7eb;
-                    text-align: center;
-                    font-size: 7pt;
-                    color: #9ca3af;
-                }
-                .no-data {
-                    text-align: center;
-                    padding: 40px;
-                    color: #9ca3af;
-                    font-style: italic;
-                }
-                .print-button {
-                    position: fixed;
-                    top: 20px;
-                    right: 20px;
-                    background: #39A900;
-                    color: white;
-                    border: none;
-                    padding: 12px 24px;
-                    border-radius: 8px;
-                    cursor: pointer;
+                .col-dias { width: 25%; }
+                .col-inicio { width: 10%; text-align: center; color: #39A900; font-weight: bold; }
+                .col-fin { width: 10%; text-align: center; color: #9ca3af; font-weight: bold; }
+                .col-ambiente { width: 10%; text-align: center; font-weight: bold; }
+                .col-competencia { width: 25%; }
+                .col-programa { width: 20%; text-transform: uppercase; font-size: 9px; }
+
+                .footer-total {
+                    text-align: right;
                     font-size: 14px;
                     font-weight: bold;
-                    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-                    z-index: 1000;
+                    color: #39A900;
+                    margin-top: 25px;
+                    padding-right: 10px;
                 }
-                .print-button:hover {
-                    background: #2d8a00;
                 }
             </style>
-            <script>
-                function printPDF() {
-                    window.print();
-                }
-                // Auto-abrir diálogo de impresión después de cargar
-                window.onload = function() {
-                    setTimeout(function() {
-                        window.print();
-                    }, 500);
-                };
-            </script>
         </head>
         <body>
-            <button class="print-button no-print" onclick="printPDF()">
-                🖨️ Imprimir / Guardar como PDF
-            </button>
+            <div class="pdf-container" id="pdfContent">
+                <div class="main-header">
+                    ' . htmlspecialchars($tituloAbsoluto) . '
+                </div>
+                
+                <div class="sub-header">
+                    <div class="sub-title">' . htmlspecialchars($subtituloAbsoluto) . '</div>
+                    <div class="sub-info">' . $descriptorInfo . ' · Total ' . $etiquetaTiempo . ': ' . $totalHorasGeneral . 'h</div>
+                </div>';
+
+        foreach ($agrupadoPorSubGrupo as $grupo) {
+            $hd = number_format($grupo['horas_diarias_promedio'], 1, ',', '.');
+            $tm = number_format($grupo['total_mes'], 1, ',', '.');
             
-            <div class="header">
-                <div class="header-left">
-                    <h1><?php echo htmlspecialchars($titulo); ?></h1>
-                    <p><strong><?php echo htmlspecialchars($subtitulo); ?></strong></p>
-                    <p><?php echo htmlspecialchars($info); ?></p>
-                </div>
-                <div class="header-right">
-                    <p><strong>SENA</strong></p>
-                    <p>Sistema de Programaciones</p>
-                    <p><?php echo $fecha; ?></p>
-                </div>
-            </div>
+            $html .= '<div class="group-card">
+                        <div class="group-header">
+                            <table style="width: 100%; border: none;">
+                                <tr>
+                                    <td class="group-header-title" style="text-align: left; border: none; width: 60%;">' . htmlspecialchars($grupo['titulo']) . '</td>
+                                    <td class="group-header-stats" style="text-align: right; border: none; width: 20%; font-weight: normal; font-size: 10px;">
+                                        h/día ' . ($tipo == 'ficha' ? 'comp' : 'ficha') . ': <b>' . $hd . 'h</b>
+                                    </td>
+                                    <td class="group-header-stats" style="text-align: right; border: none; width: 20%; font-weight: normal; font-size: 10px;">
+                                        Total ' . $etiquetaCorto . ': <b>' . $tm . 'h</b>
+                                    </td>
+                                </tr>
+                            </table>
+                        </div>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th class="col-dias">Días programados</th>
+                                    <th class="col-inicio">Inicio</th>
+                                    <th class="col-fin">Fin</th>';
+            if ($tipo == 'instructor') {
+                $html .= '<th class="col-ambiente">Ambiente</th><th class="col-competencia" style="width: 45%;">Competencia</th>';
+            } elseif ($tipo == 'ficha') {
+                $html .= '<th class="col-ambiente">Ambiente</th><th class="col-programa" style="width: 45%;">Instructor</th>';
+            } elseif ($tipo == 'ambiente') {
+                $html .= '<th class="col-competencia" style="width: 35%;">Competencia</th><th class="col-programa" style="width: 20%;">Instructor</th>';
+            } else {
+                $html .= '<th class="col-ambiente">Ambiente</th><th class="col-competencia">Competencia</th><th class="col-programa" style="width: 20%;">Instructor</th>';
+            }
+            $html .= '              </tr>
+                            </thead>
+                            <tbody>';
+            
+            foreach ($grupo['items'] as $item) {
+                $html .= '<tr>
+                            <td class="col-dias">' . htmlspecialchars($item['string_dias']) . '</td>
+                            <td class="col-inicio">' . $this->formatearHora($item['hora_ini']) . '</td>
+                            <td class="col-fin">' . $this->formatearHora($item['hora_fin']) . '</td>';
+                
+                if ($tipo == 'instructor') {
+                    $html .= '<td class="col-ambiente">' . htmlspecialchars($item['ambiente']) . '</td>
+                              <td class="col-competencia" style="width: 45%;">' . htmlspecialchars($item['competencia']) . '</td>';
+                } elseif ($tipo == 'ficha') {
+                    $html .= '<td class="col-ambiente">' . htmlspecialchars($item['ambiente']) . '</td>
+                              <td class="col-programa" style="text-transform: none; width: 45%;">' . htmlspecialchars($item['instructor_req']) . '</td>';
+                } elseif ($tipo == 'ambiente') {
+                    $html .= '<td class="col-competencia" style="width: 35%;">' . htmlspecialchars($item['competencia']) . '</td>
+                              <td class="col-programa" style="text-transform: none; width: 20%;">' . htmlspecialchars($item['instructor_req']) . '</td>';
+                } else {
+                    $html .= '<td class="col-ambiente">' . htmlspecialchars($item['ambiente']) . '</td>
+                              <td class="col-competencia">' . htmlspecialchars($item['competencia']) . '</td>
+                              <td class="col-programa" style="text-transform: none; width: 20%;">' . htmlspecialchars($item['instructor_req']) . '</td>';
+                }
+                $html .= '</tr>';
+            }
+            $html .= '          </tbody>
+                        </table>
+                      </div>';
+        }
 
-            <div class="stats-bar">
-                <strong><?php echo $totalAsignaciones; ?></strong> asignaciones programadas
-            </div>
-
-            <?php if (empty($asignaciones)): ?>
-                <div class="no-data">
-                    No hay asignaciones registradas para este elemento.
-                </div>
-            <?php else: ?>
-                <table>
-                    <thead>
-                        <tr>
-                            <?php foreach ($columnas as $col): ?>
-                                <th><?php echo $col; ?></th>
-                            <?php endforeach; ?>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($asignaciones as $asig): ?>
-                            <tr>
-                                <td class="fecha-col">
-                                    <?php 
-                                    if (empty($asig['fecha_inicio'])) {
-                                        echo 'Sin fecha';
-                                    } elseif ($asig['fecha_inicio'] === $asig['fecha_fin']) {
-                                        echo date('d/m/Y', strtotime($asig['fecha_inicio']));
-                                    } else {
-                                        echo date('d/m/Y', strtotime($asig['fecha_inicio'])) . 
-                                             ' - ' . 
-                                             date('d/m/Y', strtotime($asig['fecha_fin']));
-                                    }
-                                    ?>
-                                </td>
-                                <td class="hora-col"><?php echo substr((string)($asig['hora_ini'] ?? ''), 0, 5); ?></td>
-                                <td class="hora-col"><?php echo substr((string)($asig['hora_fin'] ?? ''), 0, 5); ?></td>
-                                <?php if ($tipo === 'total'): ?>
-                                    <td><?php echo htmlspecialchars($asig['coordinacion'] ?? 'N/A'); ?></td>
-                                    <td><?php echo htmlspecialchars($asig['ficha'] ?? 'N/A'); ?></td>
-                                    <td class="competencia-col"><?php echo htmlspecialchars($asig['competencia']); ?></td>
-                                    <td><?php echo htmlspecialchars($asig['instructor'] ?? 'N/A'); ?></td>
-                                    <td><?php echo htmlspecialchars($asig['ambiente'] ?? 'N/A'); ?></td>
-                                <?php else: ?>
-                                    <?php if ($tipo !== 'ficha'): ?>
-                                        <td><?php echo htmlspecialchars($asig['ficha'] ?? 'N/A'); ?></td>
-                                    <?php endif; ?>
-                                    <td class="competencia-col"><?php echo htmlspecialchars($asig['competencia']); ?></td>
-                                    <?php if ($tipo !== 'ambiente'): ?>
-                                        <td><?php echo htmlspecialchars($asig['ambiente'] ?? 'N/A'); ?></td>
-                                    <?php endif; ?>
-                                    <?php if ($tipo !== 'instructor'): ?>
-                                        <td><?php echo htmlspecialchars($asig['instructor'] ?? 'N/A'); ?></td>
-                                    <?php endif; ?>
-                                <?php endif; ?>
-                            </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            <?php endif; ?>
-
-            <div class="footer">
-                <p>Documento generado automáticamente por el Sistema de Programaciones SENA</p>
-                <p>Este reporte es válido únicamente como referencia informativa</p>
-            </div>
+        if (empty($agrupadoPorSubGrupo)) {
+            $html .= '<div style="text-align: center; padding: 50px; color: #9ca3af; font-style: italic;">No hay horas asignadas.</div>';
+        }
+        
+        $html .= '      <div class="footer-total">
+                            Total ' . htmlspecialchars($tituloAbsoluto) . ': ' . $totalHorasGeneral . 'h
+                        </div>
+                    </div>
         </body>
-        </html>
-        <?php
-        return ob_get_clean();
-    }
+        </html>';
 
-    /**
-     * Obtiene las columnas según el tipo de reporte
-     */
-    private function getColumnasPorTipo($tipo)
-    {
-        $base = ['Fecha/Rango', 'Hora Inicio', 'Hora Fin'];
-        
-        switch ($tipo) {
-            case 'ficha':
-                return array_merge($base, ['Competencia', 'Ambiente', 'Instructor']);
-            case 'instructor':
-                return array_merge($base, ['Ficha', 'Competencia', 'Ambiente']);
-            case 'ambiente':
-                return array_merge($base, ['Ficha', 'Competencia', 'Instructor']);
-            case 'total':
-                return array_merge($base, ['Coordinación', 'Ficha', 'Competencia', 'Instructor', 'Ambiente']);
-            default:
-                return $base;
-        }
-    }
-
-    /**
-     * Genera PDF con FPDF (cuando esté disponible)
-     */
-    private function generarConFPDF($titulo, $subtitulo, $info, $asignaciones, $tipo, $filename)
-    {
-        require_once dirname(__DIR__) . '/lib/fpdf/fpdf.php';
-        
-        $fpdfClass = 'FPDF';
-        $pdf = new $fpdfClass('L', 'mm', 'A4'); // Landscape
-        $pdf->AddPage();
-        $pdf->SetFont('Arial', 'B', 16);
-        
-        // Header
-        $pdf->SetFillColor(57, 169, 0);
-        $pdf->SetTextColor(255, 255, 255);
-        $pdf->Cell(0, 15, mb_convert_encoding($titulo, 'ISO-8859-1', 'UTF-8'), 0, 1, 'C', true);
-        
-        $pdf->SetFont('Arial', '', 10);
-        $pdf->Cell(0, 6, mb_convert_encoding($subtitulo, 'ISO-8859-1', 'UTF-8'), 0, 1, 'C', true);
-        $pdf->Cell(0, 6, mb_convert_encoding($info, 'ISO-8859-1', 'UTF-8'), 0, 1, 'C', true);
-        $pdf->Ln(5);
-        
-        // Stats
-        $pdf->SetTextColor(0, 0, 0);
-        $pdf->SetFont('Arial', 'B', 11);
-        $pdf->Cell(0, 8, count($asignaciones) . ' asignaciones programadas', 0, 1);
-        $pdf->Ln(3);
-        
-        // Table header
-        $columnas = $this->getColumnasPorTipo($tipo);
-        $widths = $this->getColumnWidths($tipo);
-        
-        $pdf->SetFillColor(57, 169, 0);
-        $pdf->SetTextColor(255, 255, 255);
-        $pdf->SetFont('Arial', 'B', 8);
-        
-        foreach ($columnas as $i => $col) {
-            $pdf->Cell($widths[$i], 8, mb_convert_encoding($col, 'ISO-8859-1', 'UTF-8'), 1, 0, 'L', true);
-        }
-        $pdf->Ln();
-        
-        // Table body
-        $pdf->SetTextColor(0, 0, 0);
-        $pdf->SetFont('Arial', '', 8);
-        $fill = false;
-        
-        foreach ($asignaciones as $asig) {
-            $pdf->SetFillColor($fill ? 249 : 255, $fill ? 250 : 255, $fill ? 251 : 255);
-            
-            // Fecha
-            if (empty($asig['fecha_inicio'])) {
-                $fecha = 'Sin fecha';
-            } elseif ($asig['fecha_inicio'] === $asig['fecha_fin']) {
-                $fecha = date('d/m/Y', strtotime($asig['fecha_inicio']));
-            } else {
-                $fecha = date('d/m/Y', strtotime($asig['fecha_inicio'])) . ' - ' . date('d/m/Y', strtotime($asig['fecha_fin']));
-            }
-            $pdf->Cell($widths[0], 7, mb_convert_encoding($fecha, 'ISO-8859-1', 'UTF-8'), 1, 0, 'L', true);
-            
-            // Horas
-            $pdf->Cell($widths[1], 7, substr((string)($asig['hora_ini'] ?? ''), 0, 5), 1, 0, 'L', true);
-            $pdf->Cell($widths[2], 7, substr((string)($asig['hora_fin'] ?? ''), 0, 5), 1, 0, 'L', true);
-            
-            // Columnas dinámicas según tipo
-            $colIndex = 3;
-            if ($tipo === 'total') {
-                $pdf->Cell($widths[$colIndex], 7, mb_convert_encoding(substr($asig['coordinacion'] ?? 'N/A', 0, 25), 'ISO-8859-1', 'UTF-8'), 1, 0, 'L', true); $colIndex++;
-                $pdf->Cell($widths[$colIndex], 7, mb_convert_encoding($asig['ficha'] ?? 'N/A', 'ISO-8859-1', 'UTF-8'), 1, 0, 'L', true); $colIndex++;
-                $pdf->Cell($widths[$colIndex], 7, mb_convert_encoding(substr($asig['competencia'], 0, 30), 'ISO-8859-1', 'UTF-8'), 1, 0, 'L', true); $colIndex++;
-                $pdf->Cell($widths[$colIndex], 7, mb_convert_encoding(substr($asig['instructor'] ?? 'N/A', 0, 25), 'ISO-8859-1', 'UTF-8'), 1, 0, 'L', true); $colIndex++;
-                $pdf->Cell($widths[$colIndex], 7, mb_convert_encoding(substr($asig['ambiente'] ?? 'N/A', 0, 15), 'ISO-8859-1', 'UTF-8'), 1, 0, 'L', true);
-            } else {
-                if ($tipo !== 'ficha') {
-                    $pdf->Cell($widths[$colIndex], 7, mb_convert_encoding($asig['ficha'] ?? 'N/A', 'ISO-8859-1', 'UTF-8'), 1, 0, 'L', true);
-                    $colIndex++;
-                }
-                $pdf->Cell($widths[$colIndex], 7, mb_convert_encoding(substr($asig['competencia'], 0, 30), 'ISO-8859-1', 'UTF-8'), 1, 0, 'L', true);
-                $colIndex++;
-                if ($tipo !== 'ambiente') {
-                    $pdf->Cell($widths[$colIndex], 7, mb_convert_encoding(substr($asig['ambiente'] ?? 'N/A', 0, 20), 'ISO-8859-1', 'UTF-8'), 1, 0, 'L', true);
-                    $colIndex++;
-                }
-                if ($tipo !== 'instructor') {
-                    $pdf->Cell($widths[$colIndex], 7, mb_convert_encoding(substr($asig['instructor'] ?? 'N/A', 0, 25), 'ISO-8859-1', 'UTF-8'), 1, 0, 'L', true);
-                }
-            }
-            
-            $pdf->Ln();
-            $fill = !$fill;
-        }
-        
-        // Footer
-        $pdf->Ln(5);
-        $pdf->SetFont('Arial', 'I', 7);
-        $pdf->SetTextColor(150, 150, 150);
-        $pdf->Cell(0, 5, mb_convert_encoding('Documento generado automáticamente por el Sistema de Programaciones SENA', 'ISO-8859-1', 'UTF-8'), 0, 1, 'C');
-        
-        // Output
-        $pdf->Output('D', $filename);
-    }
-    
-    /**
-     * Obtiene los anchos de columna según el tipo
-     */
-    private function getColumnWidths($tipo)
-    {
-        switch ($tipo) {
-            case 'ficha':
-                return [45, 20, 20, 80, 45, 50]; // Fecha, HoraIni, HoraFin, Competencia, Ambiente, Instructor
-            case 'instructor':
-                return [45, 20, 20, 25, 80, 45]; // Fecha, HoraIni, HoraFin, Ficha, Competencia, Ambiente
-            case 'ambiente':
-                return [45, 20, 20, 25, 80, 50]; // Fecha, HoraIni, HoraFin, Ficha, Competencia, Instructor
-            case 'total':
-                return [38, 18, 18, 45, 18, 55, 45, 30]; // Fecha, HoraIni, HoraFin, Coord, Ficha, Comp, Instructor, Ambiente
-            default:
-                return [45, 20, 20, 80, 45, 50];
+        try {
+            $mpdf = new \Mpdf\Mpdf([
+                'mode'          => 'utf-8',
+                'format'        => 'A4',
+                'orientation'   => 'L',
+                'margin_top'    => 12,
+                'margin_bottom' => 12,
+                'margin_left'   => 10,
+                'margin_right'  => 10,
+                'tempDir'       => sys_get_temp_dir(),
+            ]);
+            $mpdf->SetTitle(str_replace(['_', '.pdf'], [' ', ''], $filename));
+            $mpdf->WriteHTML($html);
+            $mpdf->Output($filename, 'I');
+            exit;
+        } catch (\Mpdf\MpdfException $e) {
+            http_response_code(500);
+            echo "Error al generar PDF: " . $e->getMessage();
+            exit;
         }
     }
 }

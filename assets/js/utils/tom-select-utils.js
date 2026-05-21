@@ -21,6 +21,9 @@ window.initTS = function(selector, placeholder = 'Buscar...') {
         maxOptions: null,
         placeholder,
         allowEmptyOption: true,
+        onFocus: function() {
+            this.clear();
+        }
     });
 };
 

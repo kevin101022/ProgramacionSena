@@ -133,8 +133,43 @@ class AsignacionManager {
         const deleteDayOnlyBtn = document.getElementById('deleteDayOnly');
         if (deleteDayOnlyBtn) deleteDayOnlyBtn.onclick = () => this.handleDeleteDayOnly();
 
+        const btnGenerarReporte = document.getElementById('btnGenerarReporte');
+        if (btnGenerarReporte) {
+            btnGenerarReporte.addEventListener('click', () => this.handleGenerarReporte());
+        }
+
         const applyDefaultHoursBtn = document.getElementById('applyDefaultHours');
         if (applyDefaultHoursBtn) applyDefaultHoursBtn.onclick = () => this.handleApplyDefaultHours();
+    }
+
+    handleGenerarReporte() {
+        if (!this.calendar) return;
+        
+        let url = '../../routing.php?controller=reporte_pdf';
+        let midDate;
+        
+        try {
+            const dateStr = this.calendar.getDate();
+            midDate = new Date(dateStr);
+        } catch(e) {
+            midDate = new Date();
+        }
+        
+        let mes = midDate.getMonth() + 1;
+        let anio = midDate.getFullYear();
+        let params = `&mes=${mes}&anio=${anio}`;
+        
+        if (this.activeTab === 'ficha' && this.selectedFicha) {
+            url += `&action=calendarioFicha&fich_id=${this.selectedFicha.fich_id}${params}`;
+        } else if (this.activeTab === 'instructor' && this.selectedInstructor) {
+            url += `&action=calendarioInstructor&inst_id=${this.selectedInstructor}${params}`;
+        } else if (this.activeTab === 'ambiente' && this.selectedAmbiente) {
+            url += `&action=calendarioAmbiente&amb_id=${this.selectedAmbiente}${params}`;
+        } else {
+            return;
+        }
+
+        window.open(url, '_blank');
     }
 
     async handleDeleteAsig() {
@@ -398,21 +433,32 @@ class AsignacionManager {
             ambSelect.innerHTML = '<option value="">Primero seleccione sede...</option>';
             ambSelect.disabled = true;
             this.selectedAmbiente = null;
+            if (ambSelect.tomselect) ambSelect.tomselect.destroy();
             this.updateCalendarVisibility();
             return;
         }
 
         ambSelect.disabled = false;
         const filtered = this.ambientes.filter(a => a.sede_sede_id == sedeId);
-        if (filtered.length === 0) {
-            ambSelect.innerHTML = '<option value="">No hay ambientes en esta sede</option>';
+        
+        if (window.refreshTS) {
+            const options = filtered.map(a => ({
+                value: a.amb_id,
+                text: `${a.amb_id} - ${a.amb_nombre || 'Sin nombre'} (${a.tipo_ambiente || 'Convencional'})`
+            }));
+            const pText = filtered.length === 0 ? 'No hay ambientes en esta sede' : 'Buscar ambiente...';
+            window.refreshTS('#ambienteSelectorTab', options, pText);
         } else {
-            filtered.forEach(a => {
-                const opt = document.createElement('option');
-                opt.value = a.amb_id;
-                opt.textContent = `${a.amb_id} - ${a.amb_nombre || 'Sin nombre'} (${a.tipo_ambiente || 'Convencional'})`;
-                ambSelect.appendChild(opt);
-            });
+            if (filtered.length === 0) {
+                ambSelect.innerHTML = '<option value="">No hay ambientes en esta sede</option>';
+            } else {
+                filtered.forEach(a => {
+                    const opt = document.createElement('option');
+                    opt.value = a.amb_id;
+                    opt.textContent = `${a.amb_id} - ${a.amb_nombre || 'Sin nombre'} (${a.tipo_ambiente || 'Convencional'})`;
+                    ambSelect.appendChild(opt);
+                });
+            }
         }
         
         this.selectedAmbiente = null;
@@ -447,8 +493,16 @@ class AsignacionManager {
             statsGrid.style.display = this.activeTab === 'ficha' ? 'grid' : 'none';
         }
 
+        const btnGenerarReporte = document.getElementById('btnGenerarReporte');
+
         if (isSelected) {
             addBtn.disabled = false;
+            
+            if (btnGenerarReporte) {
+                btnGenerarReporte.style.display = 'inline-flex';
+                btnGenerarReporte.classList.remove('hidden');
+            }
+
             placeholder.style.display = 'none';
             calendarEl.style.display = '';
             
@@ -461,6 +515,12 @@ class AsignacionManager {
             }
         } else {
             addBtn.disabled = true;
+            
+            if (btnGenerarReporte) {
+                btnGenerarReporte.style.display = 'none';
+                btnGenerarReporte.classList.add('hidden');
+            }
+
             calendarEl.style.display = 'none';
             placeholder.style.display = '';
             
@@ -674,13 +734,16 @@ class AsignacionManager {
                             titleText = `${horaIni}-${horaFin} | ${d.comp_nombre_corto || 'Comp.'} — ${d.inst_nombres || ''} (Ficha: ${d.ficha_num || ''})`;
                         }
 
+                        const isEditable = d.editable !== false;
+                        const eventColor = this.COLORS[asigIdNum % this.COLORS.length];
                         return {
                             id: `det_${d.detasig_id}`,
                             title: titleText,
                             start: d.detasig_fecha,
                             allDay: true,
-                            backgroundColor: this.COLORS[asigIdNum % this.COLORS.length],
-                            borderColor: this.COLORS[asigIdNum % this.COLORS.length],
+                            editable: isEditable,
+                            backgroundColor: eventColor,
+                            borderColor: eventColor,
                             extendedProps: { ...d, asig: d }
                         };
                     });
@@ -704,6 +767,42 @@ class AsignacionManager {
     handleEventClick(info) {
         const props = info.event.extendedProps;
         if (!props || !props.asig) return;
+
+        if (props.editable === false) {
+            const coordNombre = props.coord_descripcion || 'Otra';
+            const horaIni = this.formatTime(props.detasig_hora_ini);
+            const horaFin = this.formatTime(props.detasig_hora_fin);
+            const comp = props.asig.comp_nombre_corto || props.asig.comp_nombre_unidad_competencia || 'Competencia';
+            const inst = `${props.asig.inst_nombres || ''} ${props.asig.inst_apellidos || ''}`.trim();
+            const amb = props.asig.ambiente_amb_id || 'N/A';
+            const ficha = props.asig.ficha_num || props.asig.ficha_fich_id || 'N/A';
+            
+            const fechaObj = new Date(props.detasig_fecha + 'T00:00:00');
+            const fechaFormat = fechaObj.toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Asignación Restringida',
+                    html: `
+                        <div class="text-left space-y-2 text-sm mt-3">
+                            <p class="text-red-600 font-semibold mb-2">No tienes permisos para editar esta asignación porque pertenece a la <strong>${coordNombre}</strong>.</p>
+                            <p><strong>Fecha:</strong> ${fechaFormat}</p>
+                            <p><strong>Horario:</strong> ${horaIni} - ${horaFin}</p>
+                            <p><strong>Ficha:</strong> ${ficha}</p>
+                            <p><strong>Competencia:</strong> ${comp}</p>
+                            <p><strong>Instructor:</strong> ${inst}</p>
+                            <p><strong>Ambiente:</strong> ${amb}</p>
+                        </div>
+                    `,
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#3b82f6'
+                });
+            } else {
+                NotificationService.showError(`Pertenece a: ${coordNombre}\nFecha: ${fechaFormat}\nHora: ${horaIni} - ${horaFin}\nFicha: ${ficha}\nInst: ${inst}`);
+            }
+            return;
+        }
 
         const modal = document.getElementById('dayEditModal');
         if (!modal) return;
@@ -735,8 +834,44 @@ class AsignacionManager {
 
         // Open quick edit for the first event on this day
         const d = dayDetails[0];
-        const asig = d._asig;
+        const asig = d._asig || d.asig;
         if (!asig) return;
+        
+        if (d.editable === false) {
+            const coordNombre = d.coord_descripcion || 'Otra';
+            const horaIni = this.formatTime(d.detasig_hora_ini);
+            const horaFin = this.formatTime(d.detasig_hora_fin);
+            const comp = asig.comp_nombre_corto || asig.comp_nombre_unidad_competencia || 'Competencia';
+            const inst = `${asig.inst_nombres || ''} ${asig.inst_apellidos || ''}`.trim();
+            const amb = asig.ambiente_amb_id || 'N/A';
+            const ficha = asig.ficha_num || asig.ficha_fich_id || 'N/A';
+            
+            const fechaObj = new Date(d.detasig_fecha + 'T00:00:00');
+            const fechaFormat = fechaObj.toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+
+            if (typeof Swal !== 'undefined') {
+                Swal.fire({
+                    icon: 'info',
+                    title: 'Asignación Restringida',
+                    html: `
+                        <div class="text-left space-y-2 text-sm mt-3">
+                            <p class="text-red-600 font-semibold mb-2">No tienes permisos para editar esta asignación porque pertenece a la <strong>${coordNombre}</strong>.</p>
+                            <p><strong>Fecha:</strong> ${fechaFormat}</p>
+                            <p><strong>Horario:</strong> ${horaIni} - ${horaFin}</p>
+                            <p><strong>Ficha:</strong> ${ficha}</p>
+                            <p><strong>Competencia:</strong> ${comp}</p>
+                            <p><strong>Instructor:</strong> ${inst}</p>
+                            <p><strong>Ambiente:</strong> ${amb}</p>
+                        </div>
+                    `,
+                    confirmButtonText: 'Entendido',
+                    confirmButtonColor: '#3b82f6'
+                });
+            } else {
+                NotificationService.showError(`Pertenece a: ${coordNombre}\nFecha: ${fechaFormat}\nHora: ${horaIni} - ${horaFin}\nFicha: ${ficha}\nInst: ${inst}`);
+            }
+            return;
+        }
 
         const modal = document.getElementById('dayEditModal');
         if (!modal) return;

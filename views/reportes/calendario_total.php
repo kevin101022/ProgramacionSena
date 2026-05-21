@@ -69,6 +69,11 @@ require_once '../layouts/sidebar.php';
         <div class="action-bar flex-col md:flex-row gap-4">
             <div id="legendContainer" class="flex flex-wrap gap-3 items-center"></div>
             <div class="flex gap-3 ml-auto">
+                <select id="reporteFiltro" class="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#39A900] focus:border-transparent transition-all shadow-sm" style="display:none;">
+                    <option value="mes">Mes Actual</option>
+                    <option value="anio">Año Actual</option>
+                    <option value="all">Historial Completo</option>
+                </select>
                 <button id="downloadPdfBtn" class="btn-primary whitespace-nowrap" style="display:none;">
                     <ion-icon src="../../assets/ionicons/download-outline.svg"></ion-icon>
                     Descargar PDF

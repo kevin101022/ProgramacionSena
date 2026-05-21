@@ -132,6 +132,11 @@ require_once '../layouts/sidebar.php';
                 <div id="instructorDropdown" class="custom-dropdown-list"></div>
             </div>
             <div class="flex gap-3">
+                <select id="reporteFiltro" class="border border-gray-200 rounded-xl px-3 py-2 text-sm text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-[#39A900] focus:border-transparent transition-all shadow-sm" disabled>
+                    <option value="mes">Mes Actual</option>
+                    <option value="anio">Año Actual</option>
+                    <option value="all">Historial Completo</option>
+                </select>
                 <button id="downloadPdfBtn" class="btn-primary whitespace-nowrap" disabled>
                     <ion-icon src="../../assets/ionicons/download-outline.svg"></ion-icon>
                     Descargar PDF
