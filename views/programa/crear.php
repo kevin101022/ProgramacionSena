@@ -59,18 +59,16 @@ require_once '../layouts/sidebar.php';
                         </select>
                     </div>
 
+                    <div class="form-group">
+                        <label for="prog_version" class="form-label">Versión del Programa</label>
+                        <input type="text" id="prog_version" name="prog_version" class="form-input" placeholder="Ej: v1.0 o 1" value="1">
+                        <div class="form-help">Número o código de versión.</div>
+                    </div>
+
                     <div class="form-group full-width">
                         <label for="prog_denominacion" class="form-label required">Denominación del Programa</label>
                         <input type="text" id="prog_denominacion" name="prog_denominacion" class="form-input" placeholder="Ej: Análisis y Desarrollo de Software" required>
                         <div class="form-help">Nombre completo tal como aparece en el registro calificado.</div>
-                    </div>
-
-                    <div class="form-group full-width">
-                        <label for="sede_sede_id" class="form-label required">Sede a la que pertenece</label>
-                        <select id="sede_sede_id" name="sede_sede_id" class="form-input" required>
-                            <option value="" disabled selected>Cargando sedes...</option>
-                        </select>
-                        <div class="form-help">Seleccione el campus donde se impartirá principalmente este programa.</div>
                     </div>
 
                     <div class="form-group full-width">

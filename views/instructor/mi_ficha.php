@@ -66,7 +66,7 @@ $asignacionModel = new AsignacionModel();
                         // We need the program ID. Wait, $ficha['prog_codigo']? It was not selected in getFichasLider.
                         // Let's use the DB directly for total competencies count.
                         $db = Conexion::getConnect();
-                        $stmtCount = $db->prepare("SELECT COUNT(*) FROM COMPETENCIA c INNER JOIN FICHA f ON c.programa_prog_id = f.PROGRAMA_prog_id WHERE f.fich_id = :fich_id");
+                        $stmtCount = $db->prepare("SELECT COUNT(*) FROM competencia c INNER JOIN ficha f ON c.programa_prog_id = f.PROGRAMA_prog_id WHERE f.fich_id = :fich_id");
                         $stmtCount->execute([':fich_id' => $ficha['fich_id']]);
                         $totalComps = $stmtCount->fetchColumn();
                         

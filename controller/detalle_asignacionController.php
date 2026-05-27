@@ -111,7 +111,7 @@ class DetalleAsignacionController
         $rol = $_SESSION['rol'] ?? null;
         if ($rol === 'coordinador' && isset($_SESSION['id'])) {
             $db = Conexion::getConnect();
-            $stmtCoord = $db->prepare("SELECT coord_id FROM COORDINACION WHERE coordinador_actual = :uid AND estado = 1 LIMIT 1");
+            $stmtCoord = $db->prepare("SELECT coord_id FROM coordinacion WHERE coordinador_actual = :uid AND estado = 1 LIMIT 1");
             $stmtCoord->execute([':uid' => $_SESSION['id']]);
             $coord_id = $stmtCoord->fetchColumn();
 
@@ -119,13 +119,13 @@ class DetalleAsignacionController
                 // Sacar asig_id si no viene
                 $checkAsigId = $data['asignacion_asig_id'] ?? null;
                 if (!$checkAsigId) {
-                    $stmtAsig = $db->prepare("SELECT asignacion_asig_id FROM DETALLExASIGNACION WHERE detasig_id = :did");
+                    $stmtAsig = $db->prepare("SELECT asignacion_asig_id FROM detallexasignacion WHERE detasig_id = :did");
                     $stmtAsig->execute([':did' => $data['detasig_id']]);
                     $checkAsigId = $stmtAsig->fetchColumn();
                 }
 
                 if ($checkAsigId) {
-                    $stmtCheck = $db->prepare("SELECT f.COORDINACION_coord_id FROM ASIGNACION a JOIN FICHA f ON a.FICHA_fich_id = f.fich_id WHERE a.asig_id = :aid");
+                    $stmtCheck = $db->prepare("SELECT f.COORDINACION_coord_id FROM asignacion a JOIN ficha f ON a.FICHA_fich_id = f.fich_id WHERE a.asig_id = :aid");
                     $stmtCheck->execute([':aid' => $checkAsigId]);
                     $asigFichaCoord = $stmtCheck->fetchColumn();
                     if ($asigFichaCoord && $asigFichaCoord != $coord_id) {
@@ -140,7 +140,7 @@ class DetalleAsignacionController
             // If no date or asig_id provided, fetch from existing record
             if (empty($data['detasig_fecha']) || empty($data['asignacion_asig_id'])) {
                 $db = Conexion::getConnect();
-                $stmt = $db->prepare("SELECT asignacion_asig_id, detasig_fecha FROM DETALLExASIGNACION WHERE detasig_id = :id");
+                $stmt = $db->prepare("SELECT asignacion_asig_id, detasig_fecha FROM detallexasignacion WHERE detasig_id = :id");
                 $stmt->execute([':id' => $data['detasig_id']]);
                 $existing = $stmt->fetch(PDO::FETCH_ASSOC);
                 if (!$existing) {
@@ -184,12 +184,12 @@ class DetalleAsignacionController
         $rol = $_SESSION['rol'] ?? null;
         if ($rol === 'coordinador' && isset($_SESSION['id'])) {
             $db = Conexion::getConnect();
-            $stmtCoord = $db->prepare("SELECT coord_id FROM COORDINACION WHERE coordinador_actual = :uid AND estado = 1 LIMIT 1");
+            $stmtCoord = $db->prepare("SELECT coord_id FROM coordinacion WHERE coordinador_actual = :uid AND estado = 1 LIMIT 1");
             $stmtCoord->execute([':uid' => $_SESSION['id']]);
             $coord_id = $stmtCoord->fetchColumn();
 
             if ($coord_id) {
-                $stmtCheck = $db->prepare("SELECT f.COORDINACION_coord_id FROM DETALLExASIGNACION d JOIN ASIGNACION a ON d.ASIGNACION_asig_id = a.asig_id JOIN FICHA f ON a.FICHA_fich_id = f.fich_id WHERE d.detasig_id = :did");
+                $stmtCheck = $db->prepare("SELECT f.COORDINACION_coord_id FROM detallexasignacion d JOIN asignacion a ON d.ASIGNACION_asig_id = a.asig_id JOIN ficha f ON a.FICHA_fich_id = f.fich_id WHERE d.detasig_id = :did");
                 $stmtCheck->execute([':did' => $id]);
                 $asigFichaCoord = $stmtCheck->fetchColumn();
                 if ($asigFichaCoord && $asigFichaCoord != $coord_id) {

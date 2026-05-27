@@ -116,8 +116,8 @@ class InstruCompetenciaController
         $comp_id = $dato[0]['competencia_comp_id'];
 
         $db = Conexion::getConnect();
-        $sql = "DELETE FROM INSTRU_COMPETENCIA 
-                WHERE INSTRUCTOR_inst_id = :inst_id 
+        $sql = "DELETE FROM instru_competencia 
+                WHERE instructor_inst_id = :inst_id 
                 AND competencia_comp_id = :comp_id";
         $stmt = $db->prepare($sql);
         $success = $stmt->execute([

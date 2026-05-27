@@ -100,7 +100,15 @@ require_once '../layouts/sidebar.php';
                             <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
                                 <div class="relative mb-3">
                                     <ion-icon src="../../assets/ionicons/search-outline.svg" class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></ion-icon>
-                                    <input type="text" id="compSearch" class="w-full pl-10 pr-4 py-2 text-sm rounded-lg border border-gray-300 outline-none" placeholder="Filtrar competencias del programa...">
+                                    <input type="text" id="compSearch" class="w-full pl-10 pr-4 py-2 text-sm rounded-lg border border-gray-300 outline-none" placeholder="Filtrar competencias...">
+                                </div>
+                                <div class="flex gap-2 mb-3">
+                                    <button type="button" id="selectAllVisibleBtn" class="px-3 py-1.5 bg-green-50 text-sena-green text-xs font-semibold rounded-lg hover:bg-green-100 border border-sena-green/20 transition-all flex items-center gap-1 cursor-pointer">
+                                        Habilitar todas las visibles
+                                    </button>
+                                    <button type="button" id="deselectAllVisibleBtn" class="px-3 py-1.5 bg-red-50 text-red-600 text-xs font-semibold rounded-lg hover:bg-red-100 border border-red-100 transition-all flex items-center gap-1 cursor-pointer">
+                                        Desmarcar todas las visibles
+                                    </button>
                                 </div>
                                 <div id="competenciasContainer" class="flex flex-col gap-2 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
                                     <p id="emptyAviso" class="text-gray-400 text-sm italic text-center py-4">Primero seleccione un programa...</p>

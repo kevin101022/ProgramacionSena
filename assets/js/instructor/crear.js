@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let allCompetencias = []; // Competencias del programa seleccionado
     let selectedCompetencyIds = new Set();
+    let filteredCompetencias = [];
 
     // 1. Cargar TODAS las Competencias
     const loadCompetencias = async () => {
@@ -39,6 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const desc = c.comp_nombre_unidad_competencia ? c.comp_nombre_unidad_competencia.toLowerCase() : '';
             return nombre.includes(term) || desc.includes(term);
         });
+        filteredCompetencias = filtered;
 
         if (filtered.length === 0) {
             competenciasContainer.innerHTML = '<p class="text-gray-400 text-sm italic text-center py-4">No se encontraron coincidencias.</p>';
@@ -47,12 +49,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
         let html = '';
         filtered.forEach(comp => {
-            const isChecked = selectedCompetencyIds.has(String(comp.comp_id));
+            const compositeKey = (comp.programa_prog_id ? comp.programa_prog_id : '') + '|' + comp.comp_id;
+            const isChecked = selectedCompetencyIds.has(compositeKey);
+            const programLabel = comp.prog_denominacion ? ` — <span class="text-sena-green font-semibold">${comp.prog_denominacion}</span>` : ' (Transversal)';
             html += `
                 <label class="flex items-center w-full cursor-pointer hover:bg-gray-100 p-2 rounded transition-colors border border-transparent hover:border-gray-200">
-                    <input type="checkbox" data-compId="${comp.comp_id}" ${isChecked ? 'checked' : ''} class="comp-checkbox w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500">
+                    <input type="checkbox" data-compositekey="${compositeKey}" ${isChecked ? 'checked' : ''} class="comp-checkbox w-4 h-4 text-green-600 rounded border-gray-300 focus:ring-green-500">
                     <div class="ml-3 text-sm flex-1">
-                        <span class="font-medium text-gray-900">${comp.comp_nombre_corto}</span>
+                        <span class="font-medium text-gray-900">${comp.comp_nombre_corto}${programLabel}</span>
                         <span class="block text-gray-500 text-xs">${comp.comp_nombre_unidad_competencia || ''}</span>
                     </div>
                 </label>
@@ -67,9 +71,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const checkboxes = competenciasContainer.querySelectorAll('.comp-checkbox');
         checkboxes.forEach(cb => {
             cb.addEventListener('change', (e) => {
-                const id = String(e.target.dataset.compid);
-                if (e.target.checked) selectedCompetencyIds.add(id);
-                else selectedCompetencyIds.delete(id);
+                const key = e.target.dataset.compositekey;
+                if (e.target.checked) selectedCompetencyIds.add(key);
+                else selectedCompetencyIds.delete(key);
                 updateSummary();
             });
         });
@@ -87,6 +91,30 @@ document.addEventListener('DOMContentLoaded', () => {
         programaSelect.closest('.form-group').style.display = 'none'; // Hide the program selector in the UI
     }
     compSearch.addEventListener('input', (e) => renderCompetencias(e.target.value));
+
+    const selectAllVisibleBtn = document.getElementById('selectAllVisibleBtn');
+    if (selectAllVisibleBtn) {
+        selectAllVisibleBtn.addEventListener('click', () => {
+            filteredCompetencias.forEach(comp => {
+                const compositeKey = (comp.programa_prog_id ? comp.programa_prog_id : '') + '|' + comp.comp_id;
+                selectedCompetencyIds.add(compositeKey);
+            });
+            updateSummary();
+            renderCompetencias(compSearch.value);
+        });
+    }
+
+    const deselectAllVisibleBtn = document.getElementById('deselectAllVisibleBtn');
+    if (deselectAllVisibleBtn) {
+        deselectAllVisibleBtn.addEventListener('click', () => {
+            filteredCompetencias.forEach(comp => {
+                const compositeKey = (comp.programa_prog_id ? comp.programa_prog_id : '') + '|' + comp.comp_id;
+                selectedCompetencyIds.delete(compositeKey);
+            });
+            updateSummary();
+            renderCompetencias(compSearch.value);
+        });
+    }
 
     // Form Submit
     if (form) {

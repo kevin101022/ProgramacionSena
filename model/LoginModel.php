@@ -27,7 +27,7 @@ class LoginModel
         $sql = "SELECT uc.numero_documento as id, uc.coord_nombre_coordinador as nombre, uc.coord_password as password, uc.centro_formacion_id as centro_id,
                        c.coord_id
                 FROM usuario_coordinador uc
-                LEFT JOIN COORDINACION c ON c.coordinador_actual = uc.numero_documento AND c.estado = 1
+                LEFT JOIN coordinacion c ON c.coordinador_actual = uc.numero_documento AND c.estado = 1
                 WHERE uc.coord_correo = :email AND uc.estado = 1 LIMIT 1";
         $stmt = $this->db->prepare($sql);
         $stmt->bindParam(':email', $email, PDO::PARAM_STR);

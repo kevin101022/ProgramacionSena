@@ -24,16 +24,16 @@ class AuditoriaAsignacionModel
                 LEFT JOIN competencia c ON au.competencia_comp_id = c.comp_id
                 LEFT JOIN sede s ON am.SEDE_sede_id = s.sede_id
                 LEFT JOIN ficha f ON au.ficha_fich_id = f.fich_id
-                LEFT JOIN COORDINACION area ON f.COORDINACION_coord_id = area.coord_id
+                LEFT JOIN coordinacion area ON f.COORDINACION_coord_id = area.coord_id
                 -- Joins para resolver el responsable (Persona que hace la acción)
                 LEFT JOIN usuario_coordinador u_coord ON au.documento_usuario_accion = u_coord.numero_documento
-                LEFT JOIN CENTRO_FORMACION u_cent ON au.documento_usuario_accion = CAST(u_cent.cent_id AS UNSIGNED)
+                LEFT JOIN centro_formacion u_cent ON au.documento_usuario_accion = CAST(u_cent.cent_id AS UNSIGNED)
                 LEFT JOIN instructor u_inst_acc ON au.documento_usuario_accion = u_inst_acc.numero_documento
                 WHERE 1=1";
 
         if ($cent_id !== null && $cent_id !== '') {
             $sql .= " AND (i.CENTRO_FORMACION_cent_id = :cent_id1 
-                        OR f.COORDINACION_coord_id IN (SELECT coord_id FROM COORDINACION WHERE centro_formacion_cent_id = :cent_id2)
+                        OR f.COORDINACION_coord_id IN (SELECT coord_id FROM coordinacion WHERE centro_formacion_cent_id = :cent_id2)
                         OR au.documento_usuario_accion = :cent_id3
                         OR au.documento_usuario_accion IN (SELECT numero_documento FROM usuario_coordinador WHERE centro_formacion_id = :cent_id4))";
         }
@@ -78,10 +78,10 @@ class AuditoriaAsignacionModel
                 LEFT JOIN competencia c ON au.competencia_comp_id = c.comp_id
                 LEFT JOIN sede s ON am.SEDE_sede_id = s.sede_id
                 LEFT JOIN ficha f ON au.ficha_fich_id = f.fich_id
-                LEFT JOIN COORDINACION area ON f.COORDINACION_coord_id = area.coord_id
+                LEFT JOIN coordinacion area ON f.COORDINACION_coord_id = area.coord_id
                 -- Joins para resolver el responsable
                 LEFT JOIN usuario_coordinador u_coord ON au.documento_usuario_accion = u_coord.numero_documento
-                LEFT JOIN CENTRO_FORMACION u_cent ON au.documento_usuario_accion = CAST(u_cent.cent_id AS UNSIGNED)
+                LEFT JOIN centro_formacion u_cent ON au.documento_usuario_accion = CAST(u_cent.cent_id AS UNSIGNED)
                 LEFT JOIN instructor u_inst_acc ON au.documento_usuario_accion = u_inst_acc.numero_documento
                 WHERE au.id_auditoria = :id";
 

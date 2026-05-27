@@ -2,6 +2,86 @@
  * Asignacion Management JavaScript
  * Full calendar with per-day events, inline day editing, and conflict detection.
  */
+function getColombianHolidays(year) {
+    const holidays = new Set();
+    const formatDate = (date) => {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    };
+    const getNextMonday = (date) => {
+        const day = date.getDay();
+        if (day === 1) return date;
+        const diff = (day === 0) ? 1 : (8 - day);
+        const newDate = new Date(date);
+        newDate.setDate(date.getDate() + diff);
+        return newDate;
+    };
+
+    // Fixed Dates
+    holidays.add(formatDate(new Date(year, 0, 1)));   // Año Nuevo: Jan 1
+    holidays.add(formatDate(new Date(year, 4, 1)));   // Día del Trabajo: May 1
+    holidays.add(formatDate(new Date(year, 6, 20)));  // Grito Independencia: Jul 20
+    holidays.add(formatDate(new Date(year, 7, 7)));   // Batalla de Boyacá: Aug 7
+    holidays.add(formatDate(new Date(year, 11, 8)));  // Inmaculada Concepción: Dec 8
+    holidays.add(formatDate(new Date(year, 11, 25))); // Navidad: Dec 25
+
+    // Emiliani Dates (moves to next Monday)
+    holidays.add(formatDate(getNextMonday(new Date(year, 0, 6))));   // Reyes Magos: Jan 6
+    holidays.add(formatDate(getNextMonday(new Date(year, 2, 19))));  // San José: Mar 19
+    holidays.add(formatDate(getNextMonday(new Date(year, 5, 29))));  // San Pedro y San Pablo: Jun 29
+    holidays.add(formatDate(getNextMonday(new Date(year, 7, 15))));  // Asunción: Aug 15
+    holidays.add(formatDate(getNextMonday(new Date(year, 9, 12))));  // Día de la Raza: Oct 12
+    holidays.add(formatDate(getNextMonday(new Date(year, 10, 1))));  // Todos los Santos: Nov 1
+    holidays.add(formatDate(getNextMonday(new Date(year, 10, 11)))); // Independencia Cartagena: Nov 11
+
+    // Easter-relative Dates (Gauss Easter Algorithm)
+    const a = year % 19;
+    const b = Math.floor(year / 100);
+    const c = year % 100;
+    const d = Math.floor(b / 4);
+    const e = b % 4;
+    const f = Math.floor((b + 8) / 25);
+    const g = Math.floor((b - f + 1) / 3);
+    const h = (19 * a + b - d - g + 15) % 30;
+    const i = Math.floor(c / 4);
+    const k = c % 4;
+    const L = (32 + 2 * e + 2 * i - h - k) % 7;
+    const m = Math.floor((a + 11 * h + 22 * L) / 451);
+    const month = Math.floor((h + L - 7 * m + 114) / 31);
+    const day = ((h + L - 7 * m + 114) % 31) + 1;
+    
+    const easter = new Date(year, month - 1, day);
+
+    // Jueves Santo: Easter - 3
+    const juevesSanto = new Date(easter);
+    juevesSanto.setDate(easter.getDate() - 3);
+    holidays.add(formatDate(juevesSanto));
+
+    // Viernes Santo: Easter - 2
+    const viernesSanto = new Date(easter);
+    viernesSanto.setDate(easter.getDate() - 2);
+    holidays.add(formatDate(viernesSanto));
+
+    // Ascensión: Easter + 43
+    const ascension = new Date(easter);
+    ascension.setDate(easter.getDate() + 43);
+    holidays.add(formatDate(ascension));
+
+    // Corpus Christi: Easter + 64
+    const corpusChristi = new Date(easter);
+    corpusChristi.setDate(easter.getDate() + 64);
+    holidays.add(formatDate(corpusChristi));
+
+    // Sagrado Corazón: Easter + 71
+    const sagradoCorazon = new Date(easter);
+    sagradoCorazon.setDate(easter.getDate() + 71);
+    holidays.add(formatDate(sagradoCorazon));
+
+    return holidays;
+}
+
 class AsignacionManager {
     constructor() {
         this.calendar = null;
@@ -615,8 +695,10 @@ class AsignacionManager {
         const elPending = document.getElementById('totalCompetenciasPendientes');
         if (elPending) elPending.textContent = pendingComps;
 
-        // Instructores habilitados para este programa
-        const instructoresHabilitados = this.allHabilitaciones.filter(h => h.programa_prog_id == progId);
+        // Instructores habilitados para este programa (incluye NULL/vacío)
+        const instructoresHabilitados = this.allHabilitaciones.filter(h => 
+            h.programa_prog_id == progId || h.programa_prog_id === null || h.programa_prog_id === ''
+        );
         const uniqueInstructores = new Set(instructoresHabilitados.map(h => h.instructor_inst_id)).size;
         
         const elInst = document.getElementById('totalInstructoresDisp');
@@ -720,6 +802,7 @@ class AsignacionManager {
                     }
 
                     const rawEvents = data.events || data;
+                    this.allDetalles = rawEvents;
                     const events = rawEvents.map((d) => {
                         const asigIdNum = parseInt(d.asig_id, 10) || 0;
                         const horaIni = this.formatTime(d.detasig_hora_ini);
@@ -809,7 +892,8 @@ class AsignacionManager {
 
         // Fill the quick edit modal with this day's data
         document.getElementById('dayEdit_detasig_id').value = props.detasig_id;
-        document.getElementById('dayEdit_asig_id').value = props.asignacion_asig_id || props.asig.asig_id;
+        const asigId = props.asignacion_asig_id || props.asig.asig_id;
+        document.getElementById('dayEdit_asig_id').value = asigId;
 
         const dateObj = new Date(props.detasig_fecha + 'T00:00:00');
         const dateLabel = dateObj.toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
@@ -820,8 +904,17 @@ class AsignacionManager {
         document.getElementById('dayEdit_hora_fin').value = this.formatTime(props.detasig_hora_fin);
         document.getElementById('dayEdit_observaciones').value = props.observaciones || '';
 
-        document.getElementById('dayEditTitle').textContent = 'Editar Horario del Día';
+        document.getElementById('dayEditTitle').textContent = 'Información del Horario';
         document.getElementById('dayEditError').classList.add('hidden');
+
+        // Configure the edit button
+        const editBtn = document.getElementById('editDayAsigBtn');
+        if (editBtn) {
+            editBtn.onclick = () => {
+                this.closeDayEditModal();
+                this.openModal(props.asig);
+            };
+        }
 
         modal.classList.add('show');
     }
@@ -877,7 +970,8 @@ class AsignacionManager {
         if (!modal) return;
 
         document.getElementById('dayEdit_detasig_id').value = d.detasig_id;
-        document.getElementById('dayEdit_asig_id').value = d.asignacion_asig_id || asig.asig_id;
+        const asigId = d.asignacion_asig_id || asig.asig_id;
+        document.getElementById('dayEdit_asig_id').value = asigId;
 
         const dateObj = new Date(d.detasig_fecha + 'T00:00:00');
         const dateLabel = dateObj.toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
@@ -888,8 +982,17 @@ class AsignacionManager {
         document.getElementById('dayEdit_hora_fin').value = this.formatTime(d.detasig_hora_fin);
         document.getElementById('dayEdit_observaciones').value = d.observaciones || '';
 
-        document.getElementById('dayEditTitle').textContent = 'Editar Horario del Día';
+        document.getElementById('dayEditTitle').textContent = 'Información del Horario';
         document.getElementById('dayEditError').classList.add('hidden');
+
+        // Configure the edit button
+        const editBtn = document.getElementById('editDayAsigBtn');
+        if (editBtn) {
+            editBtn.onclick = () => {
+                this.closeDayEditModal();
+                this.openModal(asig);
+            };
+        }
 
         modal.classList.add('show');
     }
@@ -1011,9 +1114,12 @@ class AsignacionManager {
                 
             let availableComps = (Array.isArray(this.allCompetenciasPrograma) ? this.allCompetenciasPrograma : []).filter(c => !assignedCompIds.includes(c.comp_id));
 
-            // Si estamos en la pestaña Instructor y creando una nueva asignación, filtramos las competencias a SOLO las que este instructor puede dictar
+            // Si estamos en la pestaña Instructor y creando una nueva asignación, filtramos las competencias a SOLO las que este instructor puede dictar para el programa de la ficha
             if (this.activeTab === 'instructor' && this.selectedInstructor && (!asigIdInput || asigIdInput === '')) {
-                const habilitacionesInst = this.allHabilitaciones.filter(h => h.instructor_inst_id == this.selectedInstructor);
+                const habilitacionesInst = this.allHabilitaciones.filter(h => 
+                    h.instructor_inst_id == this.selectedInstructor &&
+                    (h.programa_prog_id == progId || h.programa_prog_id === null || h.programa_prog_id === '')
+                );
                 const compIdsHab = habilitacionesInst.map(h => h.competencia_comp_id);
                 availableComps = availableComps.filter(c => compIdsHab.includes(c.comp_id));
             }
@@ -1109,13 +1215,18 @@ class AsignacionManager {
             }
         }
 
-        if (startDate && fechaIni) fechaIni.value = startDate;
-        if (endDate && fechaFin) {
-            // FullCalendar selection: endStr is exclusive, subtract 1 day
-            const endObj = new Date(endDate);
-            endObj.setDate(endObj.getDate() - 1);
-            const correctedEnd = endObj.toISOString().split('T')[0];
-            fechaFin.value = correctedEnd;
+        if (asig) {
+            if (fechaIni && asig.asig_fecha_ini) fechaIni.value = asig.asig_fecha_ini;
+            if (fechaFin && asig.asig_fecha_fin) fechaFin.value = asig.asig_fecha_fin;
+        } else {
+            if (startDate && fechaIni) fechaIni.value = startDate;
+            if (endDate && fechaFin) {
+                // FullCalendar selection: endStr is exclusive, subtract 1 day
+                const endObj = new Date(endDate);
+                endObj.setDate(endObj.getDate() - 1);
+                const correctedEnd = endObj.toISOString().split('T')[0];
+                fechaFin.value = correctedEnd;
+            }
         }
 
         // Generate day fields based on range
@@ -1214,7 +1325,13 @@ class AsignacionManager {
                     }
                     this.handleCompetenciaChange();
                     setTimeout(() => {
-                        if (instructorSelect) instructorSelect.value = asig.instructor_inst_id;
+                        if (instructorSelect) {
+                            if (instructorSelect.tomselect) {
+                                instructorSelect.tomselect.setValue(asig.instructor_inst_id);
+                            } else {
+                                instructorSelect.value = asig.instructor_inst_id;
+                            }
+                        }
                     }, 100);
                 }
             });
@@ -1275,6 +1392,15 @@ class AsignacionManager {
             return;
         }
 
+        // Calculate holidays for the years covered in the range
+        const startYear = start.getFullYear();
+        const endYear = end.getFullYear();
+        const holidays = new Set();
+        for (let y = startYear; y <= endYear; y++) {
+            const yearHolidays = getColombianHolidays(y);
+            yearHolidays.forEach(h => holidays.add(h));
+        }
+
         // Header
         const header = document.createElement('div');
         header.className = 'flex items-center justify-between mb-2';
@@ -1299,14 +1425,27 @@ class AsignacionManager {
 
             const dateLabel = current.toLocaleDateString('es-CO', formatOptions);
             const isPast = dateISO < today;
+            const isHoliday = holidays.has(dateISO);
+            const isDisabled = isPast || isHoliday;
 
             const row = document.createElement('div');
-            row.className = `flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-4 p-3 bg-white border rounded-lg shadow-sm transition-all ${isPast ? 'border-red-200 bg-red-50/30 opacity-60' : 'border-gray-100 hover:border-sena-green/30'}`;
+            let rowClass = `flex flex-col md:flex-row items-start md:items-center gap-2 md:gap-4 p-3 bg-white border rounded-lg shadow-sm transition-all `;
+            if (isPast) {
+                rowClass += `border-red-200 bg-red-50/30 opacity-60`;
+            } else if (isHoliday) {
+                rowClass += `border-amber-200 bg-amber-50/30 opacity-75`;
+            } else {
+                rowClass += `border-gray-100 hover:border-sena-green/30`;
+            }
+            row.className = rowClass;
 
             row.innerHTML = `
                 <div class="flex items-center gap-3 w-full md:w-2/5 md:min-w-[140px]">
-                    <input type="checkbox" id="chk_${dateISO}" class="day-checkbox w-4 h-4 text-sena-green rounded focus:ring-sena-green accent-[#39a900] flex-shrink-0" ${isPast ? 'disabled' : ''}>
-                    <label for="chk_${dateISO}" class="text-sm font-medium text-gray-700 capitalize cursor-pointer leading-tight flex-1">${dateLabel}</label>
+                    <input type="checkbox" id="chk_${dateISO}" class="day-checkbox w-4 h-4 text-sena-green rounded focus:ring-sena-green accent-[#39a900] flex-shrink-0" ${isDisabled ? 'disabled' : ''}>
+                    <label for="chk_${dateISO}" class="text-sm font-medium text-gray-700 capitalize cursor-pointer leading-tight flex-1">
+                        ${dateLabel}
+                        ${isHoliday ? '<span class="text-[10px] text-amber-500 font-bold ml-2 whitespace-nowrap">(Festivo)</span>' : ''}
+                    </label>
                 </div>
                 <div class="flex-1 flex items-center gap-2 md:gap-3 w-full pl-7 md:pl-0">
                     <div class="flex-1 min-w-[110px]">
@@ -1318,6 +1457,7 @@ class AsignacionManager {
                     </div>
                 </div>
                 ${isPast ? '<span class="text-[10px] text-red-400 font-bold whitespace-nowrap hidden md:block">Fecha pasada</span>' : ''}
+                ${isHoliday ? '<span class="text-[10px] text-amber-500 font-bold whitespace-nowrap hidden md:block">Festivo</span>' : ''}
             `;
 
             container.appendChild(row);
@@ -1327,7 +1467,7 @@ class AsignacionManager {
             const ini = row.querySelector(`#ini_${dateISO}`);
             const fin = row.querySelector(`#fin_${dateISO}`);
 
-            if (chk && !isPast) {
+            if (chk && !isDisabled) {
                 chk.addEventListener('change', (e) => {
                     ini.disabled = !e.target.checked;
                     fin.disabled = !e.target.checked;
@@ -1423,25 +1563,30 @@ class AsignacionManager {
         if (!ficha) return;
 
         const progId = ficha.programa_prog_codigo || ficha.programa_prog_id;
+        // Filtrar habilitaciones por comp_id Y por programa_prog_id de la ficha.
+        // Se acepta también programa_prog_id NULL o vacío (competencias transversales).
         const habilitados = this.allHabilitaciones.filter(h =>
-            h.competencia_comp_id == compId
+            h.competencia_comp_id == compId &&
+            (h.programa_prog_id == progId || h.programa_prog_id === null || h.programa_prog_id === '' || h.programa_prog_id === undefined)
         );
 
-        instructorSelect.innerHTML = '<option value="">Seleccione instructor...</option>';
         if (habilitados.length === 0) {
-            refreshTS('#instructor_id', [{ value: '', text: 'Sin instructores habilitados' }], 'Buscar instructor...');
             instructorSelect.disabled = true;
+            refreshTS('#instructor_id', [{ value: '', text: 'Sin instructores habilitados' }], 'Buscar instructor...');
+            if (instructorSelect.tomselect) instructorSelect.tomselect.disable();
         } else {
             const seen = new Set();
             const instOpts = [{ value: '', text: 'Seleccione instructor...' }];
             habilitados.forEach(h => {
-                if (!seen.has(h.instructor_inst_id)) {
-                    seen.add(h.instructor_inst_id);
-                    instOpts.push({ value: h.instructor_inst_id, text: `${h.inst_nombres} ${h.inst_apellidos}` });
+                const name = `${h.inst_nombres} ${h.inst_apellidos}`;
+                if (!seen.has(name)) {
+                    seen.add(name);
+                    instOpts.push({ value: h.instructor_inst_id, text: name });
                 }
             });
-            refreshTS('#instructor_id', instOpts, 'Buscar instructor...');
             instructorSelect.disabled = false;
+            refreshTS('#instructor_id', instOpts, 'Buscar instructor...');
+            if (instructorSelect.tomselect) instructorSelect.tomselect.enable();
             
             // Si el tab activo es Instructor y este instructor está en la lista de habilitados, pre-seleccionar y bloquear
             if (this.activeTab === 'instructor' && this.selectedInstructor) {
@@ -1537,7 +1682,10 @@ class AsignacionManager {
             conflictAlert.innerHTML = '';
         }
 
-        // Disable save button while submitting
+        await this.sendSaveRequest(data, action);
+    }
+
+    async sendSaveRequest(data, action) {
         const saveBtn = document.getElementById('saveBtn');
         if (saveBtn) {
             saveBtn.disabled = true;
@@ -1545,65 +1693,58 @@ class AsignacionManager {
         }
 
         try {
-            const res = await fetch(`../../routing.php?controller=asignacion&action=${action}`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                body: JSON.stringify(data)
-            });
-            const result = await res.json();
-
-            if (res.status === 202 && result.warning === '80_percent_alert') {
-                NotificationService.showConfirm(result.message, async () => {
-                    data.confirm_80_percent = true;
-                    
-                    // Reenviar con confirmación
-                    const saveBtnRetry = document.getElementById('saveBtn');
-                    if (saveBtnRetry) {
-                        saveBtnRetry.disabled = true;
-                        saveBtnRetry.innerHTML = '<span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></span>Guardando...';
-                    }
-                    try {
-                        const resRetry = await fetch(`../../routing.php?controller=asignacion&action=${action}`, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
-                            body: JSON.stringify(data)
-                        });
-                        const resultRetry = await resRetry.json();
-                        
-                        if (resRetry.ok) {
-                            NotificationService.showSuccess(id ? '¡Asignación actualizada!' : '¡Asignación registrada!');
-                            this.closeModal();
-                            const fichId = this.selectedFicha?.fich_id;
-                            if (fichId) await this.loadAsignacionesFicha(fichId);
-                            if (this.calendar) this.calendar.refetchEvents();
-                            this.updateDashboardStats();
-                        } else {
-                            NotificationService.showError(resultRetry.error || 'Error al guardar.');
-                        }
-                    } catch (e) {
-                        NotificationService.showError('Error de conexión.');
-                    } finally {
-                        if (saveBtnRetry) {
-                            saveBtnRetry.disabled = false;
-                            saveBtnRetry.innerHTML = '<ion-icon src="../../assets/ionicons/save-outline.svg"></ion-icon> Guardar';
-                        }
-                    }
-                }, {
-                    title: 'Horas menores al 80%',
-                    confirmText: 'Sí, guardar',
-                    type: 'warning'
+            while (true) {
+                const res = await fetch(`../../routing.php?controller=asignacion&action=${action}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify(data)
                 });
-            } else if (res.ok) {
-                NotificationService.showSuccess(id ? '¡Asignación actualizada!' : '¡Asignación registrada!');
-                this.closeModal();
-                const fichId = this.selectedFicha?.fich_id;
-                if (fichId) await this.loadAsignacionesFicha(fichId);
-                if (this.calendar) this.calendar.refetchEvents();
-                this.updateDashboardStats();
-            } else if (res.status === 409) {
-                this.showConflictAlert(result.details || [], result.error);
-            } else {
-                NotificationService.showError(result.error || 'Error al guardar.');
+                const result = await res.json();
+
+                if (res.status === 202 && result.warning) {
+                    const confirmed = await new Promise((resolve) => {
+                        const originalCancel = NotificationService.cancelBtn.onclick;
+                        NotificationService.cancelBtn.onclick = () => {
+                            NotificationService.hide();
+                            NotificationService.cancelBtn.onclick = originalCancel;
+                            resolve(false);
+                        };
+                        NotificationService.showConfirm(result.message, () => {
+                            NotificationService.cancelBtn.onclick = originalCancel;
+                            resolve(true);
+                        }, {
+                            title: result.warning === '80_percent_alert' ? 'Horas menores al 80%' : 'Límite de 160 horas superado',
+                            confirmText: 'Sí, guardar',
+                            type: 'warning'
+                        });
+                    });
+
+                    if (confirmed) {
+                        if (result.warning === '80_percent_alert') {
+                            data.confirm_80_percent = true;
+                        } else if (result.warning === '160_hours_alert') {
+                            data.confirm_160_hours = true;
+                        }
+                        continue;
+                    } else {
+                        break;
+                    }
+                } else if (res.ok) {
+                    const id = data.asig_id;
+                    NotificationService.showSuccess(id ? '¡Asignación actualizada!' : '¡Asignación registrada!');
+                    this.closeModal();
+                    const fichId = this.selectedFicha?.fich_id;
+                    if (fichId) await this.loadAsignacionesFicha(fichId);
+                    if (this.calendar) this.calendar.refetchEvents();
+                    this.updateDashboardStats();
+                    break;
+                } else if (res.status === 409) {
+                    this.showConflictAlert(result.details || [], result.error);
+                    break;
+                } else {
+                    NotificationService.showError(result.error || 'Error al guardar.');
+                    break;
+                }
             }
         } catch (error) {
             NotificationService.showError('Error de conexión.');

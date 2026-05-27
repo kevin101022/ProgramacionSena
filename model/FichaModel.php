@@ -193,7 +193,8 @@ class FichaModel
                     i.inst_apellidos,
                     COALESCE(CAST(SUM(TIMESTAMPDIFF(SECOND, da.detasig_hora_ini, da.detasig_hora_fin)/3600) AS UNSIGNED), 0) as horas_asignadas
                   FROM asignacion a
-                  INNER JOIN competencia c ON a.competencia_comp_id = c.comp_id
+                  INNER JOIN ficha f ON a.ficha_fich_id = f.fich_id
+                  INNER JOIN competencia c ON a.competencia_comp_id = c.comp_id AND (c.programa_prog_id = f.programa_prog_id OR c.programa_prog_id IS NULL OR c.programa_prog_id = '')
                   INNER JOIN instructor i ON a.instructor_inst_id = i.numero_documento
                   LEFT JOIN detallexasignacion da ON da.asignacion_asig_id = a.asig_id
                   WHERE a.ficha_fich_id = :fich_id

@@ -127,7 +127,13 @@ const NotificationService = {
         this.show();
     },
 
+    hideTimeout: null,
+
     show() {
+        if (this.hideTimeout) {
+            clearTimeout(this.hideTimeout);
+            this.hideTimeout = null;
+        }
         this.overlay.classList.remove('hidden');
         this.overlay.classList.add('show'); // Uses styles.css .modal.show
 
@@ -141,9 +147,13 @@ const NotificationService = {
         this.modal.classList.remove('scale-100', 'opacity-100');
         this.modal.classList.add('scale-95', 'opacity-0');
 
-        setTimeout(() => {
+        if (this.hideTimeout) {
+            clearTimeout(this.hideTimeout);
+        }
+        this.hideTimeout = setTimeout(() => {
             this.overlay.classList.remove('show');
             this.overlay.classList.add('hidden');
+            this.hideTimeout = null;
         }, 300);
     }
 };

@@ -108,7 +108,7 @@ class InstructorModel
     // CRUD
     public function create()
     {
-        $query = "INSERT INTO INSTRUCTOR (numero_documento, inst_nombres, inst_apellidos, inst_correo, inst_telefono, inst_password, CENTRO_FORMACION_cent_id, profesion, especializacion, estado) 
+        $query = "INSERT INTO instructor (numero_documento, inst_nombres, inst_apellidos, inst_correo, inst_telefono, inst_password, CENTRO_FORMACION_cent_id, profesion, especializacion, estado) 
         VALUES (:numero_documento, :inst_nombres, :inst_apellidos, :inst_correo, :inst_telefono, :inst_password, :cent_id, :profesion, :especializacion, 1)";
 
         $stmt = $this->db->prepare($query);
@@ -137,8 +137,8 @@ class InstructorModel
         $sql = "SELECT i.numero_documento as inst_id, i.inst_nombres, i.inst_apellidos, i.inst_correo, i.inst_telefono, 
                        i.CENTRO_FORMACION_cent_id as cent_id, i.inst_password, i.profesion, i.especializacion,
                        c.cent_nombre 
-                FROM INSTRUCTOR i 
-                LEFT JOIN CENTRO_FORMACION c ON i.CENTRO_FORMACION_cent_id = c.cent_id 
+                FROM instructor i 
+                LEFT JOIN centro_formacion c ON i.CENTRO_FORMACION_cent_id = c.cent_id 
                 WHERE i.numero_documento = :numero_documento AND i.estado = 1";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([':numero_documento' => $this->numero_documento]);
@@ -151,8 +151,8 @@ class InstructorModel
         $sql = "SELECT i.numero_documento as inst_id, i.inst_nombres, i.inst_apellidos, i.inst_correo, i.inst_telefono,
                        i.CENTRO_FORMACION_cent_id as cent_id, i.profesion, i.especializacion,
                        c.cent_nombre
-                FROM INSTRUCTOR i
-                LEFT JOIN CENTRO_FORMACION c ON i.CENTRO_FORMACION_cent_id = c.cent_id
+                FROM instructor i
+                LEFT JOIN centro_formacion c ON i.CENTRO_FORMACION_cent_id = c.cent_id
                 WHERE i.numero_documento = :numero_documento AND i.estado = 1
                 LIMIT 1";
         $stmt = $this->db->prepare($sql);
@@ -165,8 +165,8 @@ class InstructorModel
         $sql = "SELECT i.numero_documento as inst_id, i.inst_nombres, i.inst_apellidos, i.inst_correo, i.inst_telefono, 
                        i.CENTRO_FORMACION_cent_id as cent_id, i.inst_password, i.profesion, i.especializacion,
                        c.cent_nombre 
-                FROM INSTRUCTOR i 
-                LEFT JOIN CENTRO_FORMACION c ON i.CENTRO_FORMACION_cent_id = c.cent_id 
+                FROM instructor i 
+                LEFT JOIN centro_formacion c ON i.CENTRO_FORMACION_cent_id = c.cent_id 
                 WHERE i.estado = 1
                 ORDER BY i.inst_nombres ASC, i.inst_apellidos ASC";
         $stmt = $this->db->prepare($sql);
@@ -179,8 +179,8 @@ class InstructorModel
         $sql = "SELECT i.numero_documento as inst_id, i.inst_nombres, i.inst_apellidos, i.inst_correo, i.inst_telefono, 
                        i.CENTRO_FORMACION_cent_id as cent_id, i.inst_password, i.profesion, i.especializacion,
                        c.cent_nombre 
-                FROM INSTRUCTOR i 
-                LEFT JOIN CENTRO_FORMACION c ON i.CENTRO_FORMACION_cent_id = c.cent_id 
+                FROM instructor i 
+                LEFT JOIN centro_formacion c ON i.CENTRO_FORMACION_cent_id = c.cent_id 
                 WHERE i.CENTRO_FORMACION_cent_id = :cent_id AND i.estado = 1
                 ORDER BY i.inst_nombres ASC, i.inst_apellidos ASC";
         $stmt = $this->db->prepare($sql);
@@ -191,7 +191,7 @@ class InstructorModel
     public function update()
     {
         try {
-            $query = "UPDATE INSTRUCTOR 
+            $query = "UPDATE instructor 
                       SET inst_nombres = :inst_nombres, 
                           inst_apellidos = :inst_apellidos, 
                           inst_correo = :inst_correo, 
@@ -227,7 +227,7 @@ class InstructorModel
 
     public function delete()
     {
-        $query = "UPDATE INSTRUCTOR SET estado = 0 WHERE numero_documento = :numero_documento";
+        $query = "UPDATE instructor SET estado = 0 WHERE numero_documento = :numero_documento";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':numero_documento', $this->numero_documento);
         $stmt->execute();
@@ -243,12 +243,12 @@ class InstructorModel
                        amb.amb_id,
                        amb.amb_nombre,
                        s.sede_nombre
-                FROM ASIGNACION a
-                LEFT JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
-                LEFT JOIN PROGRAMA p ON f.PROGRAMA_prog_id = p.prog_codigo
-                LEFT JOIN COMPETENCIA comp ON a.COMPETENCIA_comp_id = comp.comp_id
-                LEFT JOIN AMBIENTE amb ON a.AMBIENTE_amb_id = amb.amb_id
-                LEFT JOIN SEDE s ON amb.SEDE_sede_id = s.sede_id
+                FROM asignacion a
+                LEFT JOIN ficha f ON a.FICHA_fich_id = f.fich_id
+                LEFT JOIN programa p ON f.PROGRAMA_prog_id = p.prog_codigo
+                LEFT JOIN competencia comp ON a.COMPETENCIA_comp_id = comp.comp_id AND (comp.programa_prog_id = f.PROGRAMA_prog_id OR comp.programa_prog_id IS NULL OR comp.programa_prog_id = '')
+                LEFT JOIN ambiente amb ON a.AMBIENTE_amb_id = amb.amb_id
+                LEFT JOIN sede s ON amb.SEDE_sede_id = s.sede_id
                 WHERE a.INSTRUCTOR_inst_id = :numero_documento
                 ORDER BY a.asig_fecha_ini DESC";
         $stmt = $this->db->prepare($sql);
@@ -261,9 +261,9 @@ class InstructorModel
         $sql = "SELECT ic.inscomp_id,
                        comp.comp_id, comp.comp_nombre_corto as comp_nombre, comp.comp_nombre_unidad_competencia as comp_descripcion,
                        p.prog_codigo, p.prog_denominacion
-                FROM INSTRU_COMPETENCIA ic
-                LEFT JOIN COMPETENCIA comp ON ic.competencia_comp_id = comp.comp_id
-                LEFT JOIN PROGRAMA p ON ic.programa_prog_id = p.prog_codigo
+                FROM instru_competencia ic
+                LEFT JOIN competencia comp ON ic.competencia_comp_id = comp.comp_id
+                LEFT JOIN programa p ON ic.programa_prog_id = p.prog_codigo
                 WHERE ic.INSTRUCTOR_inst_id = :numero_documento
                 ORDER BY comp.comp_nombre_corto ASC";
         $stmt = $this->db->prepare($sql);
@@ -279,18 +279,18 @@ class InstructorModel
                        f.fich_fecha_fin_lectiva as fich_fecha_fin_lectiva,
                        p.prog_denominacion as prog_denominacion, tp.titpro_nombre as titpro_nombre,
                        c.coord_descripcion as coord_nombre, s.sede_nombre as sede_nombre
-                FROM FICHA f
-                INNER JOIN PROGRAMA p ON f.PROGRAMA_prog_id = p.prog_codigo
-                INNER JOIN TITULO_PROGRAMA tp ON p.TIT_PROGRAMA_titpro_id = tp.titpro_id
-                LEFT JOIN COORDINACION c ON f.COORDINACION_coord_id = c.coord_id
+                FROM ficha f
+                INNER JOIN programa p ON f.PROGRAMA_prog_id = p.prog_codigo
+                INNER JOIN titulo_programa tp ON p.TIT_PROGRAMA_titpro_id = tp.titpro_id
+                LEFT JOIN coordinacion c ON f.COORDINACION_coord_id = c.coord_id
                 LEFT JOIN (
                     SELECT FICHA_fich_id, MAX(ASIG_ID) as asig_id_max 
-                    FROM ASIGNACION 
+                    FROM asignacion 
                     GROUP BY FICHA_fich_id
                 ) a_max ON f.fich_id = a_max.FICHA_fich_id
-                LEFT JOIN ASIGNACION a ON a_max.asig_id_max = a.ASIG_ID
-                LEFT JOIN AMBIENTE amb ON a.AMBIENTE_amb_id = amb.amb_id
-                LEFT JOIN SEDE s ON amb.SEDE_sede_id = s.sede_id
+                LEFT JOIN asignacion a ON a_max.asig_id_max = a.ASIG_ID
+                LEFT JOIN ambiente amb ON a.AMBIENTE_amb_id = amb.amb_id
+                LEFT JOIN sede s ON amb.SEDE_sede_id = s.sede_id
                 WHERE f.INSTRUCTOR_inst_id_lider = :numero_documento
                 ORDER BY f.fich_fecha_ini_lectiva DESC";
         $stmt = $this->db->prepare($sql);

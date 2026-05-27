@@ -8,16 +8,18 @@ class ProgramaModel
     private $prog_denominacion;
     private $tit_programa_titpro_id;
     private $prog_tipo;
+    private $prog_version;
     private $centro_formacion_cent_id;
     private $db;
 
-    public function __construct($prog_codigo = null, $prog_denominacion = null, $tit_programa_titpro_id = null, $prog_tipo = null, $centro_formacion_cent_id = null)
+    public function __construct($prog_codigo = null, $prog_denominacion = null, $tit_programa_titpro_id = null, $prog_tipo = null, $centro_formacion_cent_id = null, $prog_version = null)
     {
         $this->prog_codigo = $prog_codigo;
         $this->prog_denominacion = $prog_denominacion;
         $this->tit_programa_titpro_id = $tit_programa_titpro_id;
         $this->prog_tipo = $prog_tipo;
         $this->centro_formacion_cent_id = $centro_formacion_cent_id;
+        $this->prog_version = $prog_version;
         $this->db = Conexion::getConnect();
     }
 
@@ -38,8 +40,16 @@ class ProgramaModel
     {
         return $this->prog_tipo;
     }
+    public function getProgVersion()
+    {
+        return $this->prog_version;
+    }
 
     // Setters
+    public function setProgVersion($prog_version)
+    {
+        $this->prog_version = $prog_version;
+    }
     public function setProgCodigo($prog_codigo)
     {
         $this->prog_codigo = $prog_codigo;
@@ -68,7 +78,7 @@ class ProgramaModel
     // CRUD helpers
     public function getNextId()
     {
-        $query = "SELECT COALESCE(MAX(prog_codigo), 0) + 1 FROM PROGRAMA";
+        $query = "SELECT COALESCE(MAX(prog_codigo), 0) + 1 FROM programa";
         $stmt = $this->db->prepare($query);
         $stmt->execute();
         return $stmt->fetchColumn();
@@ -80,22 +90,23 @@ class ProgramaModel
         if (!$this->prog_codigo) {
             throw new Exception("El código del programa es obligatorio.");
         }
-        $query = "INSERT INTO PROGRAMA (prog_codigo, prog_denominacion, TIT_PROGRAMA_titpro_id, prog_tipo, centro_formacion_cent_id) 
-                  VALUES (:prog_codigo, :prog_denominacion, :tit_programa_titpro_id, :prog_tipo, :centro_formacion_cent_id)";
+        $query = "INSERT INTO programa (prog_codigo, prog_denominacion, TIT_PROGRAMA_titpro_id, prog_tipo, prog_version, centro_formacion_cent_id) 
+                  VALUES (:prog_codigo, :prog_denominacion, :tit_programa_titpro_id, :prog_tipo, :prog_version, :centro_formacion_cent_id)";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':prog_codigo', $this->prog_codigo);
         $stmt->bindParam(':prog_denominacion', $this->prog_denominacion);
         $stmt->bindParam(':tit_programa_titpro_id', $this->tit_programa_titpro_id);
         $stmt->bindParam(':prog_tipo', $this->prog_tipo);
+        $stmt->bindParam(':prog_version', $this->prog_version);
         $stmt->bindParam(':centro_formacion_cent_id', $this->centro_formacion_cent_id);
         return $stmt->execute();
     }
 
     public function read($cent_id = null)
     {
-        $sql = "SELECT p.prog_codigo, p.prog_denominacion, p.TIT_PROGRAMA_titpro_id as titpro_id, p.prog_tipo, COALESCE(t.titpro_nombre, 'Sin título') as titpro_nombre 
-                FROM PROGRAMA p
-                LEFT JOIN TITULO_PROGRAMA t ON p.TIT_PROGRAMA_titpro_id = t.titpro_id
+        $sql = "SELECT p.prog_codigo, p.prog_denominacion, p.TIT_PROGRAMA_titpro_id as titpro_id, p.prog_tipo, p.prog_version, COALESCE(t.titpro_nombre, 'Sin título') as titpro_nombre 
+                FROM programa p
+                LEFT JOIN titulo_programa t ON p.TIT_PROGRAMA_titpro_id = t.titpro_id
                 WHERE p.prog_codigo = :prog_codigo";
 
         $params = [':prog_codigo' => $this->prog_codigo];
@@ -107,9 +118,9 @@ class ProgramaModel
 
     public function readAll($cent_id = null)
     {
-        $sql = "SELECT p.prog_codigo, p.prog_denominacion, p.TIT_PROGRAMA_titpro_id as titpro_id, p.prog_tipo, COALESCE(t.titpro_nombre, 'Sin título') as titpro_nombre, p.centro_formacion_cent_id 
-                FROM PROGRAMA p
-                LEFT JOIN TITULO_PROGRAMA t ON p.TIT_PROGRAMA_titpro_id = t.titpro_id";
+        $sql = "SELECT p.prog_codigo, p.prog_denominacion, p.TIT_PROGRAMA_titpro_id as titpro_id, p.prog_tipo, p.prog_version, COALESCE(t.titpro_nombre, 'Sin título') as titpro_nombre, p.centro_formacion_cent_id 
+                FROM programa p
+                LEFT JOIN titulo_programa t ON p.TIT_PROGRAMA_titpro_id = t.titpro_id";
 
         $params = [];
         if ($cent_id) {
@@ -126,16 +137,18 @@ class ProgramaModel
 
     public function update()
     {
-        $query = "UPDATE PROGRAMA 
+        $query = "UPDATE programa 
                   SET prog_denominacion = :prog_denominacion, 
                       TIT_PROGRAMA_titpro_id = :tit_programa_titpro_id, 
                       prog_tipo = :prog_tipo,
+                      prog_version = :prog_version,
                       centro_formacion_cent_id = :centro_formacion_cent_id
                   WHERE prog_codigo = :prog_codigo";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':prog_denominacion', $this->prog_denominacion);
         $stmt->bindParam(':tit_programa_titpro_id', $this->tit_programa_titpro_id);
         $stmt->bindParam(':prog_tipo', $this->prog_tipo);
+        $stmt->bindParam(':prog_version', $this->prog_version);
         $stmt->bindParam(':centro_formacion_cent_id', $this->centro_formacion_cent_id);
         $stmt->bindParam(':prog_codigo', $this->prog_codigo);
         return $stmt->execute();
@@ -143,7 +156,7 @@ class ProgramaModel
 
     public function delete()
     {
-        $query = "DELETE FROM PROGRAMA WHERE prog_codigo = :prog_codigo";
+        $query = "DELETE FROM programa WHERE prog_codigo = :prog_codigo";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':prog_codigo', $this->prog_codigo);
         return $stmt->execute();
@@ -151,7 +164,7 @@ class ProgramaModel
 
     public function getCompetenciasByPrograma()
     {
-        $sql = "SELECT * FROM COMPETENCIA WHERE programa_prog_id = :prog_id ORDER BY comp_nombre_corto ASC";
+        $sql = "SELECT * FROM competencia WHERE programa_prog_id = :prog_id ORDER BY comp_nombre_corto ASC";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([':prog_id' => $this->prog_codigo]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);

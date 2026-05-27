@@ -48,7 +48,7 @@ class SedeModel
     // CRUD helpers
     public function getNextId()
     {
-        $query = "SELECT COALESCE(MAX(sede_id), 0) + 1 FROM SEDE";
+        $query = "SELECT COALESCE(MAX(sede_id), 0) + 1 FROM sede";
         $stmt = $this->db->prepare($query);
         $stmt->execute();
         return $stmt->fetchColumn();
@@ -59,7 +59,7 @@ class SedeModel
         if (!$this->sede_id) {
             $this->sede_id = $this->getNextId();
         }
-        $query = "INSERT INTO SEDE (sede_id, sede_nombre, CENTRO_FORMACION_cent_id) 
+        $query = "INSERT INTO sede (sede_id, sede_nombre, CENTRO_FORMACION_cent_id) 
         VALUES (:sede_id, :sede_nombre, :cent_id)";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':sede_id', $this->sede_id);
@@ -70,7 +70,7 @@ class SedeModel
     }
     public function read()
     {
-        $sql = "SELECT sede_id, sede_nombre, CENTRO_FORMACION_cent_id FROM SEDE WHERE sede_id = :sede_id";
+        $sql = "SELECT sede_id, sede_nombre, CENTRO_FORMACION_cent_id FROM sede WHERE sede_id = :sede_id";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([':sede_id' => $this->sede_id]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -78,7 +78,7 @@ class SedeModel
 
     public function readAll($cent_id = null)
     {
-        $sql = "SELECT sede_id, sede_nombre, CENTRO_FORMACION_cent_id FROM SEDE";
+        $sql = "SELECT sede_id, sede_nombre, CENTRO_FORMACION_cent_id FROM sede";
         if ($cent_id) {
             $sql .= " WHERE CENTRO_FORMACION_cent_id = :cent_id";
             $sql .= " ORDER BY sede_nombre ASC";
@@ -93,7 +93,7 @@ class SedeModel
     }
     public function update()
     {
-        $query = "UPDATE SEDE SET sede_nombre = :sede_nombre, CENTRO_FORMACION_cent_id = :cent_id WHERE sede_id = :sede_id";
+        $query = "UPDATE sede SET sede_nombre = :sede_nombre, CENTRO_FORMACION_cent_id = :cent_id WHERE sede_id = :sede_id";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':sede_nombre', $this->sede_nombre);
         $stmt->bindParam(':cent_id', $this->centro_formacion_id);
@@ -103,7 +103,7 @@ class SedeModel
     }
     public function delete()
     {
-        $query = "DELETE FROM SEDE WHERE sede_id = :sede_id";
+        $query = "DELETE FROM sede WHERE sede_id = :sede_id";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':sede_id', $this->sede_id);
         $stmt->execute();
@@ -118,16 +118,16 @@ class SedeModel
                        tp.titpro_nombre,
                        i.inst_nombres, 
                        i.inst_apellidos
-                FROM FICHA f
-                INNER JOIN PROGRAMA p ON f.PROGRAMA_prog_id = p.prog_codigo
-                INNER JOIN TITULO_PROGRAMA tp ON p.TIT_PROGRAMA_titpro_id = tp.titpro_id
-                LEFT JOIN INSTRUCTOR i ON f.INSTRUCTOR_inst_id_lider = i.numero_documento
+                FROM ficha f
+                INNER JOIN programa p ON f.PROGRAMA_prog_id = p.prog_codigo
+                INNER JOIN titulo_programa tp ON p.TIT_PROGRAMA_titpro_id = tp.titpro_id
+                LEFT JOIN instructor i ON f.INSTRUCTOR_inst_id_lider = i.numero_documento
                 INNER JOIN (
                     SELECT FICHA_fich_id, AMBIENTE_amb_id 
-                    FROM ASIGNACION 
+                    FROM asignacion 
                     GROUP BY FICHA_fich_id, AMBIENTE_amb_id
                 ) a ON f.fich_id = a.FICHA_fich_id
-                INNER JOIN AMBIENTE amb ON a.AMBIENTE_amb_id = amb.amb_id
+                INNER JOIN ambiente amb ON a.AMBIENTE_amb_id = amb.amb_id
                 WHERE amb.SEDE_sede_id = :sede_id
                 ORDER BY f.fich_id DESC";
         $stmt = $this->db->prepare($sql);
@@ -139,15 +139,15 @@ class SedeModel
     {
         $sql = "SELECT DISTINCT p.prog_codigo, p.prog_denominacion, 
                        tp.titpro_nombre, tp.titpro_nivel
-                FROM PROGRAMA p
-                INNER JOIN TITULO_PROGRAMA tp ON p.TIT_PROGRAMA_titpro_id = tp.titpro_id
-                INNER JOIN FICHA f ON f.PROGRAMA_prog_id = p.prog_codigo
+                FROM programa p
+                INNER JOIN titulo_programa tp ON p.TIT_PROGRAMA_titpro_id = tp.titpro_id
+                INNER JOIN ficha f ON f.PROGRAMA_prog_id = p.prog_codigo
                 INNER JOIN (
                     SELECT FICHA_fich_id, AMBIENTE_amb_id 
-                    FROM ASIGNACION 
+                    FROM asignacion 
                     GROUP BY FICHA_fich_id, AMBIENTE_amb_id
                 ) a ON f.fich_id = a.FICHA_fich_id
-                INNER JOIN AMBIENTE amb ON a.AMBIENTE_amb_id = amb.amb_id
+                INNER JOIN ambiente amb ON a.AMBIENTE_amb_id = amb.amb_id
                 WHERE amb.SEDE_sede_id = :sede_id
                 ORDER BY p.prog_denominacion ASC";
         $stmt = $this->db->prepare($sql);

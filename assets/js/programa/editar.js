@@ -15,7 +15,6 @@ class EditarPrograma {
         this.cacheDOM();
         this.bindEvents();
         await Promise.all([
-            this.loadSedes(),
             this.loadTitulos()
         ]);
         await this.loadProgramaData();
@@ -24,10 +23,10 @@ class EditarPrograma {
     cacheDOM() {
         this.form = document.getElementById('editarProgramaForm');
         this.tituloSelect = document.getElementById('tit_programa_titpro_id');
-        this.sedeSelect = document.getElementById('sede_sede_id');
         this.codigoInput = document.getElementById('prog_codigo');
         this.denominacionInput = document.getElementById('prog_denominacion');
         this.tipoSelect = document.getElementById('prog_tipo');
+        this.versionInput = document.getElementById('prog_version');
     }
 
     bindEvents() {
@@ -51,26 +50,6 @@ class EditarPrograma {
         }
     }
 
-    async loadSedes() {
-        try {
-            const response = await fetch('../../routing.php?controller=sede&action=index');
-            const sedes = await response.json();
-
-            this.sedeSelect.innerHTML = '<option value="" disabled selected>Seleccione una sede...</option>';
-            sedes.forEach(s => {
-                const option = document.createElement('option');
-                option.value = s.sede_id;
-                option.textContent = s.sede_nombre;
-                this.sedeSelect.appendChild(option);
-            });
-        } catch (error) {
-            console.error('Error loading sedes:', error);
-            if (window.NotificationService) {
-                NotificationService.show('Error al cargar las sedes', 'error');
-            }
-        }
-    }
-
     async loadProgramaData() {
         try {
             const response = await fetch(`../../routing.php?controller=programa&action=show&id=${this.programaId}`);
@@ -81,8 +60,8 @@ class EditarPrograma {
             this.codigoInput.value = data.prog_codigo;
             this.denominacionInput.value = data.prog_denominacion;
             this.tituloSelect.value = data.tit_programa_titpro_id;
-            this.sedeSelect.value = data.sede_sede_id || '';
             this.tipoSelect.value = data.prog_tipo || '';
+            this.versionInput.value = data.prog_version || '';
 
         } catch (error) {
             console.error('Error loading programa data:', error);

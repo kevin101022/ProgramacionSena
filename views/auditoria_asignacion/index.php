@@ -8,7 +8,7 @@ $coordinaciones = [];
 if (isset($rol) && $rol === 'centro' && isset($_SESSION['centro_id'])) {
     require_once '../../Conexion.php';
     $dbCoord = Conexion::getConnect();
-    $stmtCoord = $dbCoord->prepare("SELECT coord_id, coord_descripcion FROM COORDINACION WHERE centro_formacion_cent_id = :cent_id AND estado = 1 ORDER BY coord_descripcion ASC");
+    $stmtCoord = $dbCoord->prepare("SELECT coord_id, coord_descripcion FROM coordinacion WHERE centro_formacion_cent_id = :cent_id AND estado = 1 ORDER BY coord_descripcion ASC");
     $stmtCoord->execute([':cent_id' => $_SESSION['centro_id']]);
     $coordinaciones = $stmtCoord->fetchAll(PDO::FETCH_ASSOC);
 }

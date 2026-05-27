@@ -107,7 +107,7 @@ try {
         if ($rol === 'coordinador') {
             require_once 'Conexion.php';
             $db_check = Conexion::getConnect();
-            $stmt_check = $db_check->prepare("SELECT COUNT(*) FROM COORDINACION WHERE coordinador_actual = :id AND estado = 1");
+            $stmt_check = $db_check->prepare("SELECT COUNT(*) FROM coordinacion WHERE coordinador_actual = :id AND estado = 1");
             $stmt_check->execute([':id' => $_SESSION['id']]);
             $hasCoordinacion = ($stmt_check->fetchColumn() > 0);
         }

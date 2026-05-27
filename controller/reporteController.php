@@ -166,7 +166,7 @@ class ReporteController
                 INNER JOIN instructor i ON a.instructor_inst_id = i.numero_documento
                 INNER JOIN ficha f ON a.ficha_fich_id = f.fich_id
                 INNER JOIN programa p ON f.programa_prog_id = p.prog_codigo
-                INNER JOIN competencia c ON a.competencia_comp_id = c.comp_id
+                INNER JOIN competencia c ON a.competencia_comp_id = c.comp_id AND (c.programa_prog_id = f.programa_prog_id OR c.programa_prog_id IS NULL OR c.programa_prog_id = '')
                 LEFT JOIN ambiente amb ON a.ambiente_amb_id = amb.amb_id
                 LEFT JOIN coordinacion co ON f.coordinacion_coord_id = co.coord_id";
 
@@ -289,7 +289,7 @@ class ReporteController
                 FROM asignacion a
                 INNER JOIN detallexasignacion da ON da.asignacion_asig_id = a.asig_id
                 LEFT JOIN ficha f ON a.ficha_fich_id = f.fich_id
-                LEFT JOIN competencia c ON a.competencia_comp_id = c.comp_id
+                LEFT JOIN competencia c ON a.competencia_comp_id = c.comp_id AND (c.programa_prog_id = f.programa_prog_id OR c.programa_prog_id IS NULL OR c.programa_prog_id = '')
                 LEFT JOIN instructor i ON a.instructor_inst_id = i.numero_documento
                 LEFT JOIN ambiente amb ON a.ambiente_amb_id = amb.amb_id
                 LEFT JOIN coordinacion co ON f.coordinacion_coord_id = co.coord_id";

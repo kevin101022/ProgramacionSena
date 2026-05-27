@@ -24,8 +24,8 @@ if ($rolUsuario === 'coordinador' && !empty($_SESSION['id'])) {
             $db   = Conexion::getConnect();
             $stmt = $db->prepare(
                 "SELECT c.coord_descripcion, cf.cent_nombre
-                 FROM COORDINACION c
-                 LEFT JOIN CENTRO_FORMACION cf ON c.centro_formacion_cent_id = cf.cent_id
+                 FROM coordinacion c
+                 LEFT JOIN centro_formacion cf ON c.centro_formacion_cent_id = cf.cent_id
                  WHERE c.coordinador_actual = :num_doc AND c.estado = 1
                  LIMIT 1"
             );

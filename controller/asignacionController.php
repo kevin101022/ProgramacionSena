@@ -20,7 +20,7 @@ class AsignacionController
         $coord_id = null;
         if ($rol === 'coordinador' && $user_id) {
             $db = Conexion::getConnect();
-            $stmt = $db->prepare("SELECT coord_id FROM COORDINACION WHERE coordinador_actual = :uid AND estado = 1 LIMIT 1");
+            $stmt = $db->prepare("SELECT coord_id FROM coordinacion WHERE coordinador_actual = :uid AND estado = 1 LIMIT 1");
             $stmt->execute([':uid' => $user_id]);
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
             $coord_id = $row['coord_id'] ?? null;
@@ -137,16 +137,24 @@ class AsignacionController
 
         // VALIDACIÓN DE SEGURIDAD: El coordinador dueño de la ficha
         $rol = $_SESSION['rol'] ?? null;
+        // Permitir a administradores crear asignaciones sin restricción de coordinación
         if ($rol === 'coordinador' && isset($_SESSION['id'])) {
             $db = Conexion::getConnect();
-            $stmtCoord = $db->prepare("SELECT coord_id FROM COORDINACION WHERE coordinador_actual = :uid AND estado = 1 LIMIT 1");
+            $stmtCoord = $db->prepare("SELECT coord_id FROM coordinacion WHERE coordinador_actual = :uid AND estado = 1 LIMIT 1");
             $stmtCoord->execute([':uid' => $_SESSION['id']]);
             $coord_id = $stmtCoord->fetchColumn();
-            
+
+            // Log para depuración (se escribe en error_log)
+            error_log('DEBUG: Coordinador ID=' . ($_SESSION['id'] ?? 'null') . ' coord_id=' . $coord_id . ' ficha_coord=' . ($fichaData['coordinacion_coord_id'] ?? 'null'));
+
+            // Si la ficha no pertenece a la coordinación del usuario, bloquear
             if ($coord_id && $fichaData['coordinacion_coord_id'] != $coord_id) {
                 $this->sendResponse(['error' => 'No tienes permisos para crear asignaciones en fichas de otra coordinación'], 403);
                 return;
             }
+        } elseif ($rol === 'admin') {
+            // Administrador: saltar verificación de coordinación
+            error_log('DEBUG: Usuario admin bypass seguridad coordinación');
         }
 
         $progId = $fichaData['programa_prog_id'];
@@ -176,7 +184,7 @@ class AsignacionController
 
         // --- VALIDAR VIGENCIA DE CERTIFICACIÓN ---
         $db = Conexion::getConnect();
-        $stmtVigencia = $db->prepare("SELECT inscomp_vigencia FROM INSTRU_COMPETENCIA WHERE INSTRUCTOR_inst_id = ? AND programa_prog_id = ? AND competencia_comp_id = ?");
+        $stmtVigencia = $db->prepare("SELECT inscomp_vigencia FROM instru_competencia WHERE instructor_inst_id = ? AND programa_prog_id = ? AND competencia_comp_id = ?");
         $stmtVigencia->execute([$data['instructor_inst_id'], $progId, $data['competencia_comp_id']]);
         $vigenciaRes = $stmtVigencia->fetch(PDO::FETCH_ASSOC);
         if ($vigenciaRes && !empty($vigenciaRes['inscomp_vigencia'])) {
@@ -213,8 +221,11 @@ class AsignacionController
         foreach ($hoursByMonth as $key => $hours) {
             list($year, $month) = explode('-', $key);
             $currentMonthlyHours = $asigModelCheck->getMonthlyHours($data['instructor_inst_id'], $month, $year, null);
-            if (($currentMonthlyHours + $hours) > 160) {
-                $this->sendResponse(['error' => "El instructor supera el límite de 160 horas en el mes $month/$year (Lleva: $currentMonthlyHours h, A asignar: $hours h)"], 400);
+            if (($currentMonthlyHours + $hours) > 160 && !isset($data['confirm_160_hours'])) {
+                $this->sendResponse([
+                    'warning' => '160_hours_alert',
+                    'message' => "El instructor supera el límite de 160 horas en el mes $month/$year (Lleva: $currentMonthlyHours h, A asignar: $hours h). ¿Deseas continuar con la asignación de todos modos?"
+                ], 202);
                 return;
             }
         }
@@ -392,7 +403,7 @@ class AsignacionController
 
         // --- VALIDAR VIGENCIA DE CERTIFICACIÓN ---
         $db = Conexion::getConnect();
-        $stmtVigencia = $db->prepare("SELECT inscomp_vigencia FROM INSTRU_COMPETENCIA WHERE INSTRUCTOR_inst_id = ? AND programa_prog_id = ? AND competencia_comp_id = ?");
+        $stmtVigencia = $db->prepare("SELECT inscomp_vigencia FROM instru_competencia WHERE instructor_inst_id = ? AND programa_prog_id = ? AND competencia_comp_id = ?");
         $stmtVigencia->execute([$data['instructor_inst_id'], $progId, $data['competencia_comp_id']]);
         $vigenciaRes = $stmtVigencia->fetch(PDO::FETCH_ASSOC);
         if ($vigenciaRes && !empty($vigenciaRes['inscomp_vigencia'])) {
@@ -429,8 +440,11 @@ class AsignacionController
         foreach ($hoursByMonth as $key => $hours) {
             list($year, $month) = explode('-', $key);
             $currentMonthlyHours = $asigModelCheck->getMonthlyHours($data['instructor_inst_id'], $month, $year, $data['asig_id']);
-            if (($currentMonthlyHours + $hours) > 160) {
-                $this->sendResponse(['error' => "El instructor supera el límite de 160 horas en el mes $month/$year (Lleva: $currentMonthlyHours h, A asignar: $hours h)"], 400);
+            if (($currentMonthlyHours + $hours) > 160 && !isset($data['confirm_160_hours'])) {
+                $this->sendResponse([
+                    'warning' => '160_hours_alert',
+                    'message' => "El instructor supera el límite de 160 horas en el mes $month/$year (Lleva: $currentMonthlyHours h, A asignar: $hours h). ¿Deseas continuar con la asignación de todos modos?"
+                ], 202);
                 return;
             }
         }
@@ -504,7 +518,7 @@ class AsignacionController
             }
 
             // Borrar detalles anteriores e insertar los nuevos (ya validados sin cruce)
-            $stmt = $this->db->prepare("DELETE FROM DETALLExASIGNACION WHERE ASIGNACION_asig_id = :asig_id");
+            $stmt = $this->db->prepare("DELETE FROM detallexasignacion WHERE ASIGNACION_asig_id = :asig_id");
             $stmt->execute([':asig_id' => $data['asig_id']]);
 
             // Insertar nuevos detalles
@@ -577,12 +591,12 @@ class AsignacionController
             // VALIDACIÓN DE SEGURIDAD
             $rol = $_SESSION['rol'] ?? null;
             if ($rol === 'coordinador' && isset($_SESSION['id'])) {
-                $stmtCoord = $this->db->prepare("SELECT coord_id FROM COORDINACION WHERE coordinador_actual = :uid AND estado = 1 LIMIT 1");
+                $stmtCoord = $this->db->prepare("SELECT coord_id FROM coordinacion WHERE coordinador_actual = :uid AND estado = 1 LIMIT 1");
                 $stmtCoord->execute([':uid' => $_SESSION['id']]);
                 $coord_id = $stmtCoord->fetchColumn();
 
                 if ($coord_id) {
-                    $stmtCheck = $this->db->prepare("SELECT f.COORDINACION_coord_id FROM ASIGNACION a JOIN FICHA f ON a.FICHA_fich_id = f.fich_id WHERE a.asig_id = :aid");
+                    $stmtCheck = $this->db->prepare("SELECT f.COORDINACION_coord_id FROM asignacion a JOIN ficha f ON a.FICHA_fich_id = f.fich_id WHERE a.asig_id = :aid");
                     $stmtCheck->execute([':aid' => $id]);
                     $asigFichaCoord = $stmtCheck->fetchColumn();
                     if ($asigFichaCoord && $asigFichaCoord != $coord_id) {
@@ -595,7 +609,7 @@ class AsignacionController
             $this->db->beginTransaction();
 
             // Primero eliminar detalles hijos (cascade manual)
-            $stmt = $this->db->prepare("DELETE FROM DETALLExASIGNACION WHERE ASIGNACION_asig_id = :asig_id");
+            $stmt = $this->db->prepare("DELETE FROM detallexasignacion WHERE ASIGNACION_asig_id = :asig_id");
             $stmt->execute([':asig_id' => $id]);
 
             // Luego eliminar la asignación padre
@@ -634,13 +648,14 @@ class AsignacionController
         $sql = "SELECT d.detasig_id, d.detasig_fecha, d.detasig_hora_ini, d.detasig_hora_fin, d.observaciones,
                        a.ASIG_ID as asig_id, a.INSTRUCTOR_inst_id as instructor_inst_id, a.AMBIENTE_amb_id as ambiente_amb_id,
                        a.FICHA_fich_id as ficha_fich_id, a.COMPETENCIA_comp_id as competencia_comp_id,
+                       a.asig_fecha_ini, a.asig_fecha_fin,
                        i.inst_nombres, i.inst_apellidos, am.amb_nombre, f.fich_id as ficha_num, c.comp_nombre_corto
-                FROM DETALLExASIGNACION d
-                INNER JOIN ASIGNACION a ON d.ASIGNACION_asig_id = a.ASIG_ID
-                INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.numero_documento
-                INNER JOIN AMBIENTE am ON a.AMBIENTE_amb_id = am.amb_id
-                INNER JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
-                INNER JOIN COMPETENCIA c ON a.COMPETENCIA_comp_id = c.comp_id
+                FROM detallexasignacion d
+                INNER JOIN asignacion a ON d.ASIGNACION_asig_id = a.ASIG_ID
+                INNER JOIN instructor i ON a.INSTRUCTOR_inst_id = i.numero_documento
+                INNER JOIN ambiente am ON a.AMBIENTE_amb_id = am.amb_id
+                INNER JOIN ficha f ON a.FICHA_fich_id = f.fich_id
+                INNER JOIN competencia c ON a.COMPETENCIA_comp_id = c.comp_id AND (c.programa_prog_id = f.programa_prog_id OR c.programa_prog_id IS NULL OR c.programa_prog_id = '')
                 WHERE a.FICHA_fich_id = :fich_id
                 AND d.detasig_fecha >= :start_date AND d.detasig_fecha <= :end_date";
 
@@ -675,15 +690,16 @@ class AsignacionController
         $sql = "SELECT d.detasig_id, d.detasig_fecha, d.detasig_hora_ini, d.detasig_hora_fin, d.observaciones,
                        a.ASIG_ID as asig_id, a.INSTRUCTOR_inst_id as instructor_inst_id, a.AMBIENTE_amb_id as ambiente_amb_id,
                        a.FICHA_fich_id as ficha_fich_id, a.COMPETENCIA_comp_id as competencia_comp_id,
+                       a.asig_fecha_ini, a.asig_fecha_fin,
                        i.inst_nombres, i.inst_apellidos, am.amb_nombre, f.fich_id as ficha_num, c.comp_nombre_corto,
                        f.COORDINACION_coord_id, co.coord_descripcion
-                FROM DETALLExASIGNACION d
-                INNER JOIN ASIGNACION a ON d.ASIGNACION_asig_id = a.ASIG_ID
-                INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.numero_documento
-                LEFT JOIN AMBIENTE am ON a.AMBIENTE_amb_id = am.amb_id
-                INNER JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
-                INNER JOIN COORDINACION co ON f.COORDINACION_coord_id = co.coord_id
-                INNER JOIN COMPETENCIA c ON a.COMPETENCIA_comp_id = c.comp_id
+                FROM detallexasignacion d
+                INNER JOIN asignacion a ON d.ASIGNACION_asig_id = a.ASIG_ID
+                INNER JOIN instructor i ON a.INSTRUCTOR_inst_id = i.numero_documento
+                LEFT JOIN ambiente am ON a.AMBIENTE_amb_id = am.amb_id
+                INNER JOIN ficha f ON a.FICHA_fich_id = f.fich_id
+                INNER JOIN coordinacion co ON f.COORDINACION_coord_id = co.coord_id
+                INNER JOIN competencia c ON a.COMPETENCIA_comp_id = c.comp_id AND (c.programa_prog_id = f.programa_prog_id OR c.programa_prog_id IS NULL OR c.programa_prog_id = '')
                 WHERE a.INSTRUCTOR_inst_id = :inst_id
                 AND d.detasig_fecha >= :start_date AND d.detasig_fecha <= :end_date";
 
@@ -699,7 +715,7 @@ class AsignacionController
         $rol = $_SESSION['rol'] ?? null;
         $coord_id_user = null;
         if ($rol === 'coordinador' && isset($_SESSION['id'])) {
-            $stmtCoord = $db->prepare("SELECT coord_id FROM COORDINACION WHERE coordinador_actual = :uid AND estado = 1 LIMIT 1");
+            $stmtCoord = $db->prepare("SELECT coord_id FROM coordinacion WHERE coordinador_actual = :uid AND estado = 1 LIMIT 1");
             $stmtCoord->execute([':uid' => $_SESSION['id']]);
             $coord_id_user = $stmtCoord->fetchColumn();
         }
@@ -736,15 +752,16 @@ class AsignacionController
         $sql = "SELECT d.detasig_id, d.detasig_fecha, d.detasig_hora_ini, d.detasig_hora_fin, d.observaciones,
                        a.ASIG_ID as asig_id, a.INSTRUCTOR_inst_id as instructor_inst_id, a.AMBIENTE_amb_id as ambiente_amb_id,
                        a.FICHA_fich_id as ficha_fich_id, a.COMPETENCIA_comp_id as competencia_comp_id,
+                       a.asig_fecha_ini, a.asig_fecha_fin,
                        i.inst_nombres, i.inst_apellidos, am.amb_nombre, f.fich_id as ficha_num, c.comp_nombre_corto,
                        f.COORDINACION_coord_id, co.coord_descripcion
-                FROM DETALLExASIGNACION d
-                INNER JOIN ASIGNACION a ON d.ASIGNACION_asig_id = a.ASIG_ID
-                INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.numero_documento
-                LEFT JOIN AMBIENTE am ON a.AMBIENTE_amb_id = am.amb_id
-                INNER JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
-                INNER JOIN COORDINACION co ON f.COORDINACION_coord_id = co.coord_id
-                INNER JOIN COMPETENCIA c ON a.COMPETENCIA_comp_id = c.comp_id
+                FROM detallexasignacion d
+                INNER JOIN asignacion a ON d.ASIGNACION_asig_id = a.ASIG_ID
+                INNER JOIN instructor i ON a.INSTRUCTOR_inst_id = i.numero_documento
+                LEFT JOIN ambiente am ON a.AMBIENTE_amb_id = am.amb_id
+                INNER JOIN ficha f ON a.FICHA_fich_id = f.fich_id
+                INNER JOIN coordinacion co ON f.COORDINACION_coord_id = co.coord_id
+                INNER JOIN competencia c ON a.COMPETENCIA_comp_id = c.comp_id AND (c.programa_prog_id = f.programa_prog_id OR c.programa_prog_id IS NULL OR c.programa_prog_id = '')
                 WHERE a.AMBIENTE_amb_id = :amb_id
                 AND d.detasig_fecha >= :start_date AND d.detasig_fecha <= :end_date";
 
@@ -760,7 +777,7 @@ class AsignacionController
         $rol = $_SESSION['rol'] ?? null;
         $coord_id_user = null;
         if ($rol === 'coordinador' && isset($_SESSION['id'])) {
-            $stmtCoord = $db->prepare("SELECT coord_id FROM COORDINACION WHERE coordinador_actual = :uid AND estado = 1 LIMIT 1");
+            $stmtCoord = $db->prepare("SELECT coord_id FROM coordinacion WHERE coordinador_actual = :uid AND estado = 1 LIMIT 1");
             $stmtCoord->execute([':uid' => $_SESSION['id']]);
             $coord_id_user = $stmtCoord->fetchColumn();
         }
@@ -778,6 +795,16 @@ class AsignacionController
 
     private function sendResponse($data, $status = 200)
     {
+        if ($status !== 200) {
+            $log_msg = [
+                'type' => 'AsignacionController sendResponse Error',
+                'status' => $status,
+                'data' => $data,
+                'session' => $_SESSION ?? null,
+                'timestamp' => date('Y-m-d H:i:s')
+            ];
+            file_put_contents(dirname(__DIR__) . '/debug_error.log', "[" . date('Y-m-d H:i:s') . "] " . json_encode($log_msg, JSON_PRETTY_PRINT) . "\n", FILE_APPEND);
+        }
         http_response_code($status);
         header('Content-Type: application/json');
         echo json_encode($data);

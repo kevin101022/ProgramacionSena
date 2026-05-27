@@ -39,7 +39,7 @@ class CoordinacionModel
 
     public function create()
     {
-        $query = "INSERT INTO COORDINACION (coord_descripcion, centro_formacion_cent_id, coordinador_actual, estado) 
+        $query = "INSERT INTO coordinacion (coord_descripcion, centro_formacion_cent_id, coordinador_actual, estado) 
                   VALUES (:descripcion, :cent_id, :coordinador, :estado)";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':descripcion', $this->coord_descripcion);
@@ -55,9 +55,9 @@ class CoordinacionModel
                          c.coordinador_actual as numero_documento,
                          u.coord_nombre_coordinador, u.coord_correo,
                          cf.cent_nombre 
-                  FROM COORDINACION c 
+                  FROM coordinacion c 
                   LEFT JOIN usuario_coordinador u ON c.coordinador_actual = u.numero_documento
-                  INNER JOIN CENTRO_FORMACION cf ON c.centro_formacion_cent_id = cf.cent_id 
+                  INNER JOIN centro_formacion cf ON c.centro_formacion_cent_id = cf.cent_id 
                   WHERE c.coord_id = :coord_id AND c.estado = 1";
 
         $params = [':coord_id' => $this->coord_id];
@@ -78,9 +78,9 @@ class CoordinacionModel
                          COALESCE(u.coord_nombre_coordinador, 'Vacante') as coord_nombre_coordinador, 
                          COALESCE(u.coord_correo, 'N/A') as coord_correo,
                          cf.cent_nombre 
-                  FROM COORDINACION c 
+                  FROM coordinacion c 
                   LEFT JOIN usuario_coordinador u ON c.coordinador_actual = u.numero_documento
-                  INNER JOIN CENTRO_FORMACION cf ON c.centro_formacion_cent_id = cf.cent_id 
+                  INNER JOIN centro_formacion cf ON c.centro_formacion_cent_id = cf.cent_id 
                   WHERE c.estado = 1";
 
         if ($cent_id) {
@@ -100,12 +100,12 @@ class CoordinacionModel
     public function update()
     {
         try {
-            $query = "UPDATE COORDINACION 
-                      SET coord_descripcion = :descripcion, 
-                          centro_formacion_cent_id = :cent_id,
-                          coordinador_actual = :coordinador
-                      WHERE coord_id = :coord_id";
-            $stmt = $this->db->prepare($query);
+             $query = "UPDATE coordinacion 
+                       SET coord_descripcion = :descripcion, 
+                           centro_formacion_cent_id = :cent_id,
+                           coordinador_actual = :coordinador
+                       WHERE coord_id = :coord_id";
+             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':descripcion', $this->coord_descripcion);
             $stmt->bindParam(':cent_id', $this->centro_formacion_cent_id);
             $stmt->bindParam(':coordinador', $this->coordinador_actual);
@@ -121,7 +121,7 @@ class CoordinacionModel
     {
         // En esta arquitectura normalizada, desvincular significa asignar NULL al coordinador
         // manteniendo la dependencia activa.
-        $query = "UPDATE COORDINACION 
+        $query = "UPDATE coordinacion 
                   SET coordinador_actual = NULL
                   WHERE coord_id = :coord_id";
         $stmt = $this->db->prepare($query);
@@ -131,7 +131,7 @@ class CoordinacionModel
 
     public function delete()
     {
-        $query = "UPDATE COORDINACION SET estado = 0 WHERE coord_id = :coord_id";
+        $query = "UPDATE coordinacion SET estado = 0 WHERE coord_id = :coord_id";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':coord_id', $this->coord_id);
         return $stmt->execute();
@@ -142,8 +142,8 @@ class CoordinacionModel
         // Esta consulta busca todos los programas que tienen al menos una ficha
         // vinculada a esta coordinación específica.
         $sql = "SELECT DISTINCT p.prog_codigo, p.prog_denominacion 
-                FROM PROGRAMA p 
-                INNER JOIN FICHA f ON p.prog_codigo = f.PROGRAMA_prog_id 
+                FROM programa p 
+                INNER JOIN ficha f ON p.prog_codigo = f.PROGRAMA_prog_id 
                 WHERE f.COORDINACION_coord_id = :coord_id
                 ORDER BY p.prog_denominacion ASC";
         $stmt = $this->db->prepare($sql);
@@ -153,7 +153,7 @@ class CoordinacionModel
 
     public function getCoordIdByDocumento($documento)
     {
-        $sql = "SELECT coord_id FROM COORDINACION WHERE coordinador_actual = :doc AND estado = 1 LIMIT 1";
+        $sql = "SELECT coord_id FROM coordinacion WHERE coordinador_actual = :doc AND estado = 1 LIMIT 1";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([':doc' => $documento]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);

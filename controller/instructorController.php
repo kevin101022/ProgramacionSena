@@ -78,15 +78,24 @@ class instructorController
 
             if (!empty($competencias)) {
                 require_once dirname(__DIR__) . '/model/InstruCompetenciaModel.php';
+                require_once dirname(__DIR__) . '/model/CompetenciaModel.php';
                 $instruCompModel = new InstruCompetenciaModel();
+                $compModel = new CompetenciaModel();
 
                 foreach ($competencias as $compData) {
                     try {
-                        // Support both new direct ID and old 'prog|comp' format gracefully
-                        $compId = (strpos($compData, '|') !== false) ? explode('|', $compData)[1] : $compData;
+                        if (strpos($compData, '|') !== false) {
+                            $parts = explode('|', $compData);
+                            $progId = !empty($parts[0]) ? $parts[0] : null;
+                            $compId = $parts[1];
+                        } else {
+                            $compId = $compData;
+                            // Lookup the actual program ID of the competency
+                            $compInfo = $compModel->readById($compId);
+                            $progId = $compInfo['programa_prog_id'] ?? null;
+                        }
                         
-                        // Pass null for programa_prog_id since competencies are now global for the instructor
-                        $instruCompModel = new InstruCompetenciaModel(null, $id, null, $compId);
+                        $instruCompModel = new InstruCompetenciaModel(null, $id, $progId, $compId);
                         $instruCompModel->create();
                     } catch (PDOException $ex) {
                         error_log("Error habilitando competencia $compData: " . $ex->getMessage());
@@ -165,11 +174,18 @@ class instructorController
                 if (!empty($competencias)) {
                     foreach ($competencias as $compData) {
                         try {
-                            // Support both new direct ID and old 'prog|comp' format gracefully
-                            $compId = (strpos($compData, '|') !== false) ? explode('|', $compData)[1] : $compData;
+                            if (strpos($compData, '|') !== false) {
+                                $parts = explode('|', $compData);
+                                $progId = !empty($parts[0]) ? $parts[0] : null;
+                                $compId = $parts[1];
+                            } else {
+                                $compId = $compData;
+                                // Lookup the actual program ID of the competency
+                                $compInfo = $compModel->readById($compId);
+                                $progId = $compInfo['programa_prog_id'] ?? null;
+                            }
                             
-                            // Pass null for programa_prog_id since competencies are now global for the instructor
-                            $newModel = new InstruCompetenciaModel(null, $id, null, $compId);
+                            $newModel = new InstruCompetenciaModel(null, $id, $progId, $compId);
                             $newModel->create();
                         } catch (PDOException $ex) {
                             error_log("Error habilitando competencia $compData: " . $ex->getMessage());

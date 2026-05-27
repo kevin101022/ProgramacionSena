@@ -15,7 +15,7 @@ if (isset($_SESSION['centro_id'])) {
     require_once '../../Conexion.php';
     try {
         $db = Conexion::getConnect();
-        $stmt = $db->prepare("SELECT cent_nombre FROM CENTRO_FORMACION WHERE cent_id = :id");
+        $stmt = $db->prepare("SELECT cent_nombre FROM centro_formacion WHERE cent_id = :id");
         $stmt->execute([':id' => $_SESSION['centro_id']]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($row) {

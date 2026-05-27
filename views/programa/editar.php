@@ -63,16 +63,15 @@ $id = $_GET['id'] ?? null;
                         </select>
                     </div>
 
-                    <div class="form-group full-width">
-                        <label for="prog_denominacion" class="form-label required">Denominación</label>
-                        <input type="text" id="prog_denominacion" name="prog_denominacion" class="form-input" required>
+                    <div class="form-group">
+                        <label for="prog_version" class="form-label">Versión del Programa</label>
+                        <input type="text" id="prog_version" name="prog_version" class="form-input" placeholder="Ej: v1.0 o 1">
+                        <div class="form-help">Número o código de versión.</div>
                     </div>
 
                     <div class="form-group full-width">
-                        <label for="sede_sede_id" class="form-label required">Sede a la que pertenece</label>
-                        <select id="sede_sede_id" name="sede_sede_id" class="form-input" required>
-                            <option value="" disabled>Seleccione una sede...</option>
-                        </select>
+                        <label for="prog_denominacion" class="form-label required">Denominación</label>
+                        <input type="text" id="prog_denominacion" name="prog_denominacion" class="form-input" required>
                     </div>
 
                     <div class="form-group full-width">

@@ -30,6 +30,7 @@ class VerPrograma {
         this.codigoValEl = document.getElementById('viewProgCodigoVal');
         this.tituloEl = document.getElementById('viewProgTitulo');
         this.tipoEl = document.getElementById('viewProgTipo');
+        this.versionEl = document.getElementById('viewProgVersion');
 
         // Delete modal elements
         this.modal = document.getElementById('deleteModal');
@@ -85,6 +86,9 @@ class VerPrograma {
         if (this.tituloEl) this.tituloEl.textContent = this.programaData.titpro_nombre || 'No asignado';
         if (this.tipoEl) {
             this.tipoEl.textContent = this.programaData.prog_tipo || 'N/A';
+        }
+        if (this.versionEl) {
+            this.versionEl.textContent = this.programaData.prog_version || 'N/A';
         }
 
         this.renderCompetencias();

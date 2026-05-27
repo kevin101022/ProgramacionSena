@@ -48,7 +48,7 @@ class TituloProgramaModel
     // CRUD
     public function getNextId()
     {
-        $query = "SELECT COALESCE(MAX(titpro_id), 0) + 1 FROM TITULO_PROGRAMA";
+        $query = "SELECT COALESCE(MAX(titpro_id), 0) + 1 FROM titulo_programa";
         $stmt = $this->db->prepare($query);
         $stmt->execute();
         return $stmt->fetchColumn();
@@ -59,7 +59,7 @@ class TituloProgramaModel
         if (!$this->titpro_id) {
             $this->titpro_id = $this->getNextId();
         }
-        $query = "INSERT INTO TITULO_PROGRAMA (titpro_id, titpro_nombre, centro_formacion_cent_id) VALUES (:titpro_id, :titpro_nombre, :centro_formacion_cent_id)";
+        $query = "INSERT INTO titulo_programa (titpro_id, titpro_nombre, centro_formacion_cent_id) VALUES (:titpro_id, :titpro_nombre, :centro_formacion_cent_id)";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':titpro_id', $this->titpro_id);
         $stmt->bindParam(':titpro_nombre', $this->titpro_nombre);
@@ -73,7 +73,7 @@ class TituloProgramaModel
 
     public function read()
     {
-        $sql = "SELECT * FROM TITULO_PROGRAMA WHERE titpro_id = :titpro_id";
+        $sql = "SELECT * FROM titulo_programa WHERE titpro_id = :titpro_id";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([':titpro_id' => $this->titpro_id]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -81,7 +81,7 @@ class TituloProgramaModel
 
     public function readAll($cent_id = null)
     {
-        $sql = "SELECT * FROM TITULO_PROGRAMA";
+        $sql = "SELECT * FROM titulo_programa";
         $params = [];
         if ($cent_id) {
             $sql .= " WHERE centro_formacion_cent_id = :cent_id OR centro_formacion_cent_id IS NULL";
@@ -95,7 +95,7 @@ class TituloProgramaModel
 
     public function update()
     {
-        $query = "UPDATE TITULO_PROGRAMA SET titpro_nombre = :titpro_nombre, centro_formacion_cent_id = :centro_formacion_cent_id WHERE titpro_id = :titpro_id";
+        $query = "UPDATE titulo_programa SET titpro_nombre = :titpro_nombre, centro_formacion_cent_id = :centro_formacion_cent_id WHERE titpro_id = :titpro_id";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':titpro_nombre', $this->titpro_nombre);
         $stmt->bindParam(':centro_formacion_cent_id', $this->centro_formacion_cent_id);
@@ -105,7 +105,7 @@ class TituloProgramaModel
 
     public function delete()
     {
-        $query = "DELETE FROM TITULO_PROGRAMA WHERE titpro_id = :titpro_id";
+        $query = "DELETE FROM titulo_programa WHERE titpro_id = :titpro_id";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':titpro_id', $this->titpro_id);
         return $stmt->execute();

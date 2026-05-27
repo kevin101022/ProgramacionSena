@@ -1,3 +1,83 @@
+function getColombianHolidays(year) {
+    const holidays = new Set();
+    const formatDate = (date) => {
+        const y = date.getFullYear();
+        const m = String(date.getMonth() + 1).padStart(2, '0');
+        const d = String(date.getDate()).padStart(2, '0');
+        return `${y}-${m}-${d}`;
+    };
+    const getNextMonday = (date) => {
+        const day = date.getDay();
+        if (day === 1) return date;
+        const diff = (day === 0) ? 1 : (8 - day);
+        const newDate = new Date(date);
+        newDate.setDate(date.getDate() + diff);
+        return newDate;
+    };
+
+    // Fixed Dates
+    holidays.add(formatDate(new Date(year, 0, 1)));   // Año Nuevo: Jan 1
+    holidays.add(formatDate(new Date(year, 4, 1)));   // Día del Trabajo: May 1
+    holidays.add(formatDate(new Date(year, 6, 20)));  // Grito Independencia: Jul 20
+    holidays.add(formatDate(new Date(year, 7, 7)));   // Batalla de Boyacá: Aug 7
+    holidays.add(formatDate(new Date(year, 11, 8)));  // Inmaculada Concepción: Dec 8
+    holidays.add(formatDate(new Date(year, 11, 25))); // Navidad: Dec 25
+
+    // Emiliani Dates (moves to next Monday)
+    holidays.add(formatDate(getNextMonday(new Date(year, 0, 6))));   // Reyes Magos: Jan 6
+    holidays.add(formatDate(getNextMonday(new Date(year, 2, 19))));  // San José: Mar 19
+    holidays.add(formatDate(getNextMonday(new Date(year, 5, 29))));  // San Pedro y San Pablo: Jun 29
+    holidays.add(formatDate(getNextMonday(new Date(year, 7, 15))));  // Asunción: Aug 15
+    holidays.add(formatDate(getNextMonday(new Date(year, 9, 12))));  // Día de la Raza: Oct 12
+    holidays.add(formatDate(getNextMonday(new Date(year, 10, 1))));  // Todos los Santos: Nov 1
+    holidays.add(formatDate(getNextMonday(new Date(year, 10, 11)))); // Independencia Cartagena: Nov 11
+
+    // Easter-relative Dates (Gauss Easter Algorithm)
+    const a = year % 19;
+    const b = Math.floor(year / 100);
+    const c = year % 100;
+    const d = Math.floor(b / 4);
+    const e = b % 4;
+    const f = Math.floor((b + 8) / 25);
+    const g = Math.floor((b - f + 1) / 3);
+    const h = (19 * a + b - d - g + 15) % 30;
+    const i = Math.floor(c / 4);
+    const k = c % 4;
+    const L = (32 + 2 * e + 2 * i - h - k) % 7;
+    const m = Math.floor((a + 11 * h + 22 * L) / 451);
+    const month = Math.floor((h + L - 7 * m + 114) / 31);
+    const day = ((h + L - 7 * m + 114) % 31) + 1;
+    
+    const easter = new Date(year, month - 1, day);
+
+    // Jueves Santo: Easter - 3
+    const juevesSanto = new Date(easter);
+    juevesSanto.setDate(easter.getDate() - 3);
+    holidays.add(formatDate(juevesSanto));
+
+    // Viernes Santo: Easter - 2
+    const viernesSanto = new Date(easter);
+    viernesSanto.setDate(easter.getDate() - 2);
+    holidays.add(formatDate(viernesSanto));
+
+    // Ascensión: Easter + 43
+    const ascension = new Date(easter);
+    ascension.setDate(easter.getDate() + 43);
+    holidays.add(formatDate(ascension));
+
+    // Corpus Christi: Easter + 64
+    const corpusChristi = new Date(easter);
+    corpusChristi.setDate(easter.getDate() + 64);
+    holidays.add(formatDate(corpusChristi));
+
+    // Sagrado Corazón: Easter + 71
+    const sagradoCorazon = new Date(easter);
+    sagradoCorazon.setDate(easter.getDate() + 71);
+    holidays.add(formatDate(sagradoCorazon));
+
+    return holidays;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     const loadingState = document.getElementById('loadingState');
     const detailsContainer = document.getElementById('asignacionDetails');
@@ -27,6 +107,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 loadAsignacionData(),
                 loadSedes()
             ]);
+
+            // Auto-trigger edit modal if edit=true parameter is present
+            if (new URLSearchParams(window.location.search).get('edit') === 'true') {
+                setTimeout(async () => {
+                    await loadEditDependencies();
+                    openEditModal(currentAsig);
+                }, 400);
+            }
         } catch (error) {
             console.error('Error:', error);
             showError('Error al recuperar los datos del servidor');
@@ -190,9 +278,20 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // Calculate holidays for the years covered in the range
+        const startYear = start.getFullYear();
+        const endYear = end.getFullYear();
+        const holidays = new Set();
+        for (let y = startYear; y <= endYear; y++) {
+            const yearHolidays = getColombianHolidays(y);
+            yearHolidays.forEach(h => holidays.add(h));
+        }
+
         const current = new Date(start);
         const formatOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
         const today = new Date().toISOString().split('T')[0];
+        const defaultIni = document.getElementById('default_hora_ini')?.value || '08:00';
+        const defaultFin = document.getElementById('default_hora_fin')?.value || '12:00';
 
         while (current <= end) {
             const dateISO = current.toISOString().split('T')[0];
@@ -205,19 +304,27 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const dateLabel = current.toLocaleDateString('es-CO', formatOptions);
             const isPast = dateISO < today;
+            const isHoliday = holidays.has(dateISO);
+            const isDisabled = isPast || isHoliday;
 
             const row = document.createElement('div');
-            row.className = `flex items-center gap-4 p-3 bg-white border rounded-lg shadow-sm ${isPast ? 'border-red-200 opacity-60' : 'border-gray-100'}`;
+            row.className = `flex items-center gap-4 p-3 bg-white border rounded-lg shadow-sm transition-all ${
+                isPast ? 'border-red-200 bg-red-50/10 opacity-60' : 
+                isHoliday ? 'border-amber-200 bg-amber-50/10 opacity-75' : 'border-gray-100'
+            }`;
 
             row.innerHTML = `
                 <div class="flex items-center gap-3 w-2/5">
-                    <input type="checkbox" id="chk_${dateISO}" class="day-checkbox w-4 h-4 accent-[#39a900]" ${isPast ? 'disabled' : ''}>
-                    <label for="chk_${dateISO}" class="text-sm font-medium text-gray-700 capitalize cursor-pointer leading-tight">${dateLabel}</label>
+                    <input type="checkbox" id="chk_${dateISO}" class="day-checkbox w-4 h-4 accent-[#39a900]" ${isDisabled ? 'disabled' : ''}>
+                    <label for="chk_${dateISO}" class="text-sm font-medium text-gray-700 capitalize cursor-pointer leading-tight">
+                        ${dateLabel}
+                        ${isHoliday ? '<span class="text-[10px] text-amber-500 font-bold ml-2 whitespace-nowrap">(Festivo)</span>' : ''}
+                    </label>
                 </div>
                 <div class="flex-1 flex items-center gap-3">
-                    <input type="time" id="ini_${dateISO}" class="day-time-ini w-full px-3 py-1.5 text-sm border border-gray-200 rounded-md" value="08:00" disabled>
+                    <input type="time" id="ini_${dateISO}" class="day-time-ini w-full px-3 py-1.5 text-sm border border-gray-200 rounded-md" value="${defaultIni}" disabled>
                     <span class="text-gray-400 font-bold">—</span>
-                    <input type="time" id="fin_${dateISO}" class="day-time-fin w-full px-3 py-1.5 text-sm border border-gray-200 rounded-md" value="12:00" disabled>
+                    <input type="time" id="fin_${dateISO}" class="day-time-fin w-full px-3 py-1.5 text-sm border border-gray-200 rounded-md" value="${defaultFin}" disabled>
                 </div>
             `;
 
@@ -227,7 +334,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const ini = row.querySelector(`#ini_${dateISO}`);
             const fin = row.querySelector(`#fin_${dateISO}`);
 
-            if (chk && !isPast) {
+            if (chk && !isDisabled) {
                 chk.addEventListener('change', (e) => {
                     ini.disabled = !e.target.checked;
                     fin.disabled = !e.target.checked;
@@ -363,7 +470,13 @@ document.addEventListener('DOMContentLoaded', () => {
             if (asig.competencia_comp_id && instSelect) {
                 const fichaObj = { programa_prog_codigo: asig.programa_prog_id };
                 loadInstructorsForComp(asig.competencia_comp_id, asig.ficha_fich_id || asig.fich_id);
-                setTimeout(() => { instSelect.value = asig.instructor_inst_id || ''; }, 150);
+                setTimeout(() => {
+                    if (instSelect.tomselect) {
+                        instSelect.tomselect.setValue(asig.instructor_inst_id || '');
+                    } else {
+                        instSelect.value = asig.instructor_inst_id || '';
+                    }
+                }, 150);
             }
 
             compSelect.addEventListener('change', () => {
@@ -407,7 +520,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             const habilitados = allHabilitaciones.filter(h =>
                 h.competencia_comp_id == compId &&
-                h.programa_prog_id == progId
+                (h.programa_prog_id == progId || h.programa_prog_id === null || h.programa_prog_id === '')
             );
 
             instSelect.innerHTML = '<option value="">Seleccione instructor...</option>';
@@ -451,12 +564,49 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     };
 
+    const handleApplyDefaultHours = () => {
+        const defaultIni = document.getElementById('default_hora_ini')?.value || '08:00';
+        const defaultFin = document.getElementById('default_hora_fin')?.value || '12:00';
+        
+        if (defaultIni >= defaultFin) {
+            NotificationService.showError('La hora de inicio por defecto debe ser menor a la hora de fin.');
+            return;
+        }
+
+        const container = document.getElementById('diasListContainer');
+        if (!container) return;
+
+        const checkboxes = container.querySelectorAll('.day-checkbox:not(:disabled)');
+        if (checkboxes.length === 0) {
+            NotificationService.showError('Seleccione un rango de fechas válido primero.');
+            return;
+        }
+
+        checkboxes.forEach(chk => {
+            chk.checked = true;
+            chk.dispatchEvent(new Event('change'));
+            
+            const dateISO = chk.id.split('chk_')[1];
+            const ini = document.getElementById(`ini_${dateISO}`);
+            const fin = document.getElementById(`fin_${dateISO}`);
+            
+            if (ini) ini.value = defaultIni;
+            if (fin) fin.value = defaultFin;
+        });
+        
+        NotificationService.showSuccess('Horario predeterminado aplicado a todos los días.');
+    };
+
     // Modal Events
     const closeModalBtn = document.getElementById('closeModal');
     const cancelBtn = document.getElementById('cancelBtn');
+    const applyDefaultHoursBtn = document.getElementById('applyDefaultHours');
 
     if (closeModalBtn) closeModalBtn.onclick = () => modal.classList.remove('show');
     if (cancelBtn) cancelBtn.onclick = () => modal.classList.remove('show');
+    if (applyDefaultHoursBtn) {
+        applyDefaultHoursBtn.onclick = () => handleApplyDefaultHours();
+    }
 
     if (form) {
         form.onsubmit = async (e) => {
@@ -506,13 +656,19 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
 
-            const saveBtn = document.getElementById('saveBtn');
-            if (saveBtn) {
-                saveBtn.disabled = true;
-                saveBtn.textContent = 'Guardando...';
-            }
+            await sendSaveRequest(data);
+        };
+    }
 
-            try {
+    const sendSaveRequest = async (data) => {
+        const saveBtn = document.getElementById('saveBtn');
+        if (saveBtn) {
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<span class="animate-spin inline-block w-4 h-4 border-2 border-white border-t-transparent rounded-full mr-2"></span>Guardando...';
+        }
+
+        try {
+            while (true) {
                 const response = await fetch(`../../routing.php?controller=asignacion&action=update`, {
                     method: 'POST',
                     headers: {
@@ -521,29 +677,59 @@ document.addEventListener('DOMContentLoaded', () => {
                     },
                     body: JSON.stringify(data)
                 });
+                const result = await response.json();
 
-                if (response.ok) {
+                if (response.status === 202 && result.warning) {
+                    const confirmed = await new Promise((resolve) => {
+                        const originalCancel = NotificationService.cancelBtn.onclick;
+                        NotificationService.cancelBtn.onclick = () => {
+                            NotificationService.hide();
+                            NotificationService.cancelBtn.onclick = originalCancel;
+                            resolve(false);
+                        };
+                        NotificationService.showConfirm(result.message, () => {
+                            NotificationService.cancelBtn.onclick = originalCancel;
+                            resolve(true);
+                        }, {
+                            title: result.warning === '80_percent_alert' ? 'Horas menores al 80%' : 'Límite de 160 horas superado',
+                            confirmText: 'Sí, guardar',
+                            type: 'warning'
+                        });
+                    });
+
+                    if (confirmed) {
+                        if (result.warning === '80_percent_alert') {
+                            data.confirm_80_percent = true;
+                        } else if (result.warning === '160_hours_alert') {
+                            data.confirm_160_hours = true;
+                        }
+                        continue;
+                    } else {
+                        break;
+                    }
+                } else if (response.ok) {
                     NotificationService.showSuccess('Asignación actualizada');
                     modal.classList.remove('show');
                     await loadAsignacionData();
+                    break;
                 } else {
-                    const res = await response.json();
                     if (response.status === 409) {
                         NotificationService.showError('Cruce de horario detectado. Revise los días y horarios.');
                     } else {
-                        NotificationService.showError(res.error || 'Error al actualizar');
+                        NotificationService.showError(result.error || 'Error al actualizar');
                     }
-                }
-            } catch (err) {
-                NotificationService.showError('Error de servidor');
-            } finally {
-                if (saveBtn) {
-                    saveBtn.disabled = false;
-                    saveBtn.innerHTML = '<ion-icon src="../../assets/ionicons/save-outline.svg"></ion-icon> Guardar';
+                    break;
                 }
             }
-        };
-    }
+        } catch (err) {
+            NotificationService.showError('Error de servidor');
+        } finally {
+            if (saveBtn) {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<ion-icon src="../../assets/ionicons/save-outline.svg"></ion-icon> Guardar';
+            }
+        }
+    };
 
     const showDetails = () => {
         if (loadingState) loadingState.style.display = 'none';

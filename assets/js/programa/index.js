@@ -121,7 +121,7 @@ class ProgramaManager {
                             </div>
                             <div class="user-info-sm">
                                 <div class="user-name-sm">${p.prog_denominacion}</div>
-                                <div class="user-meta-sm">Código: ${p.prog_codigo}</div>
+                                <div class="user-meta-sm">Código: ${p.prog_codigo} | Versión: ${p.prog_version || 'N/A'}</div>
                             </div>
                         </div>
                     </td>

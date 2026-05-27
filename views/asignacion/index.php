@@ -289,17 +289,17 @@ if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'instructor') {
                 <div class="flex items-center gap-3 mb-4">
                     <div class="flex-1">
                         <label class="form-label text-xs">Hora Inicio</label>
-                        <input type="time" id="dayEdit_hora_ini" class="form-input text-sm" required min="06:00" max="22:00">
+                        <input type="time" id="dayEdit_hora_ini" class="form-input text-sm" required min="06:00" max="22:00" disabled>
                     </div>
                     <div class="flex-1">
                         <label class="form-label text-xs">Hora Fin</label>
-                        <input type="time" id="dayEdit_hora_fin" class="form-input text-sm" required min="06:00" max="22:00">
+                        <input type="time" id="dayEdit_hora_fin" class="form-input text-sm" required min="06:00" max="22:00" disabled>
                     </div>
                 </div>
                 
                 <div class="form-group mb-0">
                     <label class="form-label text-xs">Observaciones (Opcional)</label>
-                    <textarea id="dayEdit_observaciones" class="form-input text-sm resize-none" rows="2" placeholder="Ej. Cambio de ambiente temporal..."></textarea>
+                    <textarea id="dayEdit_observaciones" class="form-input text-sm resize-none" rows="2" placeholder="Ej. Cambio de ambiente temporal..." disabled></textarea>
                 </div>
             </div>
 
@@ -316,9 +316,9 @@ if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'instructor') {
                 </div>
                 <div class="flex gap-2">
                     <button type="button" class="btn-secondary" id="cancelDayEdit">Cancelar</button>
-                    <button type="submit" class="btn-primary" id="saveDayEdit">
-                        <ion-icon src="../../assets/ionicons/save-outline.svg"></ion-icon>
-                        Guardar
+                    <button type="button" class="btn-primary" id="editDayAsigBtn">
+                        <ion-icon src="../../assets/ionicons/create-outline.svg"></ion-icon>
+                        Editar
                     </button>
                 </div>
             </div>

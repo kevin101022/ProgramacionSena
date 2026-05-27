@@ -7,7 +7,6 @@ class CrearPrograma {
         this.cacheDOM();
         this.bindEvents();
         await Promise.all([
-            this.loadSedes(),
             this.loadTitulos()
         ]);
     }
@@ -15,7 +14,6 @@ class CrearPrograma {
     cacheDOM() {
         this.form = document.getElementById('crearProgramaForm');
         this.tituloSelect = document.getElementById('tit_programa_titpro_id');
-        this.sedeSelect = document.getElementById('sede_sede_id');
     }
 
     bindEvents() {
@@ -38,26 +36,6 @@ class CrearPrograma {
             console.error('Error loading titulos:', error);
             if (window.NotificationService) {
                 NotificationService.show('Error al cargar los títulos', 'error');
-            }
-        }
-    }
-
-    async loadSedes() {
-        try {
-            const response = await fetch('../../routing.php?controller=sede&action=index');
-            const sedes = await response.json();
-
-            this.sedeSelect.innerHTML = '<option value="" disabled selected>Seleccione una sede...</option>';
-            sedes.forEach(s => {
-                const option = document.createElement('option');
-                option.value = s.sede_id;
-                option.textContent = s.sede_nombre;
-                this.sedeSelect.appendChild(option);
-            });
-        } catch (error) {
-            console.error('Error loading sedes:', error);
-            if (window.NotificationService) {
-                NotificationService.show('Error al cargar las sedes', 'error');
             }
         }
     }

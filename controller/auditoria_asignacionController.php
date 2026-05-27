@@ -52,7 +52,7 @@ class AuditoriaAsignacionController
             $coordModel = new CoordinacionModel();
             // Necesitamos un método para obtener todas las coordinaciones de un centro
             // Aprovecharé que CoordinacionModel ya tiene lógica de conexión
-            $sqlCoord = "SELECT coord_id, coord_descripcion FROM COORDINACION WHERE centro_formacion_cent_id = :cent_id AND estado = 1 ORDER BY coord_descripcion ASC";
+            $sqlCoord = "SELECT coord_id, coord_descripcion FROM coordinacion WHERE centro_formacion_cent_id = :cent_id AND estado = 1 ORDER BY coord_descripcion ASC";
             $stmtCoord = Conexion::getConnect()->prepare($sqlCoord);
             $stmtCoord->execute([':cent_id' => $cent_id]);
             $coordinaciones = $stmtCoord->fetchAll(PDO::FETCH_ASSOC);

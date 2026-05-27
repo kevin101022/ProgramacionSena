@@ -20,7 +20,7 @@ class fichaController
 
         $db = Conexion::getConnect();
         $stmt = $db->prepare(
-            "SELECT coord_id FROM COORDINACION WHERE coordinador_actual = :num_doc AND estado = 1 LIMIT 1"
+            "SELECT coord_id FROM coordinacion WHERE coordinador_actual = :num_doc AND estado = 1 LIMIT 1"
         );
         $stmt->execute([':num_doc' => $num_doc]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);

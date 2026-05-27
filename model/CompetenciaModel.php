@@ -98,7 +98,7 @@ class CompetenciaModel
     // CRUD
     public function getNextId()
     {
-        $query = "SELECT COALESCE(MAX(comp_id), 0) + 1 FROM COMPETENCIA";
+        $query = "SELECT COALESCE(MAX(comp_id), 0) + 1 FROM competencia";
         $stmt = $this->db->prepare($query);
         $stmt->execute();
         return $stmt->fetchColumn();
@@ -109,7 +109,7 @@ class CompetenciaModel
         if (!$this->comp_id) {
             $this->comp_id = $this->getNextId();
         }
-        $query = "INSERT INTO COMPETENCIA (comp_id, comp_nombre_corto, comp_horas, comp_nombre_unidad_competencia, centro_formacion_cent_id, programa_prog_id, requisitos_academicos, experiencia_laboral) 
+        $query = "INSERT INTO competencia (comp_id, comp_nombre_corto, comp_horas, comp_nombre_unidad_competencia, centro_formacion_cent_id, programa_prog_id, requisitos_academicos, experiencia_laboral) 
                   VALUES (:id, :corto, :horas, :unidad, :centro_formacion_cent_id, :prog_id, :requisitos, :experiencia)";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':id', $this->comp_id);
@@ -129,8 +129,8 @@ class CompetenciaModel
     public function read()
     {
         $sql = "SELECT c.*, p.prog_denominacion 
-                FROM COMPETENCIA c
-                LEFT JOIN PROGRAMA p ON c.programa_prog_id = p.prog_codigo
+                FROM competencia c
+                LEFT JOIN programa p ON c.programa_prog_id = p.prog_codigo
                 WHERE c.comp_id = :comp_id";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([':comp_id' => $this->comp_id]);
@@ -140,8 +140,8 @@ class CompetenciaModel
     public function readById($id)
     {
         $sql = "SELECT c.*, p.prog_denominacion 
-                FROM COMPETENCIA c
-                LEFT JOIN PROGRAMA p ON c.programa_prog_id = p.prog_codigo
+                FROM competencia c
+                LEFT JOIN programa p ON c.programa_prog_id = p.prog_codigo
                 WHERE c.comp_id = :comp_id";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([':comp_id' => $id]);
@@ -151,8 +151,8 @@ class CompetenciaModel
     public function readAll($cent_id = null)
     {
         $sql = "SELECT c.*, p.prog_denominacion 
-                FROM COMPETENCIA c
-                LEFT JOIN PROGRAMA p ON c.programa_prog_id = p.prog_codigo";
+                FROM competencia c
+                LEFT JOIN programa p ON c.programa_prog_id = p.prog_codigo";
         $params = [];
         if ($cent_id) {
             $sql .= " WHERE c.centro_formacion_cent_id = :cent_id OR c.centro_formacion_cent_id IS NULL";
@@ -166,7 +166,7 @@ class CompetenciaModel
 
     public function update()
     {
-        $query = "UPDATE COMPETENCIA 
+        $query = "UPDATE competencia 
                   SET comp_nombre_corto = :comp_nombre_corto, 
                       comp_horas = :comp_horas, 
                       comp_nombre_unidad_competencia = :comp_nombre_unidad_competencia,
@@ -197,7 +197,7 @@ class CompetenciaModel
             // Las claves foráneas en la base de datos manejarán la integridad
 
             // 2. Eliminar la competencia
-            $queryComp = "DELETE FROM COMPETENCIA WHERE comp_id = :comp_id";
+            $queryComp = "DELETE FROM competencia WHERE comp_id = :comp_id";
             $stmtComp = $this->db->prepare($queryComp);
             $stmtComp->bindParam(':comp_id', $this->comp_id);
             $stmtComp->execute();
@@ -215,8 +215,8 @@ class CompetenciaModel
     // Association with Programs - Refactored to one-to-many
     public function getPrograma()
     {
-        $sql = "SELECT p.* FROM PROGRAMA p 
-                INNER JOIN COMPETENCIA c ON p.prog_codigo = c.programa_prog_id 
+        $sql = "SELECT p.* FROM programa p 
+                INNER JOIN competencia c ON p.prog_codigo = c.programa_prog_id 
                 WHERE c.comp_id = :id";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([':id' => $this->comp_id]);
@@ -230,9 +230,9 @@ class CompetenciaModel
     {
         $sql = "SELECT i.numero_documento as inst_id, i.inst_nombres, i.inst_apellidos, 
                        i.inst_correo, p.prog_codigo, p.prog_denominacion
-                FROM INSTRU_COMPETENCIA ic
-                INNER JOIN INSTRUCTOR i ON ic.INSTRUCTOR_inst_id = i.numero_documento
-                LEFT JOIN PROGRAMA p ON ic.programa_prog_id = p.prog_codigo
+                FROM instru_competencia ic
+                INNER JOIN instructor i ON ic.INSTRUCTOR_inst_id = i.numero_documento
+                LEFT JOIN programa p ON ic.programa_prog_id = p.prog_codigo
                 WHERE ic.competencia_comp_id = :comp_id";
 
         $params = [':comp_id' => $this->comp_id];
@@ -253,8 +253,8 @@ class CompetenciaModel
     public function getByPrograma($prog_id, $cent_id = null)
     {
         $sql = "SELECT c.*, p.prog_denominacion 
-                FROM COMPETENCIA c
-                LEFT JOIN PROGRAMA p ON c.programa_prog_id = p.prog_codigo
+                FROM competencia c
+                LEFT JOIN programa p ON c.programa_prog_id = p.prog_codigo
                 WHERE c.programa_prog_id = :prog_id";
         $params = [':prog_id' => $prog_id];
         if ($cent_id) {
@@ -273,8 +273,8 @@ class CompetenciaModel
     public function getProgramas($cent_id = null)
     {
         $sql = "SELECT DISTINCT p.prog_codigo, p.prog_denominacion 
-                FROM PROGRAMA p
-                INNER JOIN COMPETENCIA c ON p.prog_codigo = c.programa_prog_id";
+                FROM programa p
+                INNER JOIN competencia c ON p.prog_codigo = c.programa_prog_id";
         
         $params = [];
         if ($cent_id) {

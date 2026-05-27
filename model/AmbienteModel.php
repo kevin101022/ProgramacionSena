@@ -58,7 +58,7 @@ class AmbienteModel
     // CRUD
     public function getNextId()
     {
-        $query = "SELECT COALESCE(MAX(CASE WHEN amb_id REGEXP '^[0-9]+$' THEN CAST(amb_id AS UNSIGNED) ELSE 0 END), 0) + 1 FROM AMBIENTE";
+        $query = "SELECT COALESCE(MAX(CASE WHEN amb_id REGEXP '^[0-9]+$' THEN CAST(amb_id AS UNSIGNED) ELSE 0 END), 0) + 1 FROM ambiente";
         $stmt = $this->db->prepare($query);
         $stmt->execute();
         return (string)$stmt->fetchColumn();
@@ -69,7 +69,7 @@ class AmbienteModel
         if (!$this->amb_id) {
             $this->amb_id = $this->getNextId();
         }
-        $query = "INSERT INTO AMBIENTE (amb_id, amb_nombre, SEDE_sede_id, tipo_ambiente) VALUES (:id, :amb_nombre, :sede, :tipo)";
+        $query = "INSERT INTO ambiente (amb_id, amb_nombre, SEDE_sede_id, tipo_ambiente) VALUES (:id, :amb_nombre, :sede, :tipo)";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':id', $this->amb_id);
         $stmt->bindParam(':amb_nombre', $this->amb_nombre);
@@ -81,8 +81,8 @@ class AmbienteModel
     public function read($cent_id = null)
     {
         $sql = "SELECT a.amb_id, a.amb_nombre, a.tipo_ambiente, a.SEDE_sede_id as sede_sede_id, s.sede_nombre 
-                FROM AMBIENTE a 
-                INNER JOIN SEDE s ON a.SEDE_sede_id = s.sede_id 
+                FROM ambiente a 
+                INNER JOIN sede s ON a.SEDE_sede_id = s.sede_id 
                 WHERE a.SEDE_sede_id = :sede";
 
         $params = [':sede' => $this->sede_sede_id];
@@ -102,8 +102,8 @@ class AmbienteModel
     public function readAll($cent_id = null)
     {
         $sql = "SELECT a.amb_id, a.amb_nombre, a.tipo_ambiente, a.SEDE_sede_id as sede_sede_id, s.sede_nombre 
-                FROM AMBIENTE a 
-                INNER JOIN SEDE s ON a.SEDE_sede_id = s.sede_id";
+                FROM ambiente a 
+                INNER JOIN sede s ON a.SEDE_sede_id = s.sede_id";
 
         if ($cent_id) {
             $sql .= " WHERE s.CENTRO_FORMACION_cent_id = :cent_id";
@@ -122,8 +122,8 @@ class AmbienteModel
     public function readById($id, $cent_id = null)
     {
         $sql = "SELECT a.amb_id, a.amb_nombre, a.tipo_ambiente, a.SEDE_sede_id as sede_sede_id, s.sede_nombre 
-                FROM AMBIENTE a 
-                INNER JOIN SEDE s ON a.SEDE_sede_id = s.sede_id 
+                FROM ambiente a 
+                INNER JOIN sede s ON a.SEDE_sede_id = s.sede_id 
                 WHERE a.amb_id = :id";
 
         $params = [':id' => $id];
@@ -140,7 +140,7 @@ class AmbienteModel
 
     public function update()
     {
-        $query = "UPDATE AMBIENTE SET amb_nombre = :amb_nombre, SEDE_sede_id = :sede, tipo_ambiente = :tipo WHERE amb_id = :id";
+        $query = "UPDATE ambiente SET amb_nombre = :amb_nombre, SEDE_sede_id = :sede, tipo_ambiente = :tipo WHERE amb_id = :id";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':amb_nombre', $this->amb_nombre);
         $stmt->bindParam(':sede', $this->sede_sede_id);
@@ -151,7 +151,7 @@ class AmbienteModel
 
     public function delete()
     {
-        $query = "DELETE FROM AMBIENTE WHERE amb_id = :id";
+        $query = "DELETE FROM ambiente WHERE amb_id = :id";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':id', $this->amb_id);
         return $stmt->execute();
@@ -164,11 +164,11 @@ class AmbienteModel
                        i.inst_nombres, i.inst_apellidos,
                        p.prog_denominacion,
                        c.comp_nombre_corto
-                FROM ASIGNACION a
-                LEFT JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.numero_documento
-                LEFT JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
-                LEFT JOIN PROGRAMA p ON f.PROGRAMA_prog_id = p.prog_codigo
-                LEFT JOIN COMPETENCIA c ON a.COMPETENCIA_comp_id = c.comp_id
+                FROM asignacion a
+                LEFT JOIN instructor i ON a.INSTRUCTOR_inst_id = i.numero_documento
+                LEFT JOIN ficha f ON a.FICHA_fich_id = f.fich_id
+                LEFT JOIN programa p ON f.PROGRAMA_prog_id = p.prog_codigo
+                LEFT JOIN competencia c ON a.COMPETENCIA_comp_id = c.comp_id
                 WHERE a.AMBIENTE_amb_id = :amb_id
                 ORDER BY a.asig_fecha_ini DESC";
         $stmt = $this->db->prepare($sql);

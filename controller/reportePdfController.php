@@ -24,7 +24,7 @@ class ReportePdfController
 
         $coord_id   = null;
         if ($rol === "coordinador" && $user_id) {
-            $stmt = $this->db->prepare("SELECT coord_id FROM COORDINACION WHERE coordinador_actual = :uid AND estado = 1 LIMIT 1");
+            $stmt = $this->db->prepare("SELECT coord_id FROM coordinacion WHERE coordinador_actual = :uid AND estado = 1 LIMIT 1");
             $stmt->execute([":uid" => $user_id]);
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
             $coord_id = $row["coord_id"] ?? null;
@@ -152,13 +152,13 @@ class ReportePdfController
         
         $coord_desc = 'Todas las coordinaciones';
         if ($context['rol'] === 'coordinador' && $coord_id) {
-            $stmt = $this->db->prepare("SELECT coord_descripcion FROM COORDINACION WHERE coord_id = :cid");
+            $stmt = $this->db->prepare("SELECT coord_descripcion FROM coordinacion WHERE coord_id = :cid");
             $stmt->execute([':cid' => $coord_id]);
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
             $coord_desc = $row['coord_descripcion'] ?? 'Mi coordinación';
             $subtitulo = "Coordinación: {$coord_desc}";
         } else {
-            $stmt = $this->db->prepare("SELECT cent_nombre FROM CENTRO_FORMACION WHERE cent_id = :cid");
+            $stmt = $this->db->prepare("SELECT cent_nombre FROM centro_formacion WHERE cent_id = :cid");
             $stmt->execute([':cid' => $cent_id]);
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
             $cent_nombre = $row['cent_nombre'] ?? '';
@@ -180,9 +180,9 @@ class ReportePdfController
 
     private function getFichaData($fichId) {
         $sql = "SELECT f.fich_id, p.prog_denominacion, tp.titpro_nombre
-                FROM FICHA f
-                LEFT JOIN PROGRAMA p ON f.PROGRAMA_prog_id = p.prog_codigo
-                LEFT JOIN TITULO_PROGRAMA tp ON p.TIT_PROGRAMA_titpro_id = tp.titpro_id
+                FROM ficha f
+                LEFT JOIN programa p ON f.programa_prog_id = p.prog_codigo
+                LEFT JOIN titulo_programa tp ON p.tit_programa_titpro_id = tp.titpro_id
                 WHERE f.fich_id = :fich_id";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([':fich_id' => $fichId]);
@@ -190,7 +190,7 @@ class ReportePdfController
     }
 
     private function getInstructorData($instId) {
-        $sql = "SELECT numero_documento, inst_nombres, inst_apellidos FROM INSTRUCTOR WHERE numero_documento = :inst_id";
+        $sql = "SELECT numero_documento, inst_nombres, inst_apellidos FROM instructor WHERE numero_documento = :inst_id";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([':inst_id' => $instId]);
         return $stmt->fetch(PDO::FETCH_ASSOC);
@@ -198,8 +198,8 @@ class ReportePdfController
 
     private function getAmbienteData($ambId) {
         $sql = "SELECT a.amb_id, a.amb_nombre, s.sede_nombre
-                FROM AMBIENTE a
-                LEFT JOIN SEDE s ON a.SEDE_sede_id = s.sede_id
+                FROM ambiente a
+                LEFT JOIN sede s ON a.sede_sede_id = s.sede_id
                 WHERE a.amb_id = :amb_id";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([':amb_id' => $ambId]);
@@ -212,15 +212,15 @@ class ReportePdfController
                        c.comp_nombre_corto, c.comp_nombre_unidad_competencia,
                        i.inst_nombres, i.inst_apellidos, i.numero_documento,
                        amb.amb_id, amb.amb_nombre, co.coord_descripcion, co.coord_id as asignacion_coord_id
-                FROM ASIGNACION a
-                LEFT JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
-                LEFT JOIN PROGRAMA p ON f.PROGRAMA_prog_id = p.prog_codigo
-                INNER JOIN COORDINACION co ON f.COORDINACION_coord_id = co.coord_id
-                INNER JOIN DETALLExASIGNACION d ON a.asig_id = d.ASIGNACION_asig_id
-                INNER JOIN COMPETENCIA c ON a.COMPETENCIA_comp_id = c.comp_id
-                INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.numero_documento
-                LEFT JOIN AMBIENTE amb ON a.AMBIENTE_amb_id = amb.amb_id
-                WHERE a.FICHA_fich_id = :fich_id";
+                FROM asignacion a
+                LEFT JOIN ficha f ON a.ficha_fich_id = f.fich_id
+                LEFT JOIN programa p ON f.programa_prog_id = p.prog_codigo
+                INNER JOIN coordinacion co ON f.coordinacion_coord_id = co.coord_id
+                INNER JOIN detallexasignacion d ON a.asig_id = d.asignacion_asig_id
+                INNER JOIN competencia c ON a.competencia_comp_id = c.comp_id AND (c.programa_prog_id = f.programa_prog_id OR c.programa_prog_id IS NULL OR c.programa_prog_id = '')
+                INNER JOIN instructor i ON a.instructor_inst_id = i.numero_documento
+                LEFT JOIN ambiente amb ON a.ambiente_amb_id = amb.amb_id
+                WHERE a.ficha_fich_id = :fich_id";
 
         $params = [':fich_id' => $fichId];
 
@@ -236,7 +236,7 @@ class ReportePdfController
             $sql .= " AND co.coord_id = :coord_id";
             $params[':coord_id'] = $coord_id;
         } elseif ($cent_id) {
-            $sql .= " AND co.CENTRO_FORMACION_cent_id = :cent_id";
+            $sql .= " AND co.centro_formacion_cent_id = :cent_id";
             $params[':cent_id'] = $cent_id;
         }
 
@@ -253,15 +253,15 @@ class ReportePdfController
                        c.comp_nombre_corto, c.comp_nombre_unidad_competencia,
                        i.inst_nombres, i.inst_apellidos, i.numero_documento,
                        amb.amb_id, amb.amb_nombre, co.coord_descripcion, co.coord_id as asignacion_coord_id
-                FROM ASIGNACION a
-                LEFT JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
-                LEFT JOIN PROGRAMA p ON f.PROGRAMA_prog_id = p.prog_codigo
-                INNER JOIN COORDINACION co ON f.COORDINACION_coord_id = co.coord_id
-                INNER JOIN DETALLExASIGNACION d ON a.asig_id = d.ASIGNACION_asig_id
-                INNER JOIN COMPETENCIA c ON a.COMPETENCIA_comp_id = c.comp_id
-                INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.numero_documento
-                LEFT JOIN AMBIENTE amb ON a.AMBIENTE_amb_id = amb.amb_id
-                WHERE a.INSTRUCTOR_inst_id = :inst_id";
+                FROM asignacion a
+                LEFT JOIN ficha f ON a.ficha_fich_id = f.fich_id
+                LEFT JOIN programa p ON f.programa_prog_id = p.prog_codigo
+                INNER JOIN coordinacion co ON f.coordinacion_coord_id = co.coord_id
+                INNER JOIN detallexasignacion d ON a.asig_id = d.asignacion_asig_id
+                INNER JOIN competencia c ON a.competencia_comp_id = c.comp_id AND (c.programa_prog_id = f.programa_prog_id OR c.programa_prog_id IS NULL OR c.programa_prog_id = '')
+                INNER JOIN instructor i ON a.instructor_inst_id = i.numero_documento
+                LEFT JOIN ambiente amb ON a.ambiente_amb_id = amb.amb_id
+                WHERE a.instructor_inst_id = :inst_id";
 
         $params = [':inst_id' => $instId];
 
@@ -277,7 +277,7 @@ class ReportePdfController
             $sql .= " AND co.coord_id = :coord_id";
             $params[':coord_id'] = $coord_id;
         } elseif ($cent_id) {
-            $sql .= " AND co.CENTRO_FORMACION_cent_id = :cent_id";
+            $sql .= " AND co.centro_formacion_cent_id = :cent_id";
             $params[':cent_id'] = $cent_id;
         }
 
@@ -294,15 +294,15 @@ class ReportePdfController
                        c.comp_nombre_corto, c.comp_nombre_unidad_competencia,
                        i.inst_nombres, i.inst_apellidos, i.numero_documento,
                        amb.amb_id, amb.amb_nombre, co.coord_descripcion, co.coord_id as asignacion_coord_id
-                FROM ASIGNACION a
-                LEFT JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
-                LEFT JOIN PROGRAMA p ON f.PROGRAMA_prog_id = p.prog_codigo
-                INNER JOIN COORDINACION co ON f.COORDINACION_coord_id = co.coord_id
-                INNER JOIN DETALLExASIGNACION d ON a.asig_id = d.ASIGNACION_asig_id
-                INNER JOIN COMPETENCIA c ON a.COMPETENCIA_comp_id = c.comp_id
-                INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.numero_documento
-                LEFT JOIN AMBIENTE amb ON a.AMBIENTE_amb_id = amb.amb_id
-                WHERE a.AMBIENTE_amb_id = :amb_id";
+                FROM asignacion a
+                LEFT JOIN ficha f ON a.ficha_fich_id = f.fich_id
+                LEFT JOIN programa p ON f.programa_prog_id = p.prog_codigo
+                INNER JOIN coordinacion co ON f.coordinacion_coord_id = co.coord_id
+                INNER JOIN detallexasignacion d ON a.asig_id = d.asignacion_asig_id
+                INNER JOIN competencia c ON a.competencia_comp_id = c.comp_id AND (c.programa_prog_id = f.programa_prog_id OR c.programa_prog_id IS NULL OR c.programa_prog_id = '')
+                INNER JOIN instructor i ON a.instructor_inst_id = i.numero_documento
+                LEFT JOIN ambiente amb ON a.ambiente_amb_id = amb.amb_id
+                WHERE a.ambiente_amb_id = :amb_id";
 
         $params = [':amb_id' => $ambId];
 
@@ -318,7 +318,7 @@ class ReportePdfController
             $sql .= " AND co.coord_id = :coord_id";
             $params[':coord_id'] = $coord_id;
         } elseif ($cent_id) {
-            $sql .= " AND co.CENTRO_FORMACION_cent_id = :cent_id";
+            $sql .= " AND co.centro_formacion_cent_id = :cent_id";
             $params[':cent_id'] = $cent_id;
         }
 
@@ -336,14 +336,14 @@ class ReportePdfController
                        c.comp_nombre_corto, c.comp_nombre_unidad_competencia,
                        i.inst_nombres, i.inst_apellidos, i.numero_documento,
                        amb.amb_id, amb.amb_nombre
-                FROM ASIGNACION a
-                INNER JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
-                LEFT JOIN PROGRAMA p ON f.PROGRAMA_prog_id = p.prog_codigo
-                INNER JOIN COORDINACION co ON f.COORDINACION_coord_id = co.coord_id
-                INNER JOIN DETALLExASIGNACION d ON a.asig_id = d.ASIGNACION_asig_id
-                INNER JOIN COMPETENCIA c ON a.COMPETENCIA_comp_id = c.comp_id
-                INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.numero_documento
-                LEFT JOIN AMBIENTE amb ON a.AMBIENTE_amb_id = amb.amb_id
+                FROM asignacion a
+                INNER JOIN ficha f ON a.ficha_fich_id = f.fich_id
+                LEFT JOIN programa p ON f.programa_prog_id = p.prog_codigo
+                INNER JOIN coordinacion co ON f.coordinacion_coord_id = co.coord_id
+                INNER JOIN detallexasignacion d ON a.asig_id = d.asignacion_asig_id
+                INNER JOIN competencia c ON a.competencia_comp_id = c.comp_id AND (c.programa_prog_id = f.programa_prog_id OR c.programa_prog_id IS NULL OR c.programa_prog_id = '')
+                INNER JOIN instructor i ON a.instructor_inst_id = i.numero_documento
+                LEFT JOIN ambiente amb ON a.ambiente_amb_id = amb.amb_id
                 WHERE 1=1";
 
         $params = [];
@@ -359,7 +359,7 @@ class ReportePdfController
             $sql .= " AND co.coord_id = :coord_id";
             $params[':coord_id'] = $coord_id;
         } elseif ($cent_id) {
-            $sql .= " AND co.CENTRO_FORMACION_cent_id = :cent_id";
+            $sql .= " AND co.centro_formacion_cent_id = :cent_id";
             $params[':cent_id'] = $cent_id;
         }
         $sql .= " ORDER BY co.coord_descripcion, d.detasig_fecha, d.detasig_hora_ini";

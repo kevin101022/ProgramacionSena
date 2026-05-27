@@ -23,7 +23,7 @@ class DetalleAsignacionModel
 
     public function create()
     {
-        $query = "INSERT INTO DETALLExASIGNACION (ASIGNACION_asig_id, detasig_fecha, detasig_hora_ini, detasig_hora_fin, observaciones) 
+        $query = "INSERT INTO detallexasignacion (ASIGNACION_asig_id, detasig_fecha, detasig_hora_ini, detasig_hora_fin, observaciones) 
                   VALUES (:asig_id, :fecha, :hora_ini, :hora_fin, :observaciones)";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':asig_id', $this->asignacion_asig_id);
@@ -38,7 +38,7 @@ class DetalleAsignacionModel
     public function readAllByAsignacion($asig_id)
     {
         $sql = "SELECT detasig_id, ASIGNACION_asig_id as asignacion_asig_id, detasig_fecha, detasig_hora_ini, detasig_hora_fin, observaciones 
-                FROM DETALLExASIGNACION WHERE ASIGNACION_asig_id = :asig_id ORDER BY detasig_fecha ASC, detasig_hora_ini ASC";
+                FROM detallexasignacion WHERE ASIGNACION_asig_id = :asig_id ORDER BY detasig_fecha ASC, detasig_hora_ini ASC";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([':asig_id' => $asig_id]);
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
@@ -47,7 +47,7 @@ class DetalleAsignacionModel
     // ... otros métodos actualizados con el nombre de tabla DETALLExASIGNACION
     public function update()
     {
-        $query = "UPDATE DETALLExASIGNACION SET ASIGNACION_asig_id = :asig_id, detasig_fecha = :fecha, detasig_hora_ini = :hora_ini, detasig_hora_fin = :hora_fin, observaciones = :observaciones WHERE detasig_id = :id";
+        $query = "UPDATE detallexasignacion SET ASIGNACION_asig_id = :asig_id, detasig_fecha = :fecha, detasig_hora_ini = :hora_ini, detasig_hora_fin = :hora_fin, observaciones = :observaciones WHERE detasig_id = :id";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':asig_id', $this->asignacion_asig_id);
         $stmt->bindParam(':fecha', $this->detasig_fecha);
@@ -60,7 +60,7 @@ class DetalleAsignacionModel
 
     public function delete()
     {
-        $query = "DELETE FROM DETALLExASIGNACION WHERE detasig_id = :id";
+        $query = "DELETE FROM detallexasignacion WHERE detasig_id = :id";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':id', $this->detasig_id);
         return $stmt->execute();
@@ -95,11 +95,11 @@ class DetalleAsignacionModel
                        a.INSTRUCTOR_inst_id as instructor_inst_id, a.AMBIENTE_amb_id as ambiente_amb_id,
                        a.FICHA_fich_id as ficha_fich_id, a.ASIG_ID as asig_id,
                        i.inst_nombres, i.inst_apellidos, am.amb_nombre, f.fich_id as ficha_num
-                FROM DETALLExASIGNACION d
-                INNER JOIN ASIGNACION a ON d.ASIGNACION_asig_id = a.ASIG_ID
-                INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.numero_documento
-                INNER JOIN AMBIENTE am ON a.AMBIENTE_amb_id = am.amb_id
-                INNER JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
+                FROM detallexasignacion d
+                INNER JOIN asignacion a ON d.ASIGNACION_asig_id = a.ASIG_ID
+                INNER JOIN instructor i ON a.INSTRUCTOR_inst_id = i.numero_documento
+                INNER JOIN ambiente am ON a.AMBIENTE_amb_id = am.amb_id
+                INNER JOIN ficha f ON a.FICHA_fich_id = f.fich_id
                 WHERE $excludeClause
                 AND d.detasig_fecha = :fecha
                 AND (d.detasig_hora_ini < :hora_fin AND d.detasig_hora_fin > :hora_ini)

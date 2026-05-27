@@ -93,17 +93,47 @@ class InstructorManager {
         }
     }
 
+    normalizeString(str) {
+        return (str || '')
+            .trim()
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .toUpperCase();
+    }
+
     populateCompetenciaFilter() {
         const select = document.getElementById('competenciaFilter');
         if (!select) return;
         
-        select.innerHTML = '<option value="">Todas las competencias...</option>';
-        this.competencias.forEach(comp => {
-            const opt = document.createElement('option');
-            opt.value = comp.comp_id;
-            opt.textContent = comp.comp_nombre_corto || `Competencia ${comp.comp_id}`;
-            select.appendChild(opt);
+        const uniqueNames = new Set();
+        const options = [];
+        
+        const sortedComps = [...this.competencias];
+        sortedComps.sort((a, b) => (a.comp_nombre_corto || '').localeCompare(b.comp_nombre_corto || ''));
+        
+        sortedComps.forEach(comp => {
+            const name = (comp.comp_nombre_corto || '').trim();
+            const normalized = this.normalizeString(name);
+            if (name && !uniqueNames.has(normalized)) {
+                uniqueNames.add(normalized);
+                options.push({
+                    value: normalized,
+                    text: name
+                });
+            }
         });
+        
+        if (window.refreshTS) {
+            window.refreshTS(select, options, 'Todas las competencias...');
+        } else {
+            select.innerHTML = '<option value="">Todas las competencias...</option>';
+            options.forEach(optData => {
+                const opt = document.createElement('option');
+                opt.value = optData.value;
+                opt.textContent = optData.text;
+                select.appendChild(opt);
+            });
+        }
     }
 
     getFilteredData() {
@@ -117,8 +147,13 @@ class InstructorManager {
             
             let matchesComp = true;
             if (compFilter) {
+                // Find all comp_ids that have the same normalized comp_nombre_corto
+                const matchingCompIds = this.competencias
+                    .filter(c => this.normalizeString(c.comp_nombre_corto) === compFilter)
+                    .map(c => Number(c.comp_id));
+                
                 matchesComp = this.habilitaciones.some(h => 
-                    h.instructor_inst_id == inst.inst_id && h.competencia_comp_id == compFilter
+                    h.instructor_inst_id == inst.inst_id && matchingCompIds.includes(Number(h.competencia_comp_id))
                 );
             }
             

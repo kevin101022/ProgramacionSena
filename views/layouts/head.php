@@ -17,7 +17,7 @@ if ($rol === 'coordinador' && !empty($_SESSION['id'])) {
     require_once __DIR__ . '/../../Conexion.php';
     try {
         $db_head   = Conexion::getConnect();
-        $stmt_head = $db_head->prepare("SELECT COUNT(*) FROM COORDINACION WHERE coordinador_actual = :id AND estado = 1");
+        $stmt_head = $db_head->prepare("SELECT COUNT(*) FROM coordinacion WHERE coordinador_actual = :id AND estado = 1");
         $stmt_head->execute([':id' => $_SESSION['id']]);
         $hasCoordinacion = ($stmt_head->fetchColumn() > 0);
     } catch (Exception $e) {

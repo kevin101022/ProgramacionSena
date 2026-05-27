@@ -26,7 +26,7 @@ class AsignacionModel
     public function create()
     {
         try {
-            $query = "INSERT INTO ASIGNACION (INSTRUCTOR_inst_id, asig_fecha_ini, asig_fecha_fin, FICHA_fich_id, AMBIENTE_amb_id, COMPETENCIA_comp_id) 
+            $query = "INSERT INTO asignacion (INSTRUCTOR_inst_id, asig_fecha_ini, asig_fecha_fin, FICHA_fich_id, AMBIENTE_amb_id, COMPETENCIA_comp_id) 
                       VALUES (:inst_id, :fecha_ini, :fecha_fin, :ficha_id, :amb_id, :comp_id)";
             $stmt = $this->db->prepare($query);
             $stmt->bindParam(':inst_id', $this->instructor_inst_id);
@@ -51,12 +51,12 @@ class AsignacionModel
                        a.AMBIENTE_amb_id as ambiente_amb_id, 
                        a.COMPETENCIA_comp_id as competencia_comp_id,
                        i.inst_nombres, i.inst_apellidos, f.fich_id, am.amb_nombre, c.comp_nombre_corto, s.sede_nombre
-                FROM ASIGNACION a
-                INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.numero_documento
-                INNER JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
-                INNER JOIN AMBIENTE am ON a.AMBIENTE_amb_id = am.amb_id
-                INNER JOIN COMPETENCIA c ON a.COMPETENCIA_comp_id = c.comp_id
-                INNER JOIN SEDE s ON am.SEDE_sede_id = s.sede_id";
+                FROM asignacion a
+                INNER JOIN instructor i ON a.INSTRUCTOR_inst_id = i.numero_documento
+                INNER JOIN ficha f ON a.FICHA_fich_id = f.fich_id
+                INNER JOIN ambiente am ON a.AMBIENTE_amb_id = am.amb_id
+                INNER JOIN competencia c ON a.COMPETENCIA_comp_id = c.comp_id AND (c.programa_prog_id = f.programa_prog_id OR c.programa_prog_id IS NULL OR c.programa_prog_id = '')
+                INNER JOIN sede s ON am.SEDE_sede_id = s.sede_id";
 
         $params = [];
         if ($coord_id) {
@@ -81,12 +81,12 @@ class AsignacionModel
                        a.AMBIENTE_amb_id as ambiente_amb_id, 
                        a.COMPETENCIA_comp_id as competencia_comp_id,
                        i.inst_nombres, i.inst_apellidos, f.fich_id, am.amb_nombre, c.comp_nombre_corto, s.sede_nombre
-                FROM ASIGNACION a
-                INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.numero_documento
-                INNER JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
-                INNER JOIN AMBIENTE am ON a.AMBIENTE_amb_id = am.amb_id
-                INNER JOIN COMPETENCIA c ON a.COMPETENCIA_comp_id = c.comp_id
-                INNER JOIN SEDE s ON am.SEDE_sede_id = s.sede_id
+                FROM asignacion a
+                INNER JOIN instructor i ON a.INSTRUCTOR_inst_id = i.numero_documento
+                INNER JOIN ficha f ON a.FICHA_fich_id = f.fich_id
+                INNER JOIN ambiente am ON a.AMBIENTE_amb_id = am.amb_id
+                INNER JOIN competencia c ON a.COMPETENCIA_comp_id = c.comp_id AND (c.programa_prog_id = f.programa_prog_id OR c.programa_prog_id IS NULL OR c.programa_prog_id = '')
+                INNER JOIN sede s ON am.SEDE_sede_id = s.sede_id
                 WHERE a.ASIG_ID = :asig_id";
 
         $params = [':asig_id' => $this->asig_id];
@@ -103,7 +103,7 @@ class AsignacionModel
     // ... otros métodos ajustados (update, delete) siguiendo el mismo patrón de nombres
     public function update()
     {
-        $query = "UPDATE ASIGNACION 
+        $query = "UPDATE asignacion 
                   SET INSTRUCTOR_inst_id = :inst_id, 
                       asig_fecha_ini = :fecha_ini, asig_fecha_fin = :fecha_fin, 
                       FICHA_fich_id = :ficha_id, AMBIENTE_amb_id = :amb_id, COMPETENCIA_comp_id = :comp_id 
@@ -121,7 +121,7 @@ class AsignacionModel
 
     public function delete()
     {
-        $query = "DELETE FROM ASIGNACION WHERE ASIG_ID = :asig_id";
+        $query = "DELETE FROM asignacion WHERE ASIG_ID = :asig_id";
         $stmt = $this->db->prepare($query);
         $stmt->bindParam(':asig_id', $this->asig_id);
         return $stmt->execute();
@@ -134,10 +134,10 @@ class AsignacionModel
                        a.AMBIENTE_amb_id as ambiente_amb_id, a.FICHA_fich_id as ficha_fich_id,
                        a.asig_fecha_ini, a.asig_fecha_fin,
                        i.inst_nombres, i.inst_apellidos, am.amb_nombre, f.fich_id as ficha_num
-                FROM ASIGNACION a
-                INNER JOIN INSTRUCTOR i ON a.INSTRUCTOR_inst_id = i.numero_documento
-                INNER JOIN AMBIENTE am ON a.AMBIENTE_amb_id = am.amb_id
-                INNER JOIN FICHA f ON a.FICHA_fich_id = f.fich_id
+                FROM asignacion a
+                INNER JOIN instructor i ON a.INSTRUCTOR_inst_id = i.numero_documento
+                INNER JOIN ambiente am ON a.AMBIENTE_amb_id = am.amb_id
+                INNER JOIN ficha f ON a.FICHA_fich_id = f.fich_id
                 WHERE (a.INSTRUCTOR_inst_id = :inst_id OR a.AMBIENTE_amb_id = :amb_id OR a.FICHA_fich_id = :fich_id)
                 AND (a.asig_fecha_ini <= :fecha_fin AND a.asig_fecha_fin >= :fecha_ini)";
 
@@ -174,8 +174,8 @@ class AsignacionModel
     public function getMonthlyHours($inst_id, $month, $year, $exclude_asig_id = null)
     {
         $sql = "SELECT SUM(TIMESTAMPDIFF(SECOND, d.detasig_hora_ini, d.detasig_hora_fin)/3600) as total_horas
-                FROM DETALLExASIGNACION d
-                INNER JOIN ASIGNACION a ON d.ASIGNACION_asig_id = a.ASIG_ID
+                FROM detallexasignacion d
+                INNER JOIN asignacion a ON d.ASIGNACION_asig_id = a.ASIG_ID
                 WHERE a.INSTRUCTOR_inst_id = :inst_id
                 AND MONTH(d.detasig_fecha) = :month
                 AND YEAR(d.detasig_fecha) = :year";
@@ -205,8 +205,8 @@ class AsignacionModel
     public function getCompetenceHoursAssigned($fich_id, $comp_id, $exclude_asig_id = null)
     {
         $sql = "SELECT SUM(TIMESTAMPDIFF(SECOND, d.detasig_hora_ini, d.detasig_hora_fin)/3600) as total_horas
-                FROM DETALLExASIGNACION d
-                INNER JOIN ASIGNACION a ON d.ASIGNACION_asig_id = a.ASIG_ID
+                FROM detallexasignacion d
+                INNER JOIN asignacion a ON d.ASIGNACION_asig_id = a.ASIG_ID
                 WHERE a.FICHA_fich_id = :fich_id
                 AND a.COMPETENCIA_comp_id = :comp_id";
 
@@ -234,9 +234,9 @@ class AsignacionModel
     {
         $sql = "SELECT a.*, 
                        (SELECT COALESCE(SUM(TIMESTAMPDIFF(SECOND, da.detasig_hora_ini, da.detasig_hora_fin)/3600), 0)
-                        FROM DETALLExASIGNACION da 
+                        FROM detallexasignacion da 
                         WHERE da.ASIGNACION_asig_id = a.asig_id) as total_horas
-                FROM ASIGNACION a
+                FROM asignacion a
                 WHERE a.FICHA_fich_id = :fich_id";
         $stmt = $this->db->prepare($sql);
         $stmt->execute([':fich_id' => $fich_id]);
