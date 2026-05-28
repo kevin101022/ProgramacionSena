@@ -50,10 +50,11 @@ class AsignacionModel
                        a.FICHA_fich_id as ficha_fich_id, 
                        a.AMBIENTE_amb_id as ambiente_amb_id, 
                        a.COMPETENCIA_comp_id as competencia_comp_id,
-                       i.inst_nombres, i.inst_apellidos, f.fich_id, am.amb_nombre, c.comp_nombre_corto, s.sede_nombre
+                       i.inst_nombres, i.inst_apellidos, f.fich_id, am.amb_nombre, c.comp_nombre_corto, s.sede_nombre, p.prog_denominacion
                 FROM asignacion a
                 INNER JOIN instructor i ON a.INSTRUCTOR_inst_id = i.numero_documento
                 INNER JOIN ficha f ON a.FICHA_fich_id = f.fich_id
+                LEFT JOIN programa p ON f.programa_prog_id = p.prog_codigo
                 INNER JOIN ambiente am ON a.AMBIENTE_amb_id = am.amb_id
                 INNER JOIN competencia c ON a.COMPETENCIA_comp_id = c.comp_id AND (c.programa_prog_id = f.programa_prog_id OR c.programa_prog_id IS NULL OR c.programa_prog_id = '')
                 INNER JOIN sede s ON am.SEDE_sede_id = s.sede_id";
@@ -184,6 +185,35 @@ class AsignacionModel
             ':inst_id' => $inst_id,
             ':month' => $month,
             ':year' => $year
+        ];
+
+        if ($exclude_asig_id) {
+            $sql .= " AND a.ASIG_ID != :exclude_asig_id";
+            $params[':exclude_asig_id'] = $exclude_asig_id;
+        }
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        return $result['total_horas'] ? (float)$result['total_horas'] : 0.0;
+    }
+
+    /**
+     * Calcula las horas dictadas por el instructor en un día específico,
+     * excluyendo una asignación particular si se está editando.
+     */
+    public function getDailyHours($inst_id, $date, $exclude_asig_id = null)
+    {
+        $sql = "SELECT SUM(TIMESTAMPDIFF(SECOND, d.detasig_hora_ini, d.detasig_hora_fin)/3600) as total_horas
+                FROM detallexasignacion d
+                INNER JOIN asignacion a ON d.ASIGNACION_asig_id = a.ASIG_ID
+                WHERE a.INSTRUCTOR_inst_id = :inst_id
+                AND d.detasig_fecha = :fecha";
+
+        $params = [
+            ':inst_id' => $inst_id,
+            ':fecha' => $date
         ];
 
         if ($exclude_asig_id) {

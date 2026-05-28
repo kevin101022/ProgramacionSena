@@ -196,6 +196,7 @@ class AsignacionController
 
         // --- CÁLCULO DE HORAS PROPUESTAS ---
         $hoursByMonth = [];
+        $hoursByDay = [];
         foreach ($diasSeleccionados as $dia) {
             if (!empty($dia['hora_ini']) && !empty($dia['hora_fin'])) {
                 $dateParts = explode('-', $dia['fecha']);
@@ -211,6 +212,10 @@ class AsignacionController
                     if ($diff > 0) {
                         if (!isset($hoursByMonth[$key])) $hoursByMonth[$key] = 0;
                         $hoursByMonth[$key] += $diff;
+
+                        $dayKey = $dia['fecha'];
+                        if (!isset($hoursByDay[$dayKey])) $hoursByDay[$dayKey] = 0;
+                        $hoursByDay[$dayKey] += $diff;
                     }
                 }
             }
@@ -226,6 +231,16 @@ class AsignacionController
                     'warning' => '160_hours_alert',
                     'message' => "El instructor supera el límite de 160 horas en el mes $month/$year (Lleva: $currentMonthlyHours h, A asignar: $hours h). ¿Deseas continuar con la asignación de todos modos?"
                 ], 202);
+                return;
+            }
+        }
+
+        // --- VALIDACIÓN DE HORAS DIARIAS (MAX 10h) ---
+        foreach ($hoursByDay as $date => $hours) {
+            $currentDailyHours = $asigModelCheck->getDailyHours($data['instructor_inst_id'], $date, null);
+            if (($currentDailyHours + $hours) > 10) {
+                $label = date('d/m/Y', strtotime($date));
+                $this->sendResponse(['error' => "El instructor supera el límite de 10 horas programadas en un solo día: $label (Ya tiene asignadas: $currentDailyHours h, Intenta añadir: $hours h)."], 400);
                 return;
             }
         }
@@ -415,6 +430,7 @@ class AsignacionController
 
         // --- CÁLCULO DE HORAS PROPUESTAS ---
         $hoursByMonth = [];
+        $hoursByDay = [];
         foreach ($diasSeleccionados as $dia) {
             if (!empty($dia['hora_ini']) && !empty($dia['hora_fin'])) {
                 $dateParts = explode('-', $dia['fecha']);
@@ -430,6 +446,10 @@ class AsignacionController
                     if ($diff > 0) {
                         if (!isset($hoursByMonth[$key])) $hoursByMonth[$key] = 0;
                         $hoursByMonth[$key] += $diff;
+
+                        $dayKey = $dia['fecha'];
+                        if (!isset($hoursByDay[$dayKey])) $hoursByDay[$dayKey] = 0;
+                        $hoursByDay[$dayKey] += $diff;
                     }
                 }
             }
@@ -445,6 +465,16 @@ class AsignacionController
                     'warning' => '160_hours_alert',
                     'message' => "El instructor supera el límite de 160 horas en el mes $month/$year (Lleva: $currentMonthlyHours h, A asignar: $hours h). ¿Deseas continuar con la asignación de todos modos?"
                 ], 202);
+                return;
+            }
+        }
+
+        // --- VALIDACIÓN DE HORAS DIARIAS (MAX 10h) ---
+        foreach ($hoursByDay as $date => $hours) {
+            $currentDailyHours = $asigModelCheck->getDailyHours($data['instructor_inst_id'], $date, $data['asig_id']);
+            if (($currentDailyHours + $hours) > 10) {
+                $label = date('d/m/Y', strtotime($date));
+                $this->sendResponse(['error' => "El instructor supera el límite de 10 horas programadas en un solo día: $label (Ya tiene asignadas: $currentDailyHours h, Intenta añadir: $hours h)."], 400);
                 return;
             }
         }
@@ -649,12 +679,14 @@ class AsignacionController
                        a.ASIG_ID as asig_id, a.INSTRUCTOR_inst_id as instructor_inst_id, a.AMBIENTE_amb_id as ambiente_amb_id,
                        a.FICHA_fich_id as ficha_fich_id, a.COMPETENCIA_comp_id as competencia_comp_id,
                        a.asig_fecha_ini, a.asig_fecha_fin,
-                       i.inst_nombres, i.inst_apellidos, am.amb_nombre, f.fich_id as ficha_num, c.comp_nombre_corto
+                       i.inst_nombres, i.inst_apellidos, am.amb_nombre, f.fich_id as ficha_num, c.comp_nombre_corto,
+                       p.prog_denominacion
                 FROM detallexasignacion d
                 INNER JOIN asignacion a ON d.ASIGNACION_asig_id = a.ASIG_ID
                 INNER JOIN instructor i ON a.INSTRUCTOR_inst_id = i.numero_documento
                 INNER JOIN ambiente am ON a.AMBIENTE_amb_id = am.amb_id
                 INNER JOIN ficha f ON a.FICHA_fich_id = f.fich_id
+                LEFT JOIN programa p ON f.programa_prog_id = p.prog_codigo
                 INNER JOIN competencia c ON a.COMPETENCIA_comp_id = c.comp_id AND (c.programa_prog_id = f.programa_prog_id OR c.programa_prog_id IS NULL OR c.programa_prog_id = '')
                 WHERE a.FICHA_fich_id = :fich_id
                 AND d.detasig_fecha >= :start_date AND d.detasig_fecha <= :end_date";
@@ -692,12 +724,13 @@ class AsignacionController
                        a.FICHA_fich_id as ficha_fich_id, a.COMPETENCIA_comp_id as competencia_comp_id,
                        a.asig_fecha_ini, a.asig_fecha_fin,
                        i.inst_nombres, i.inst_apellidos, am.amb_nombre, f.fich_id as ficha_num, c.comp_nombre_corto,
-                       f.COORDINACION_coord_id, co.coord_descripcion
+                       f.COORDINACION_coord_id, co.coord_descripcion, p.prog_denominacion
                 FROM detallexasignacion d
                 INNER JOIN asignacion a ON d.ASIGNACION_asig_id = a.ASIG_ID
                 INNER JOIN instructor i ON a.INSTRUCTOR_inst_id = i.numero_documento
                 LEFT JOIN ambiente am ON a.AMBIENTE_amb_id = am.amb_id
                 INNER JOIN ficha f ON a.FICHA_fich_id = f.fich_id
+                LEFT JOIN programa p ON f.programa_prog_id = p.prog_codigo
                 INNER JOIN coordinacion co ON f.COORDINACION_coord_id = co.coord_id
                 INNER JOIN competencia c ON a.COMPETENCIA_comp_id = c.comp_id AND (c.programa_prog_id = f.programa_prog_id OR c.programa_prog_id IS NULL OR c.programa_prog_id = '')
                 WHERE a.INSTRUCTOR_inst_id = :inst_id
@@ -754,12 +787,13 @@ class AsignacionController
                        a.FICHA_fich_id as ficha_fich_id, a.COMPETENCIA_comp_id as competencia_comp_id,
                        a.asig_fecha_ini, a.asig_fecha_fin,
                        i.inst_nombres, i.inst_apellidos, am.amb_nombre, f.fich_id as ficha_num, c.comp_nombre_corto,
-                       f.COORDINACION_coord_id, co.coord_descripcion
+                       f.COORDINACION_coord_id, co.coord_descripcion, p.prog_denominacion
                 FROM detallexasignacion d
                 INNER JOIN asignacion a ON d.ASIGNACION_asig_id = a.ASIG_ID
                 INNER JOIN instructor i ON a.INSTRUCTOR_inst_id = i.numero_documento
                 LEFT JOIN ambiente am ON a.AMBIENTE_amb_id = am.amb_id
                 INNER JOIN ficha f ON a.FICHA_fich_id = f.fich_id
+                LEFT JOIN programa p ON f.programa_prog_id = p.prog_codigo
                 INNER JOIN coordinacion co ON f.COORDINACION_coord_id = co.coord_id
                 INNER JOIN competencia c ON a.COMPETENCIA_comp_id = c.comp_id AND (c.programa_prog_id = f.programa_prog_id OR c.programa_prog_id IS NULL OR c.programa_prog_id = '')
                 WHERE a.AMBIENTE_amb_id = :amb_id

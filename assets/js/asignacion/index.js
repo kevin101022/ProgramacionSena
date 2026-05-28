@@ -204,8 +204,6 @@ class AsignacionManager {
         if (closeDayEdit) closeDayEdit.onclick = () => this.closeDayEditModal();
         if (cancelDayEdit) cancelDayEdit.onclick = () => this.closeDayEditModal();
 
-        const dayEditForm = document.getElementById('dayEditForm');
-        if (dayEditForm) dayEditForm.onsubmit = (e) => this.handleDayEditSubmit(e);
 
         const deleteAsigBtn = document.getElementById('deleteDayAsig');
         if (deleteAsigBtn) deleteAsigBtn.onclick = () => this.handleDeleteAsig();
@@ -892,19 +890,30 @@ class AsignacionManager {
 
         // Fill the quick edit modal with this day's data
         document.getElementById('dayEdit_detasig_id').value = props.detasig_id;
-        const asigId = props.asignacion_asig_id || props.asig.asig_id;
+        const asigId = props.asignacion_asig_id || props.asig_id || props.asig.asig_id;
         document.getElementById('dayEdit_asig_id').value = asigId;
 
         const dateObj = new Date(props.detasig_fecha + 'T00:00:00');
         const dateLabel = dateObj.toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
         document.getElementById('dayEditDateLabel').textContent = dateLabel;
-        document.getElementById('dayEditAsigInfo').textContent = `${props.asig.comp_nombre_corto || 'Competencia'} — ${props.asig.inst_nombres || ''} ${props.asig.inst_apellidos || ''} | Amb. ${props.asig.ambiente_amb_id || ''}`;
+        document.getElementById('dayEditAsigInfo').textContent =
+            `${this.formatTime(props.detasig_hora_ini)} - ${this.formatTime(props.detasig_hora_fin)}`;
 
-        document.getElementById('dayEdit_hora_ini').value = this.formatTime(props.detasig_hora_ini);
-        document.getElementById('dayEdit_hora_fin').value = this.formatTime(props.detasig_hora_fin);
-        document.getElementById('dayEdit_observaciones').value = props.observaciones || '';
+        // Populate detail info fields
+        const fichNum = props.asig.ficha_num || props.asig.ficha_fich_id || props.asig.fich_id || 'N/A';
+        const progNombre = props.asig.prog_denominacion || props.asig.titpro_nombre || props.asig.prog_nombre || '';
+        document.getElementById('dayEditFichaLabel').textContent = `Ficha ${fichNum}`;
+        document.getElementById('dayEditProgramaLabel').textContent = progNombre || 'N/A';
+        document.getElementById('dayEditCompetenciaLabel').textContent =
+            props.asig.comp_nombre_corto || props.asig.comp_nombre_unidad_competencia || 'N/A';
+        document.getElementById('dayEditInstructorLabel').textContent =
+            `${props.asig.inst_nombres || ''} ${props.asig.inst_apellidos || ''}`.trim() || 'N/A';
+        const ambNombre = props.asig.amb_nombre
+            ? `${props.asig.ambiente_amb_id} — ${props.asig.amb_nombre}`
+            : (props.asig.ambiente_amb_id || 'N/A');
+        document.getElementById('dayEditAmbienteLabel').textContent = ambNombre;
 
-        document.getElementById('dayEditTitle').textContent = 'Información del Horario';
+        document.getElementById('dayEditTitle').textContent = 'Detalle de Asignación';
         document.getElementById('dayEditError').classList.add('hidden');
 
         // Configure the edit button
@@ -927,8 +936,8 @@ class AsignacionManager {
 
         // Open quick edit for the first event on this day
         const d = dayDetails[0];
-        const asig = d._asig || d.asig;
-        if (!asig) return;
+        // allDetalles stores raw API rows (not calendar extendedProps), so fallback to d itself
+        const asig = d._asig || d.asig || d;
         
         if (d.editable === false) {
             const coordNombre = d.coord_descripcion || 'Otra';
@@ -970,19 +979,30 @@ class AsignacionManager {
         if (!modal) return;
 
         document.getElementById('dayEdit_detasig_id').value = d.detasig_id;
-        const asigId = d.asignacion_asig_id || asig.asig_id;
+        const asigId = d.asignacion_asig_id || d.asig_id || asig.asig_id;
         document.getElementById('dayEdit_asig_id').value = asigId;
 
         const dateObj = new Date(d.detasig_fecha + 'T00:00:00');
         const dateLabel = dateObj.toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
         document.getElementById('dayEditDateLabel').textContent = dateLabel;
-        document.getElementById('dayEditAsigInfo').textContent = `${asig.comp_nombre_corto || 'Competencia'} — ${asig.inst_nombres || ''} ${asig.inst_apellidos || ''} | Amb. ${asig.ambiente_amb_id || ''}`;
+        document.getElementById('dayEditAsigInfo').textContent =
+            `${this.formatTime(d.detasig_hora_ini)} - ${this.formatTime(d.detasig_hora_fin)}`;
 
-        document.getElementById('dayEdit_hora_ini').value = this.formatTime(d.detasig_hora_ini);
-        document.getElementById('dayEdit_hora_fin').value = this.formatTime(d.detasig_hora_fin);
-        document.getElementById('dayEdit_observaciones').value = d.observaciones || '';
+        // Populate detail info fields
+        const fichNumD = asig.ficha_num || asig.ficha_fich_id || asig.fich_id || 'N/A';
+        const progNombreD = asig.prog_denominacion || asig.titpro_nombre || asig.prog_nombre || '';
+        document.getElementById('dayEditFichaLabel').textContent = `Ficha ${fichNumD}`;
+        document.getElementById('dayEditProgramaLabel').textContent = progNombreD || 'N/A';
+        document.getElementById('dayEditCompetenciaLabel').textContent =
+            asig.comp_nombre_corto || asig.comp_nombre_unidad_competencia || 'N/A';
+        document.getElementById('dayEditInstructorLabel').textContent =
+            `${asig.inst_nombres || ''} ${asig.inst_apellidos || ''}`.trim() || 'N/A';
+        const ambNombreD = asig.amb_nombre
+            ? `${asig.ambiente_amb_id} — ${asig.amb_nombre}`
+            : (asig.ambiente_amb_id || 'N/A');
+        document.getElementById('dayEditAmbienteLabel').textContent = ambNombreD;
 
-        document.getElementById('dayEditTitle').textContent = 'Información del Horario';
+        document.getElementById('dayEditTitle').textContent = 'Detalle de Asignación';
         document.getElementById('dayEditError').classList.add('hidden');
 
         // Configure the edit button

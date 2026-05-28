@@ -13,7 +13,7 @@ class Conexion
             EnvLoader::load(__DIR__ . '/.env');
 
             $host = getenv('DB_HOST') ?: 'localhost';
-            $db = getenv('DB_NAME') ?: 'transversal';
+            $db = getenv('DB_NAME') ?: 'programaciones';
             $user = getenv('DB_USER') ?: 'root';
             $pass = getenv('DB_PASS') ?: '';
             $port = getenv('DB_PORT') ?: '3306';

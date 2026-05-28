@@ -126,6 +126,16 @@ if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'instructor') {
                         <p id="dayDetailFicha" class="text-sm font-bold text-gray-800">--</p>
                     </div>
                 </div>
+
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                        <ion-icon src="../../assets/ionicons/school-outline.svg" id="iconProg" class="text-gray-500"></ion-icon>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-xs text-gray-500 font-semibold uppercase">Programa</p>
+                        <p id="dayDetailPrograma" class="text-sm font-bold text-gray-800">--</p>
+                    </div>
+                </div>
                 
                 <div class="flex items-start gap-3">
                     <div class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
@@ -195,6 +205,7 @@ if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'instructor') {
                 document.getElementById('dayDetailTime').textContent = `${props.horaIni} - ${props.horaFin}`;
                 document.getElementById('dayDetailCompetencia').textContent = props.comp_nombre || 'N/A';
                 document.getElementById('dayDetailFicha').textContent = `Ficha ${props.fich_id || 'N/A'}`;
+                document.getElementById('dayDetailPrograma').textContent = props.prog_denominacion || 'N/A';
                 document.getElementById('dayDetailInstructor').textContent = props.inst_nombre;
                 document.getElementById('dayDetailAmbiente').textContent = `${props.amb_id} - ${props.amb_nombre}`;
                 
@@ -202,7 +213,7 @@ if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'instructor') {
                 modalHeader.style.backgroundColor = props.color;
                 modalHeader.style.borderColor = props.color;
                 
-                ['iconFicha', 'iconComp', 'iconInst', 'iconAmb'].forEach(id => {
+                ['iconFicha', 'iconProg', 'iconComp', 'iconInst', 'iconAmb'].forEach(id => {
                     document.getElementById(id).style.color = props.color;
                 });
 
@@ -269,6 +280,7 @@ if (!isset($_SESSION['rol']) || $_SESSION['rol'] !== 'instructor') {
                             horaFin: formatHora(horaFin),
                             comp_nombre: asig.comp_nombre_corto || asig.comp_nombre,
                             fich_id: asig.fich_id,
+                            prog_denominacion: asig.prog_denominacion,
                             amb_id: asig.ambiente_amb_id || asig.amb_id || 'N/A',
                             amb_nombre: asig.amb_nombre || 'S/N',
                             inst_nombre: asig.inst_nombres ? `${asig.inst_nombres} ${asig.inst_apellidos}` : 'Mi Asignación',

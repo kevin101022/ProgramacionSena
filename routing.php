@@ -97,7 +97,7 @@ try {
         $isAjax = true; // routing.php maneja backend calls principalmente
 
         $allowedControllersByRole = [
-            'centro' => ['sede', 'ambiente', 'programa', 'titulo_programa', 'instructor', 'competencia', 'coordinacion', 'usuario_coordinador', 'reporte', 'reporte_pdf', 'centro_formacion', 'auditoria_asignacion', 'detalle_asignacion', 'proyecto_formativo', 'resultado_aprendizaje', 'competencia_horas_programa'],
+            'centro' => ['sede', 'ambiente', 'programa', 'titulo_programa', 'instructor', 'competencia', 'coordinacion', 'usuario_coordinador', 'reporte', 'reporte_pdf', 'centro_formacion', 'auditoria_asignacion', 'detalle_asignacion', 'proyecto_formativo', 'resultado_aprendizaje', 'competencia_horas_programa', 'instru_competencia'],
             'coordinador' => ['ficha', 'instru_competencia', 'asignacion', 'detalle_asignacion', 'reporte', 'reporte_pdf', 'auditoria_asignacion', 'coordinacion', 'setdata', 'proyecto_formativo', 'resultado_aprendizaje', 'competencia_horas_programa', 'programa', 'competencia', 'instructor'],
             'instructor' => ['asignacion', 'instructor', 'ficha', 'reporte', 'reporte_pdf']
         ];

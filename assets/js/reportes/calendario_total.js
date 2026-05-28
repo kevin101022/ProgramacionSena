@@ -178,6 +178,7 @@ class CalendarioTotalManager {
             `${this.formatTime(d.detasig_hora_ini)} - ${this.formatTime(d.detasig_hora_fin)}`;
         document.getElementById('dayDetailCoord').textContent = d.coord_descripcion || 'N/A';
         document.getElementById('dayDetailFicha').textContent = `Ficha ${d.fich_id}`;
+        document.getElementById('dayDetailPrograma').textContent = d.prog_denominacion || 'N/A';
         document.getElementById('dayDetailCompetencia').textContent = d.comp_nombre_corto || 'N/A';
         document.getElementById('dayDetailInstructor').textContent =
             `${d.inst_nombres || ''} ${d.inst_apellidos || ''}`.trim() || 'N/A';

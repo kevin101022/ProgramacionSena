@@ -197,9 +197,15 @@ if ($navItem) {
             }
 
             .sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100%; /* Fallback for older browsers */
+                height: 100dvh; /* Usa dynamic viewport height para navegadores móviles */
                 transform: translateX(-100%);
                 padding-top: 20px;
                 box-shadow: 10px 0 30px rgba(0, 0, 0, 0.1);
+                z-index: 100;
             }
 
             .sidebar.open {

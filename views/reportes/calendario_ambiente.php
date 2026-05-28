@@ -197,6 +197,16 @@ require_once '../layouts/sidebar.php';
                         <p id="dayDetailFicha" class="text-sm font-bold text-gray-800">--</p>
                     </div>
                 </div>
+
+                <div class="flex items-start gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">
+                        <ion-icon src="../../assets/ionicons/school-outline.svg" class="text-blue-500"></ion-icon>
+                    </div>
+                    <div class="flex-1">
+                        <p class="text-xs text-gray-500 font-semibold uppercase">Programa</p>
+                        <p id="dayDetailPrograma" class="text-sm font-bold text-gray-800">--</p>
+                    </div>
+                </div>
                 
                 <div class="flex items-start gap-3">
                     <div class="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center flex-shrink-0">

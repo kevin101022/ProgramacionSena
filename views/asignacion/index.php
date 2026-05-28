@@ -264,65 +264,109 @@ if (isset($_SESSION['rol']) && $_SESSION['rol'] === 'instructor') {
 
 <!-- Quick Day Edit Modal -->
 <div id="dayEditModal" class="modal">
-    <div class="modal-content" style="max-width: 420px;">
+    <div class="modal-content" style="max-width: 460px;">
         <div class="modal-header" style="padding: 16px 20px;">
-            <h3 id="dayEditTitle" style="font-size: 15px;">Editar Horario</h3>
+            <h3 id="dayEditTitle" style="font-size: 15px;">Detalle de Asignación</h3>
             <button class="modal-close" id="closeDayEdit">
                 <ion-icon src="../../assets/ionicons/close-outline.svg"></ion-icon>
             </button>
         </div>
-        <form id="dayEditForm">
+        <div id="dayEditBody">
             <input type="hidden" id="dayEdit_detasig_id">
             <input type="hidden" id="dayEdit_asig_id">
-            
+
             <div class="modal-body" style="padding: 16px 20px;">
                 <div id="dayEditError" class="hidden mb-4 p-3 bg-red-50 border-l-4 border-red-500 rounded text-sm text-red-700">
                     <ion-icon src="../../assets/ionicons/warning-outline.svg" class="mr-1"></ion-icon>
                     <span id="dayEditErrorMsg">Error</span>
                 </div>
 
-                <div class="mb-4 text-center">
-                    <p id="dayEditDateLabel" class="text-lg font-bold text-sena-green capitalize"></p>
-                    <p id="dayEditAsigInfo" class="text-xs text-gray-500 mt-1"></p>
+                <!-- Fecha + Hora header -->
+                <div class="mb-4 p-3 bg-green-50 rounded-xl border border-green-100 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-sena-green flex items-center justify-center flex-shrink-0">
+                        <ion-icon src="../../assets/ionicons/calendar-outline.svg" class="text-white text-xl"></ion-icon>
+                    </div>
+                    <div>
+                        <p id="dayEditDateLabel" class="text-sm font-bold text-gray-800 capitalize"></p>
+                        <p id="dayEditAsigInfo" class="text-xs text-gray-500 mt-0.5"></p>
+                    </div>
                 </div>
 
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="flex-1">
-                        <label class="form-label text-xs">Hora Inicio</label>
-                        <input type="time" id="dayEdit_hora_ini" class="form-input text-sm" required min="06:00" max="22:00" disabled>
+                <!-- Ficha, Programa, Competencia, Instructor, Ambiente -->
+                <div class="space-y-2">
+                    <div class="flex items-start gap-2">
+                        <div class="w-7 h-7 rounded-md bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <ion-icon src="../../assets/ionicons/layers-outline.svg" class="text-sena-green" style="font-size:14px;"></ion-icon>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-[10px] text-gray-400 font-semibold uppercase tracking-wide">Ficha</p>
+                            <p id="dayEditFichaLabel" class="text-sm font-bold text-gray-800">--</p>
+                        </div>
                     </div>
-                    <div class="flex-1">
-                        <label class="form-label text-xs">Hora Fin</label>
-                        <input type="time" id="dayEdit_hora_fin" class="form-input text-sm" required min="06:00" max="22:00" disabled>
+                    <div class="flex items-start gap-2">
+                        <div class="w-7 h-7 rounded-md bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <ion-icon src="../../assets/ionicons/school-outline.svg" class="text-sena-green" style="font-size:14px;"></ion-icon>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-[10px] text-gray-400 font-semibold uppercase tracking-wide">Programa</p>
+                            <p id="dayEditProgramaLabel" class="text-sm font-medium text-gray-700">--</p>
+                        </div>
                     </div>
-                </div>
-                
-                <div class="form-group mb-0">
-                    <label class="form-label text-xs">Observaciones (Opcional)</label>
-                    <textarea id="dayEdit_observaciones" class="form-input text-sm resize-none" rows="2" placeholder="Ej. Cambio de ambiente temporal..." disabled></textarea>
+                    <div class="flex items-start gap-2">
+                        <div class="w-7 h-7 rounded-md bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <ion-icon src="../../assets/ionicons/bookmarks-outline.svg" class="text-sena-green" style="font-size:14px;"></ion-icon>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-[10px] text-gray-400 font-semibold uppercase tracking-wide">Competencia</p>
+                            <p id="dayEditCompetenciaLabel" class="text-sm font-medium text-gray-700">--</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <div class="w-7 h-7 rounded-md bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <ion-icon src="../../assets/ionicons/person-outline.svg" class="text-sena-green" style="font-size:14px;"></ion-icon>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-[10px] text-gray-400 font-semibold uppercase tracking-wide">Instructor</p>
+                            <p id="dayEditInstructorLabel" class="text-sm font-medium text-gray-700">--</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-2">
+                        <div class="w-7 h-7 rounded-md bg-gray-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <ion-icon src="../../assets/ionicons/cube-outline.svg" class="text-sena-green" style="font-size:14px;"></ion-icon>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <p class="text-[10px] text-gray-400 font-semibold uppercase tracking-wide">Ambiente</p>
+                            <p id="dayEditAmbienteLabel" class="text-sm font-medium text-gray-700">--</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="form-actions mt-4" style="justify-content: space-between; padding: 12px 20px;">
+            <!-- Footer: Eliminar izq | Cancelar + Editar der -->
+            <div class="modal-footer" style="justify-content: space-between; padding: 14px 20px; border-top: 1px solid #f3f4f6;">
                 <div class="flex gap-2">
-                    <button type="button" class="btn-danger-soft" id="deleteDayOnly" style="padding: 8px 12px; font-size: 0.85rem;" title="Eliminar solo este horario">
+                    <button type="button" class="btn-danger-soft" id="deleteDayOnly"
+                        style="padding: 8px 12px; font-size: 0.82rem;"
+                        title="Eliminar solo este día">
                         <ion-icon src="../../assets/ionicons/trash-outline.svg"></ion-icon>
-                        Día
+                        Eliminar Día
                     </button>
-                    <button type="button" class="btn-danger-soft" id="deleteDayAsig" style="padding: 8px 12px; font-size: 0.85rem;" title="Eliminar asignación completa">
+                    <button type="button" class="btn-danger-soft" id="deleteDayAsig"
+                        style="padding: 8px 12px; font-size: 0.82rem;"
+                        title="Eliminar asignación completa">
                         <ion-icon src="../../assets/ionicons/trash-bin-outline.svg"></ion-icon>
-                        Asig. Completa
+                        Eliminar Completa
                     </button>
                 </div>
                 <div class="flex gap-2">
-                    <button type="button" class="btn-secondary" id="cancelDayEdit">Cancelar</button>
-                    <button type="button" class="btn-primary" id="editDayAsigBtn">
+                    <button type="button" class="btn-secondary" id="cancelDayEdit" style="font-size: 0.85rem;">Cancelar</button>
+                    <button type="button" class="btn-primary" id="editDayAsigBtn" style="font-size: 0.85rem;">
                         <ion-icon src="../../assets/ionicons/create-outline.svg"></ion-icon>
                         Editar
                     </button>
                 </div>
             </div>
-        </form>
+        </div>
     </div>
 </div>
 

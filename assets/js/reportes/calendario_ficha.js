@@ -218,6 +218,7 @@ class CalendarioFichaManager {
         document.getElementById('dayDetailDate').textContent = dateLabel;
         document.getElementById('dayDetailTime').textContent = `${this.formatTime(props.detasig_hora_ini)} - ${this.formatTime(props.detasig_hora_fin)}`;
         document.getElementById('dayDetailFicha').textContent = `Ficha ${asig.ficha_fich_id || asig.fich_id}`;
+        document.getElementById('dayDetailPrograma').textContent = asig.prog_denominacion || 'N/A';
         document.getElementById('dayDetailCompetencia').textContent = asig.comp_nombre_corto || 'N/A';
         document.getElementById('dayDetailInstructor').textContent = `${asig.inst_nombres || ''} ${asig.inst_apellidos || ''}`.trim() || 'N/A';
         document.getElementById('dayDetailAmbiente').textContent = `Ambiente ${asig.ambiente_amb_id || 'N/A'}`;
