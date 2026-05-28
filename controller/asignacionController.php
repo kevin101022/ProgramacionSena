@@ -235,12 +235,12 @@ class AsignacionController
             }
         }
 
-        // --- VALIDACIÓN DE HORAS DIARIAS (MAX 10h) ---
+        // --- VALIDACIÓN DE HORAS DIARIAS (MAX 12h) ---
         foreach ($hoursByDay as $date => $hours) {
             $currentDailyHours = $asigModelCheck->getDailyHours($data['instructor_inst_id'], $date, null);
-            if (($currentDailyHours + $hours) > 10) {
+            if (($currentDailyHours + $hours) > 12) {
                 $label = date('d/m/Y', strtotime($date));
-                $this->sendResponse(['error' => "El instructor supera el límite de 10 horas programadas en un solo día: $label (Ya tiene asignadas: $currentDailyHours h, Intenta añadir: $hours h)."], 400);
+                $this->sendResponse(['error' => "El instructor supera el límite de 12 horas programadas en un solo día: $label (Ya tiene asignadas: $currentDailyHours h, Intenta añadir: $hours h)."], 400);
                 return;
             }
         }
@@ -469,12 +469,12 @@ class AsignacionController
             }
         }
 
-        // --- VALIDACIÓN DE HORAS DIARIAS (MAX 10h) ---
+        // --- VALIDACIÓN DE HORAS DIARIAS (MAX 12h) ---
         foreach ($hoursByDay as $date => $hours) {
             $currentDailyHours = $asigModelCheck->getDailyHours($data['instructor_inst_id'], $date, $data['asig_id']);
-            if (($currentDailyHours + $hours) > 10) {
+            if (($currentDailyHours + $hours) > 12) {
                 $label = date('d/m/Y', strtotime($date));
-                $this->sendResponse(['error' => "El instructor supera el límite de 10 horas programadas en un solo día: $label (Ya tiene asignadas: $currentDailyHours h, Intenta añadir: $hours h)."], 400);
+                $this->sendResponse(['error' => "El instructor supera el límite de 12 horas programadas en un solo día: $label (Ya tiene asignadas: $currentDailyHours h, Intenta añadir: $hours h)."], 400);
                 return;
             }
         }
