@@ -157,6 +157,7 @@ $nombre_usuario = isset($_SESSION['nombre']) ? $_SESSION['nombre'] : 'Usuario';
 <!-- Custom Notifications -->
 <?php require_once dirname(__DIR__) . '/layouts/notifications.php'; ?>
 <script src="../../assets/js/utils/notifications.js?v=<?php echo time(); ?>"></script>
+<script src="../../assets/js/utils/pagination.js?v=<?php echo time(); ?>"></script>
 <script src="../../assets/js/utils/tom-select-utils.js?v=<?php echo time(); ?>"></script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {

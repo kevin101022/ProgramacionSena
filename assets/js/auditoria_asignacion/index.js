@@ -153,14 +153,10 @@ class AuditoriaManager {
         if (nextBtn) nextBtn.disabled = this.currentPage === totalPages || totalPages === 0;
 
         if (paginationNumbers) {
-            paginationNumbers.innerHTML = '';
-            for (let i = 1; i <= totalPages; i++) {
-                const btn = document.createElement('button');
-                btn.className = `w-7 h-7 rounded-lg text-[10px] font-black transition-all ${i === this.currentPage ? 'bg-sena-green text-white shadow-md' : 'bg-white text-slate-400 border border-slate-100 hover:border-sena-green hover:text-sena-green'}`;
-                btn.textContent = i;
-                btn.onclick = () => { this.currentPage = i; this.renderTable(); };
-                paginationNumbers.appendChild(btn);
-            }
+            renderPaginationCarousel(paginationNumbers, this.currentPage, totalPages, (page) => {
+                this.currentPage = page;
+                this.renderTable();
+            });
         }
     }
 

@@ -270,17 +270,10 @@ class InstructorManager {
         if (nextBtn) nextBtn.disabled = this.currentPage === totalPages || totalPages === 0;
 
         if (paginationNumbers) {
-            paginationNumbers.innerHTML = '';
-            for (let i = 1; i <= totalPages; i++) {
-                const btn = document.createElement('button');
-                btn.className = `pagination-number ${i === this.currentPage ? 'active' : ''}`;
-                btn.textContent = i;
-                btn.onclick = () => {
-                    this.currentPage = i;
-                    this.renderTable();
-                };
-                paginationNumbers.appendChild(btn);
-            }
+            renderPaginationCarousel(paginationNumbers, this.currentPage, totalPages, (page) => {
+                this.currentPage = page;
+                this.renderTable();
+            });
         }
     }
 

@@ -196,3 +196,4 @@ if (isset($_SESSION['id']) && $_SESSION['rol'] === 'instructor') {
 <!-- Custom Notifications (Included only once at the end) -->
 <?php require_once dirname(__DIR__) . '/layouts/notifications.php'; ?>
 <script src="../../assets/js/utils/notifications.js?v=<?php echo time(); ?>"></script>
+<script src="../../assets/js/utils/pagination.js?v=<?php echo time(); ?>"></script>

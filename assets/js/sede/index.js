@@ -205,19 +205,11 @@ class SedeManager {
         // Update pagination numbers
         const paginationNumbers = document.getElementById('paginationNumbers');
         if (paginationNumbers) {
-            paginationNumbers.innerHTML = '';
-
-            for (let i = 1; i <= Math.min(totalPages, 5); i++) {
-                const pageBtn = document.createElement('button');
-                pageBtn.className = `pagination-number ${i === this.currentPage ? 'active' : ''}`;
-                pageBtn.textContent = i;
-                pageBtn.addEventListener('click', () => {
-                    this.currentPage = i;
-                    this.renderTable();
-                    this.updatePagination();
-                });
-                paginationNumbers.appendChild(pageBtn);
-            }
+            renderPaginationCarousel(paginationNumbers, this.currentPage, totalPages, (page) => {
+                this.currentPage = page;
+                this.renderTable();
+                this.updatePagination();
+            });
         }
     }
 

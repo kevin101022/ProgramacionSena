@@ -136,18 +136,10 @@ window.usuarioCoordinadorModule = (() => {
         if (nextBtn) nextBtn.disabled = currentPage === totalPages || totalPages === 0;
 
         if (paginationNumbers) {
-            paginationNumbers.innerHTML = '';
-            for (let i = 1; i <= totalPages; i++) {
-                const btn = document.createElement('button');
-                btn.className = `w-7 h-7 rounded-lg text-[10px] font-black transition-all ${i === currentPage ? 'bg-sena-green text-white shadow-md' : 'bg-white text-slate-400 border border-slate-100 hover:border-sena-green hover:text-sena-green'}`;
-                btn.textContent = i;
-                btn.onclick = (e) => {
-                    e.stopPropagation();
-                    currentPage = i;
-                    renderTable();
-                };
-                paginationNumbers.appendChild(btn);
-            }
+            renderPaginationCarousel(paginationNumbers, currentPage, totalPages, (page) => {
+                currentPage = page;
+                renderTable();
+            });
         }
     };
 
