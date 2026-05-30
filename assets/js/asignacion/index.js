@@ -815,19 +815,39 @@ class AsignacionManager {
                             titleText = `${horaIni}-${horaFin} | ${d.comp_nombre_corto || 'Comp.'} — ${d.inst_nombres || ''} (Ficha: ${d.ficha_num || ''})`;
                         }
 
-                        const isEditable = d.editable !== false;
                         const eventColor = this.COLORS[asigIdNum % this.COLORS.length];
                         return {
                             id: `det_${d.detasig_id}`,
                             title: titleText,
                             start: d.detasig_fecha,
                             allDay: true,
-                            editable: isEditable,
+                            editable: false,
                             backgroundColor: eventColor,
                             borderColor: eventColor,
                             extendedProps: { ...d, asig: d }
                         };
                     });
+
+                    // Add Colombian holidays as background events
+                    const currentYear = midDate.getFullYear();
+                    const nextYear = currentYear + 1;
+                    const prevYear = currentYear - 1;
+                    const holidaysSet = new Set([
+                        ...getColombianHolidays(prevYear),
+                        ...getColombianHolidays(currentYear),
+                        ...getColombianHolidays(nextYear)
+                    ]);
+                    
+                    for (const date of holidaysSet) {
+                        events.push({
+                            title: 'Festivo',
+                            start: date,
+                            allDay: true,
+                            display: 'background',
+                            backgroundColor: '#fee2e2' // Light red for holidays
+                        });
+                    }
+
                     successCallback(events);
                 } catch (e) {
                     console.error('Error fetching events:', e);
