@@ -18,11 +18,11 @@ function renderPaginationCarousel(container, currentPage, totalPages, onPageClic
 
     // Calculate the sliding window
     let startPage = Math.max(1, currentPage - Math.floor(WINDOW / 2));
-    let endPage   = startPage + WINDOW - 1;
+    let endPage = startPage + WINDOW - 1;
 
     // Clamp to totalPages
     if (endPage > totalPages) {
-        endPage   = totalPages;
+        endPage = totalPages;
         startPage = Math.max(1, endPage - WINDOW + 1);
     }
 
@@ -35,7 +35,7 @@ function renderPaginationCarousel(container, currentPage, totalPages, onPageClic
             return btn;
         }
         btn.textContent = label;
-        btn.className   = `pagination-number${isActive ? ' active' : ''}`;
+        btn.className = `pagination-number${isActive ? ' active' : ''}`;
         btn.addEventListener('click', () => onPageClick(page));
         return btn;
     };
